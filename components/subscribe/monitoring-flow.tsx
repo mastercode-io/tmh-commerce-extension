@@ -161,6 +161,123 @@ function formatDate(value?: string) {
   }).format(new Date(value));
 }
 
+function MonitoringSectionLinks() {
+  return (
+    <nav
+      aria-label="Monitoring page sections"
+      className="grid gap-2 md:hidden"
+    >
+      <div className="text-muted-foreground text-xs font-semibold tracking-[0.12em] uppercase">
+        Jump to
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <a
+          href="#monitoring-trademarks"
+          className="bg-muted text-foreground rounded-full border px-3 py-2 text-sm font-medium"
+        >
+          Trademarks
+        </a>
+        <a
+          href="#monitoring-plans"
+          className="bg-muted text-foreground rounded-full border px-3 py-2 text-sm font-medium"
+        >
+          Plans
+        </a>
+        <a
+          href="#monitoring-compare"
+          className="bg-muted text-foreground rounded-full border px-3 py-2 text-sm font-medium"
+        >
+          Compare
+        </a>
+      </div>
+    </nav>
+  );
+}
+
+function MonitoringTrademarkOverview({
+  trademarks,
+}: {
+  trademarks: MonitoringTrademark[];
+}) {
+  return (
+    <>
+      <div className="hidden overflow-hidden rounded-xl border md:block">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="pl-4">Trademark Number</TableHead>
+              <TableHead>Word</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="pr-4">Expire Date</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {trademarks.map((trademark) => (
+              <TableRow key={trademark.id}>
+                <TableCell className="pl-4 font-medium whitespace-nowrap">
+                  {trademark.registrationNumber ?? '—'}
+                </TableCell>
+                <TableCell className="min-w-[180px]">{trademark.name}</TableCell>
+                <TableCell>{formatTrademarkType(trademark.type)}</TableCell>
+                <TableCell>{formatTrademarkStatus(trademark.status)}</TableCell>
+                <TableCell className="pr-4 whitespace-nowrap">
+                  {formatDate(trademark.expiryDate)}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="grid gap-3 md:hidden">
+        {trademarks.map((trademark) => (
+          <div
+            key={trademark.id}
+            className="bg-background rounded-2xl border px-4 py-4"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="font-semibold leading-snug">{trademark.name}</div>
+                <div className="text-muted-foreground mt-1 text-sm">
+                  {trademark.registrationNumber ?? 'Registration number pending'}
+                </div>
+              </div>
+              <Badge variant="secondary">
+                {formatTrademarkStatus(trademark.status)}
+              </Badge>
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Badge variant="outline">{formatTrademarkType(trademark.type)}</Badge>
+              <Badge variant="outline">{trademark.jurisdiction}</Badge>
+            </div>
+
+            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+              <div>
+                <dt className="text-muted-foreground text-xs uppercase">
+                  Expires
+                </dt>
+                <dd className="mt-1 font-medium">
+                  {formatDate(trademark.expiryDate)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground text-xs uppercase">
+                  Brand
+                </dt>
+                <dd className="mt-1 font-medium">
+                  {trademark.brandName ?? '—'}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
 export function MonitoringFlow({
   initialToken,
   initialCheckoutState,
@@ -464,45 +581,17 @@ export function MonitoringFlow({
           </div>
         </CardHeader>
         {flowMode === 'plan-selection' ? (
-          <CardContent className="grid gap-4 pt-4">
+          <CardContent
+            id="monitoring-trademarks"
+            className="scroll-mt-24 grid gap-4 pt-4"
+          >
             <div className="grid gap-3">
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-950">
-                The following trademarks require a monitoring subscription
+                {clientData.trademarks.length} trademark
+                {clientData.trademarks.length === 1 ? '' : 's'} require a
+                monitoring subscription
               </div>
-              <div className="overflow-hidden rounded-xl border">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                      <TableHead className="pl-4">Trademark Number</TableHead>
-                      <TableHead>Word</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="pr-4">Expire Date</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {clientData.trademarks.map((trademark) => (
-                      <TableRow key={trademark.id}>
-                        <TableCell className="pl-4 font-medium whitespace-nowrap">
-                          {trademark.registrationNumber ?? '—'}
-                        </TableCell>
-                        <TableCell className="min-w-[180px]">
-                          {trademark.name}
-                        </TableCell>
-                        <TableCell>
-                          {formatTrademarkType(trademark.type)}
-                        </TableCell>
-                        <TableCell>
-                          {formatTrademarkStatus(trademark.status)}
-                        </TableCell>
-                        <TableCell className="pr-4 whitespace-nowrap">
-                          {formatDate(trademark.expiryDate)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <MonitoringTrademarkOverview trademarks={clientData.trademarks} />
             </div>
           </CardContent>
         ) : null}
@@ -516,18 +605,23 @@ export function MonitoringFlow({
               onChange={setBillingFrequency}
             />
           </div>
-          <PlanCards
-            billingFrequency={billingFrequency}
-            onSelectPlan={handlePlanSelect}
-            busyPlan={busyPlan}
-          />
-          {bookingPromptVisible ? (
-            <BookingPrompt bookingUrl={clientData.bookingUrl} />
-          ) : null}
-          <PlanFeatureTable
-            onSelectPlan={handlePlanSelect}
-            busyPlan={busyPlan}
-          />
+          <MonitoringSectionLinks />
+          <div id="monitoring-plans" className="scroll-mt-24">
+            <PlanCards
+              billingFrequency={billingFrequency}
+              onSelectPlan={handlePlanSelect}
+              busyPlan={busyPlan}
+            />
+          </div>
+          <div id="monitoring-compare" className="scroll-mt-24 grid gap-6">
+            {bookingPromptVisible ? (
+              <BookingPrompt bookingUrl={clientData.bookingUrl} />
+            ) : null}
+            <PlanFeatureTable
+              onSelectPlan={handlePlanSelect}
+              busyPlan={busyPlan}
+            />
+          </div>
         </div>
       ) : null}
 

@@ -39,6 +39,187 @@ const planActions = [
   { plan: 'annual_review', label: 'Select Plan' },
 ] as const satisfies Array<{ plan: MonitoringPlan; label: string }>;
 
+const planDetails = [
+  {
+    plan: 'monitoring_defence',
+    shortLabel: 'MAD',
+    title: 'Monitoring, Advisory & Defence',
+    badge: 'Most comprehensive',
+    accent: 'border-amber-200 bg-amber-50/70',
+  },
+  {
+    plan: 'monitoring_essentials',
+    shortLabel: 'Essentials',
+    title: 'Monitoring Essentials',
+    badge: 'Recommended',
+    accent: 'border-primary/20 bg-primary/5',
+  },
+  {
+    plan: 'annual_review',
+    shortLabel: 'Annual Review',
+    title: 'Annual Review & Representation',
+    badge: 'Most cost effective',
+    accent: 'border-slate-200 bg-slate-50/80',
+  },
+] as const satisfies Array<{
+  plan: MonitoringPlan;
+  shortLabel: string;
+  title: string;
+  badge: string;
+  accent: string;
+}>;
+
+const mobileFeatureSections = [
+  {
+    title: 'Monitoring',
+    features: [
+      {
+        label: 'Trademark monitoring',
+        values: {
+          monitoring_defence: 'check',
+          monitoring_essentials: 'check',
+          annual_review: 'check',
+        },
+      },
+      {
+        label: 'Annual review across all trademarks',
+        values: {
+          monitoring_defence: 'check',
+          monitoring_essentials: 'check',
+          annual_review: 'check',
+        },
+      },
+      {
+        label: 'UK & international IPO notifications',
+        values: {
+          monitoring_defence: 'check',
+          monitoring_essentials: 'check',
+          annual_review: 'check',
+        },
+      },
+    ],
+  },
+  {
+    title: 'Reports & Alerts',
+    features: [
+      {
+        label: 'Trademark reports',
+        values: {
+          monitoring_defence: 'Monthly',
+          monitoring_essentials: 'Quarterly',
+          annual_review: 'Annually',
+        },
+      },
+      {
+        label: 'Search engine reports',
+        values: {
+          monitoring_defence: 'Monthly',
+          monitoring_essentials: 'Quarterly',
+          annual_review: 'Annually',
+        },
+      },
+      {
+        label: 'Domain name alerts & reports',
+        values: {
+          monitoring_defence: 'Monthly',
+          monitoring_essentials: 'Quarterly',
+          annual_review: 'Annually',
+        },
+      },
+      {
+        label: 'Social media alerts & reports',
+        values: {
+          monitoring_defence: 'Ongoing',
+          monitoring_essentials: 'Quarterly',
+          annual_review: 'Annually',
+        },
+      },
+      {
+        label: 'Risk-scored threat reporting',
+        values: {
+          monitoring_defence: 'Monthly',
+          monitoring_essentials: 'Quarterly',
+          annual_review: 'Annually',
+        },
+      },
+    ],
+  },
+  {
+    title: 'Portal & Renewal',
+    features: [
+      {
+        label: 'Temmy portal access',
+        values: {
+          monitoring_defence: 'check',
+          monitoring_essentials: 'check',
+          annual_review: 'check',
+        },
+      },
+      {
+        label: 'Optional IPO address for service',
+        values: {
+          monitoring_defence: 'check',
+          monitoring_essentials: 'check',
+          annual_review: 'check',
+        },
+      },
+      {
+        label: 'Trademark renewal reminders',
+        values: {
+          monitoring_defence: 'check',
+          monitoring_essentials: 'check',
+          annual_review: 'check',
+        },
+      },
+      {
+        label: 'Auto renewal option',
+        values: {
+          monitoring_defence: 'check',
+          monitoring_essentials: 'no',
+          annual_review: 'no',
+        },
+      },
+    ],
+  },
+  {
+    title: 'Support & Terms',
+    features: [
+      {
+        label: 'Defence hours',
+        values: {
+          monitoring_defence: 'Up to 10 hours / 12 months',
+          monitoring_essentials: 'no',
+          annual_review: 'no',
+        },
+      },
+      {
+        label: 'Proactive takedown & opposition hours',
+        values: {
+          monitoring_defence: 'Up to 2 hours / 12 months',
+          monitoring_essentials: 'no',
+          annual_review: 'no',
+        },
+      },
+      {
+        label: 'Minimum term',
+        values: {
+          monitoring_defence: '6 months',
+          monitoring_essentials: '1 month notice',
+          annual_review: '1 month notice',
+        },
+      },
+      {
+        label: 'Discounted hourly rate',
+        values: {
+          monitoring_defence: '£99/hour',
+          monitoring_essentials: '£119/hour',
+          annual_review: '£149/hour',
+        },
+      },
+    ],
+  },
+] as const;
+
 function FeatureCell({ value }: { value: string }) {
   if (value === 'check') {
     return (
@@ -61,6 +242,67 @@ function FeatureCell({ value }: { value: string }) {
   return <span>{value}</span>;
 }
 
+function MobilePlanDetailCard({
+  plan,
+  onSelectPlan,
+  busyPlan,
+}: {
+  plan: (typeof planDetails)[number];
+  onSelectPlan: (plan: MonitoringPlan) => void;
+  busyPlan?: MonitoringPlan | null;
+}) {
+  const action = planActions.find((item) => item.plan === plan.plan);
+  const loading = busyPlan === plan.plan;
+
+  return (
+    <div className={cn('rounded-2xl border p-4', plan.accent)}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="grid gap-2">
+          <div className="text-muted-foreground text-xs font-semibold tracking-[0.14em] uppercase">
+            {plan.shortLabel}
+          </div>
+          <div>
+            <h3 className="text-base font-semibold">{plan.title}</h3>
+            <p className="text-muted-foreground mt-1 text-sm">{plan.badge}</p>
+          </div>
+        </div>
+        {action ? (
+          <Button
+            className="w-full sm:w-auto"
+            onClick={() => onSelectPlan(plan.plan)}
+            disabled={loading}
+          >
+            {action.label}
+          </Button>
+        ) : null}
+      </div>
+
+      <div className="mt-4 grid gap-4">
+        {mobileFeatureSections.map((section) => (
+          <div key={`${plan.plan}-${section.title}`} className="grid gap-2">
+            <div className="text-muted-foreground text-xs font-semibold tracking-[0.12em] uppercase">
+              {section.title}
+            </div>
+            <div className="grid gap-2">
+              {section.features.map((feature) => (
+                <div
+                  key={`${plan.plan}-${feature.label}`}
+                  className="bg-background/85 rounded-xl border px-3 py-3"
+                >
+                  <div className="text-sm font-medium">{feature.label}</div>
+                  <div className="mt-2 text-sm">
+                    <FeatureCell value={feature.values[plan.plan]} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function PlanFeatureTable({
   onSelectPlan,
   busyPlan,
@@ -74,7 +316,18 @@ export function PlanFeatureTable({
         <CardTitle>What each plan covers</CardTitle>
       </CardHeader>
       <CardContent className="pt-4">
-        <div className="overflow-x-auto">
+        <div className="grid gap-4 md:hidden">
+          {planDetails.map((plan) => (
+            <MobilePlanDetailCard
+              key={plan.plan}
+              plan={plan}
+              onSelectPlan={onSelectPlan}
+              busyPlan={busyPlan}
+            />
+          ))}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[760px] text-sm">
             <thead className="text-muted-foreground border-b text-left text-xs tracking-[0.12em] uppercase">
               <tr>
