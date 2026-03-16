@@ -38,7 +38,7 @@ const plans = [
     label: 'Monitoring Essentials',
     fullName: 'Monitoring Essentials',
     badge: 'Recommended',
-    pricePrimary: '£24/month for 1 trademark,',
+    pricePrimary: '£24/month per trademark',
     priceSecondary: '+£12/month each additional TM',
     minimumTerm: 'Cancel any time',
     minimumTermSecondary: '(one month notice period)',
@@ -51,7 +51,7 @@ const plans = [
     label: 'Annual Review',
     fullName: 'Annual Review & Representation',
     badge: 'Most cost effective',
-    pricePrimary: '£14/month per trademark,',
+    pricePrimary: '£14/month per trademark',
     priceSecondary: '+£7/month each additional TM',
     minimumTerm: 'Cancel any time',
     minimumTermSecondary: '(one month notice period)',
@@ -118,7 +118,7 @@ export function PlanCards({
             </CardHeader>
             <CardContent className="grid gap-4 pt-4">
               <div className="grid gap-1">
-                <div className="text-[2rem] leading-tight font-semibold tracking-tight">
+                <div className="text-[1.75rem] leading-tight font-semibold tracking-tight">
                   {plan.pricePrimary}
                 </div>
                 <div className="text-muted-foreground text-base font-medium">
@@ -135,7 +135,7 @@ export function PlanCards({
                 <div>{plan.hourlyRate}</div>
               </div>
             </CardContent>
-            <CardFooter className="mt-auto justify-center bg-transparent p-4 pt-0">
+            <CardFooter className="mt-auto justify-center border-0 bg-transparent p-4 pt-0">
               <Button
                 className="min-w-[9.75rem]"
                 onClick={() => onSelectPlan(plan.plan)}
