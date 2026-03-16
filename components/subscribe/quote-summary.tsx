@@ -69,10 +69,7 @@ export function QuoteSummary({
     billingFrequency === 'annual'
       ? (quote?.summary.discountAnnual ?? 0)
       : (quote?.summary.discountMonthly ?? 0);
-  const ctaLabel =
-    followUpItems.length > 0
-      ? 'Request Quote & Pay for Selected'
-      : 'Continue to Payment';
+  const ctaLabel = 'Continue to payment';
 
   return (
     <Card className="sticky top-24">
@@ -107,20 +104,14 @@ export function QuoteSummary({
             <span className="font-medium">{followUpItems.length}</span>
           </div>
           <div className="flex items-center justify-between gap-3 border-t pt-3">
-            <span className="text-muted-foreground text-sm">
-              {billingFrequency === 'annual' ? 'Annual subtotal' : 'Subtotal'}
-            </span>
+            <span className="text-muted-foreground text-sm">Subtotal</span>
             <span className="font-medium">
               {formatMoney(displayedSubtotal)}
             </span>
           </div>
           {quote && displayedDiscount > 0 ? (
             <div className="flex items-center justify-between gap-3">
-              <span className="text-muted-foreground text-sm">
-                {billingFrequency === 'annual'
-                  ? 'Annual discount'
-                  : 'Discount'}
-              </span>
+              <span className="text-muted-foreground text-sm">Discount</span>
               <span className="font-medium text-green-700">
                 -{formatMoney(displayedDiscount)}
               </span>
