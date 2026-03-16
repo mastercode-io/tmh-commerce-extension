@@ -1,37 +1,38 @@
+import Image from 'next/image';
 import Link from 'next/link';
-import { ShieldCheck } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
+import { Mail, Phone } from 'lucide-react';
 
 export function MonitoringHeader() {
   return (
-    <header className="bg-background/95 border-b backdrop-blur">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="bg-primary text-primary-foreground grid size-9 place-items-center rounded-xl">
-            <ShieldCheck className="size-5" />
-          </div>
-          <div>
-            <div className="text-sm font-semibold tracking-tight">
-              Temmy Portal
-            </div>
-            <div className="text-muted-foreground text-xs">
-              Monitoring subscriptions
-            </div>
-          </div>
+    <header className="bg-background sticky top-0 z-40 shrink-0 border-b shadow-[0_6px_12px_rgba(34,52,71,0.05)]">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+        <Link href="/" className="shrink-0">
+          <Image
+            src="/images/tmh-logo-light.svg"
+            alt="The Trademark Helpline"
+            width={220}
+            height={62}
+            className="h-auto w-[170px] sm:w-[200px] lg:w-[220px]"
+            priority
+          />
         </Link>
 
-        <div className="flex items-center gap-2">
-          <div className="hidden text-right sm:block">
-            <div className="text-xs font-medium tracking-[0.16em] text-neutral-500 uppercase">
-              Need help?
-            </div>
-            <div className="text-sm font-medium">0800 689 1700</div>
-          </div>
-          <Button variant="outline" asChild>
-            <a href="tel:08006891700">Call us</a>
-          </Button>
-        </div>
+        <nav className="flex flex-col gap-2 text-sm font-semibold text-[#223447] sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-5">
+          <a
+            href="tel:01618335400"
+            className="inline-flex items-center gap-2 text-[#E51652] hover:text-[#D01349]"
+          >
+            <Phone className="size-4" />
+            <span>0161 833 5400</span>
+          </a>
+          <a
+            href="mailto:enquiries@thetrademarkhelpline.com"
+            className="inline-flex items-center gap-2 text-[#E51652] hover:text-[#D01349]"
+          >
+            <Mail className="size-4" />
+            <span>enquiries@thetrademarkhelpline.com</span>
+          </a>
+        </nav>
       </div>
     </header>
   );
