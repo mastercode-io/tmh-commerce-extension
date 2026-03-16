@@ -20,17 +20,17 @@ export function MonitoringHeader() {
         <nav className="flex flex-col gap-2 text-sm font-semibold text-[#223447] sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-5">
           <a
             href="tel:01618335400"
-            className="inline-flex items-center gap-2 text-[#E51652] hover:text-[#D01349]"
+            className="inline-flex items-center gap-2 text-[#223447] hover:text-[#223447]"
           >
-            <Phone className="size-4" />
+            <Phone className="size-4 text-[#E51652]" />
             <span>0161 833 5400</span>
           </a>
           <a
             href="mailto:enquiries@thetrademarkhelpline.com"
-            className="inline-flex items-center gap-2 text-[#E51652] hover:text-[#D01349]"
+            className="inline-flex items-center gap-2 text-[#223447] hover:text-[#223447]"
           >
-            <Mail className="size-4" />
-            <span>enquiries@thetrademarkhelpline.com</span>
+            <Mail className="size-4 text-[#E51652]" />
+            <span>Email us</span>
           </a>
         </nav>
       </div>
