@@ -139,6 +139,10 @@ export function calculateMonitoringQuote(
     (total, lineItem) => total + (lineItem.monthlyPrice ?? 0),
     0,
   );
+  const subtotalAnnual = payableNowLineItems.reduce(
+    (total, lineItem) => total + (lineItem.annualPrice ?? 0),
+    0,
+  );
   const discountMonthly = getMonthlyDiscount(
     selections.filter((selection) => {
       const lineItem = lineItems.find(
@@ -147,9 +151,10 @@ export function calculateMonitoringQuote(
       return Boolean(lineItem?.payableNow);
     }),
   );
+  const discountAnnual = discountMonthly * 10;
   const totalMonthly = Math.max(0, subtotalMonthly - discountMonthly);
-  const totalAnnual = totalMonthly * 10;
-  const annualSaving = totalMonthly * 2;
+  const totalAnnual = Math.max(0, subtotalAnnual - discountAnnual);
+  const annualSaving = Math.max(0, totalMonthly * 12 - totalAnnual);
 
   return {
     billingFrequency,
@@ -162,7 +167,9 @@ export function calculateMonitoringQuote(
       payableNowCount: payableNowLineItems.length,
       requiresQuoteCount: followUpLineItems.length,
       subtotalMonthly,
+      subtotalAnnual,
       discountMonthly,
+      discountAnnual,
       totalMonthly,
       totalAnnual,
       annualSaving,

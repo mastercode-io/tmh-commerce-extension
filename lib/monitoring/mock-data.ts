@@ -44,7 +44,7 @@ const mockTrademarks: MonitoringTrademark[] = [
     expiryDate: '2034-09-02',
     registrationNumber: 'UK00003164021',
     status: 'registered',
-    riskProfile: 'high',
+    riskProfile: 'low',
     imageUrl: buildLogoDataUri('LL', '#111827'),
   },
   {
@@ -58,7 +58,6 @@ const mockTrademarks: MonitoringTrademark[] = [
     expiryDate: '2034-09-14',
     registrationNumber: 'UK00002894762',
     status: 'registered',
-    riskProfile: 'low',
   },
 ];
 

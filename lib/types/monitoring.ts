@@ -76,7 +76,9 @@ export interface MonitoringQuoteSummary {
   payableNowCount: number;
   requiresQuoteCount: number;
   subtotalMonthly: number;
+  subtotalAnnual: number;
   discountMonthly: number;
+  discountAnnual: number;
   totalMonthly: number;
   totalAnnual: number;
   annualSaving: number;

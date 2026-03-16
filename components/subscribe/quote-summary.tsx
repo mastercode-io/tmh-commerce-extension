@@ -61,6 +61,14 @@ export function QuoteSummary({
     billingFrequency === 'annual'
       ? (quote?.summary.totalAnnual ?? 0)
       : (quote?.summary.totalMonthly ?? 0);
+  const displayedSubtotal =
+    billingFrequency === 'annual'
+      ? (quote?.summary.subtotalAnnual ?? 0)
+      : (quote?.summary.subtotalMonthly ?? 0);
+  const displayedDiscount =
+    billingFrequency === 'annual'
+      ? (quote?.summary.discountAnnual ?? 0)
+      : (quote?.summary.discountMonthly ?? 0);
   const ctaLabel =
     followUpItems.length > 0
       ? 'Request Quote & Pay for Selected'
@@ -99,16 +107,32 @@ export function QuoteSummary({
             <span className="font-medium">{followUpItems.length}</span>
           </div>
           <div className="flex items-center justify-between gap-3 border-t pt-3">
-            <span className="text-muted-foreground text-sm">Subtotal</span>
+            <span className="text-muted-foreground text-sm">
+              {billingFrequency === 'annual' ? 'Annual subtotal' : 'Subtotal'}
+            </span>
             <span className="font-medium">
-              {formatMoney(quote?.summary.subtotalMonthly ?? 0)}
+              {formatMoney(displayedSubtotal)}
             </span>
           </div>
-          {quote && quote.summary.discountMonthly > 0 ? (
+          {quote && displayedDiscount > 0 ? (
             <div className="flex items-center justify-between gap-3">
-              <span className="text-muted-foreground text-sm">Discount</span>
+              <span className="text-muted-foreground text-sm">
+                {billingFrequency === 'annual'
+                  ? 'Annual discount'
+                  : 'Discount'}
+              </span>
               <span className="font-medium text-green-700">
-                -{formatMoney(quote.summary.discountMonthly)}
+                -{formatMoney(displayedDiscount)}
+              </span>
+            </div>
+          ) : null}
+          {billingFrequency === 'annual' && quote ? (
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground text-sm">
+                Annual saving
+              </span>
+              <span className="font-medium text-green-700">
+                -{formatMoney(quote.summary.annualSaving)}
               </span>
             </div>
           ) : null}
@@ -126,7 +150,7 @@ export function QuoteSummary({
           {billingFrequency === 'annual' && quote ? (
             <div className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800">
               Save {formatMoney(quote.summary.annualSaving)} per year compared
-              with monthly billing
+              with the monthly subscription
             </div>
           ) : null}
         </div>
