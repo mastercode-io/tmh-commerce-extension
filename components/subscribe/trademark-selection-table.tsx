@@ -136,7 +136,7 @@ export function TrademarkSelectionTable({
           </h2>
           <p className="text-muted-foreground mt-1 text-sm">
             Adjust plans per trademark, then review payable items and follow-up
-            items in the summary.
+            items in the summary
           </p>
         </div>
         <button

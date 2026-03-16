@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { AlertTriangle, ArrowRight, ExternalLink, Loader2 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -12,11 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import type {
-  MonitoringPlan,
-  MonitoringQuoteResponse,
-  TrademarkSelection,
-} from '@/lib/types/monitoring';
+import type { MonitoringPlan, MonitoringQuoteResponse, TrademarkSelection } from '@/lib/types/monitoring';
 
 function formatMoney(amount: number) {
   return new Intl.NumberFormat('en-GB', {
@@ -71,20 +66,12 @@ export function QuoteSummary({
       ? 'Request Quote & Pay for Selected'
       : 'Continue to Payment';
 
-  const planBreakdown = selectedItems.reduce<Record<string, number>>(
-    (acc, item) => {
-      acc[item.plan] = (acc[item.plan] ?? 0) + 1;
-      return acc;
-    },
-    {},
-  );
-
   return (
     <Card className="sticky top-24">
       <CardHeader className="border-b">
         <CardTitle>Quote summary</CardTitle>
         <CardDescription>
-          Review what is payable now versus what still needs a short follow-up.
+          Review what is payable now versus what still needs a short follow-up
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 pt-4">
@@ -139,28 +126,9 @@ export function QuoteSummary({
           {billingFrequency === 'annual' && quote ? (
             <div className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800">
               Save {formatMoney(quote.summary.annualSaving)} per year compared
-              with monthly billing.
+              with monthly billing
             </div>
           ) : null}
-        </div>
-
-        <div className="grid gap-2">
-          <div className="text-muted-foreground text-xs tracking-[0.14em] uppercase">
-            Plan breakdown
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(planBreakdown).length ? (
-              Object.entries(planBreakdown).map(([plan, count]) => (
-                <Badge key={plan} variant="secondary">
-                  {planLabel(plan as MonitoringPlan)} x {count}
-                </Badge>
-              ))
-            ) : (
-              <span className="text-muted-foreground text-sm">
-                No trademarks selected yet.
-              </span>
-            )}
-          </div>
         </div>
 
         <div className="grid gap-3">
@@ -180,7 +148,7 @@ export function QuoteSummary({
                   </li>
                 ))
               ) : (
-                <li>No items are currently payable.</li>
+                <li>No items are currently payable</li>
               )}
             </ul>
           </div>
@@ -203,8 +171,8 @@ export function QuoteSummary({
                     ))}
                   </ul>
                   <p className="mt-3 text-sm text-amber-900/80">
-                    These MAD items are not included in today&apos;s payment.
-                    Book a short call so we can finish the quote.
+                    These MAD items are not included in today&apos;s payment, book
+                    a short call so we can finish the quote
                   </p>
                   {bookingUrl ? (
                     <Button asChild size="sm" className="mt-3">

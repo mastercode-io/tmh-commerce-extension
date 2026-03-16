@@ -4,7 +4,6 @@ import * as React from 'react';
 import Link from 'next/link';
 import {
   AlertTriangle,
-  ArrowLeft,
   ArrowRight,
   BadgeAlert,
   Loader2,
@@ -114,9 +113,9 @@ function StatusBanner({ checkoutState }: { checkoutState: string | null }) {
 
   const message =
     checkoutState === 'cancelled'
-      ? 'The hosted payment flow was cancelled. Your selections are still here.'
+      ? 'The hosted payment flow was cancelled, your selections are still here'
       : checkoutState === 'failed'
-        ? 'The hosted payment flow returned an error. Please review the summary and try again.'
+        ? 'The hosted payment flow returned an error, please review the summary and try again'
         : null;
 
   if (!message) {
@@ -394,7 +393,7 @@ export function MonitoringFlow({
             </Badge>
             <CardTitle>Preparing your subscription options</CardTitle>
             <CardDescription>
-              Fetching client context and trademark records from the mock CRM.
+              Fetching client context and trademark records from the mock CRM
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 pt-4">
@@ -419,7 +418,7 @@ export function MonitoringFlow({
         <CardContent className="grid gap-4 pt-4">
           <div className="bg-muted/40 rounded-xl border p-4 text-sm">
             For the MVP, you can open the sample client journey using the demo
-            token.
+            token
           </div>
         </CardContent>
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-4">
@@ -462,15 +461,6 @@ export function MonitoringFlow({
                 defense support
               </CardDescription>
             </div>
-            {flowMode === 'configuration' ? (
-              <Button
-                variant="outline"
-                onClick={() => setFlowMode('plan-selection')}
-              >
-                <ArrowLeft />
-                Change plan
-              </Button>
-            ) : null}
           </div>
         </CardHeader>
         {flowMode === 'plan-selection' ? (
@@ -554,7 +544,7 @@ export function MonitoringFlow({
                     </CardTitle>
                     <CardDescription className="mt-1">
                       Choose plans per trademark and switch between monthly and
-                      annual billing.
+                      annual billing
                     </CardDescription>
                   </div>
                   <BillingToggle
@@ -596,7 +586,7 @@ export function MonitoringFlow({
                   <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-amber-950">
                     <div className="flex items-center gap-2 font-medium">
                       <BadgeAlert className="size-4" />
-                      Please select at least one trademark to continue.
+                      Please select at least one trademark to continue
                     </div>
                   </div>
                 ) : null}
@@ -604,7 +594,7 @@ export function MonitoringFlow({
                 {quoteLoading ? (
                   <div className="text-muted-foreground mt-4 flex items-center gap-2 text-sm">
                     <Loader2 className="size-4 animate-spin" />
-                    Refreshing quote based on current selections...
+                    Refreshing quote based on current selections
                   </div>
                 ) : null}
               </CardContent>
@@ -614,7 +604,7 @@ export function MonitoringFlow({
               <BookingPrompt
                 bookingUrl={clientData.bookingUrl}
                 title="Some MAD selections still need a short review call"
-                description="You can continue to payment for the quotable items now. The remaining MAD items will stay listed for follow-up on the confirmation page."
+                description="You can continue to payment for the quotable items now, the remaining MAD items will stay listed for follow-up on the confirmation page"
               />
             ) : null}
           </div>
