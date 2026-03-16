@@ -132,14 +132,10 @@ function StatusBanner({ checkoutState }: { checkoutState: string | null }) {
 
 function formatTrademarkType(type: MonitoringTrademark['type']) {
   if (type === 'word_mark') {
-    return 'Word text';
+    return 'Word';
   }
 
-  if (type === 'figurative') {
-    return 'Image';
-  }
-
-  return 'Image + text';
+  return 'Image';
 }
 
 function formatTrademarkStatus(status: MonitoringTrademark['status']) {
@@ -463,7 +459,7 @@ export function MonitoringFlow({
               </CardTitle>
               <CardDescription className="mt-3 max-w-2xl text-sm">
                 Protect your trademarks with ongoing monitoring, review, and
-                defence support.
+                defense support
               </CardDescription>
             </div>
             {flowMode === 'configuration' ? (
@@ -479,15 +475,15 @@ export function MonitoringFlow({
         </CardHeader>
         <CardContent className="grid gap-4 pt-4">
           <div className="grid gap-3">
-            <div className="text-sm font-medium tracking-tight">
-              The following trademarks require a monitoring subscription.
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-950">
+              The following trademarks require a monitoring subscription
             </div>
             <div className="overflow-hidden rounded-xl border">
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="pl-4">Trademark Number</TableHead>
-                    <TableHead>Word Text</TableHead>
+                    <TableHead>Word</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="pr-4">Expire Date</TableHead>

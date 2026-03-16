@@ -59,14 +59,10 @@ function typeIcon(type: MonitoringTrademark['type']) {
 
 function typeLabel(type: MonitoringTrademark['type']) {
   if (type === 'word_mark') {
-    return 'Word mark';
+    return 'Word';
   }
 
-  if (type === 'figurative') {
-    return 'Figurative mark';
-  }
-
-  return 'Combined mark';
+  return 'Image';
 }
 
 function statusLabel(status: MonitoringTrademark['status']) {
