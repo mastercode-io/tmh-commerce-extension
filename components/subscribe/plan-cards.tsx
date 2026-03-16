@@ -9,7 +9,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -26,8 +25,11 @@ const plans = [
     label: 'MAD',
     fullName: 'Monitoring, Advisory & Defence',
     badge: 'Most comprehensive',
-    pricePrimary: 'From £49/month',
-    priceSecondary: 'depending on risk profile',
+    monthlyPrimary: 'From £49/month',
+    monthlySecondary: 'depending on risk profile',
+    annualPrimary: 'From £490/year',
+    annualSecondary: 'depending on risk profile',
+    annualSaving: 'Save £98-£298/year',
     minimumTerm: '6 month minimum term',
     hourlyRate: '£99/hour discounted support',
     cta: 'Get a Quote',
@@ -38,8 +40,11 @@ const plans = [
     label: 'Monitoring Essentials',
     fullName: 'Monitoring Essentials',
     badge: 'Recommended',
-    pricePrimary: '£24/month per trademark',
-    priceSecondary: '+£12/month each additional TM',
+    monthlyPrimary: '£24/month per trademark',
+    monthlySecondary: '+£12/month each additional TM',
+    annualPrimary: '£240/year per trademark',
+    annualSecondary: '+£120/year each additional TM',
+    annualSaving: 'Save £48/year on first trademark',
     minimumTerm: 'Cancel any time',
     minimumTermSecondary: '(one month notice period)',
     hourlyRate: '£119/hour discounted support',
@@ -51,8 +56,11 @@ const plans = [
     label: 'Annual Review',
     fullName: 'Annual Review & Representation',
     badge: 'Most cost effective',
-    pricePrimary: '£14/month per trademark',
-    priceSecondary: '+£7/month each additional TM',
+    monthlyPrimary: '£14/month per trademark',
+    monthlySecondary: '+£7/month each additional TM',
+    annualPrimary: '£140/year per trademark',
+    annualSecondary: '+£70/year each additional TM',
+    annualSaving: 'Save £28/year per trademark',
     minimumTerm: 'Cancel any time',
     minimumTermSecondary: '(one month notice period)',
     hourlyRate: '£149/hour discounted support',
@@ -64,8 +72,11 @@ const plans = [
   label: string;
   fullName: string;
   badge: string;
-  pricePrimary: string;
-  priceSecondary: string;
+  monthlyPrimary: string;
+  monthlySecondary: string;
+  annualPrimary: string;
+  annualSecondary: string;
+  annualSaving: string;
   minimumTerm: string;
   minimumTermSecondary?: string;
   hourlyRate: string;
@@ -74,9 +85,11 @@ const plans = [
 }>;
 
 export function PlanCards({
+  billingFrequency,
   onSelectPlan,
   busyPlan,
 }: {
+  billingFrequency: 'monthly' | 'annual';
   onSelectPlan: (plan: MonitoringPlan) => void;
   busyPlan?: MonitoringPlan | null;
 }) {
@@ -86,6 +99,14 @@ export function PlanCards({
         const Icon = plan.icon;
         const recommended = plan.plan === 'monitoring_essentials';
         const loading = busyPlan === plan.plan;
+        const primary =
+          billingFrequency === 'annual'
+            ? plan.annualPrimary
+            : plan.monthlyPrimary;
+        const secondary =
+          billingFrequency === 'annual'
+            ? plan.annualSecondary
+            : plan.monthlySecondary;
 
         return (
           <Card
@@ -118,12 +139,17 @@ export function PlanCards({
             </CardHeader>
             <CardContent className="grid gap-4 pt-4">
               <div className="grid gap-1">
-                <div className="text-[1.75rem] leading-tight font-semibold tracking-tight">
-                  {plan.pricePrimary}
+                <div className="text-[1.55rem] leading-tight font-semibold tracking-tight">
+                  {primary}
                 </div>
-                <div className="text-muted-foreground text-base font-medium">
-                  {plan.priceSecondary}
+                <div className="text-muted-foreground text-sm font-medium">
+                  {secondary}
                 </div>
+                {billingFrequency === 'annual' ? (
+                  <div className="text-primary text-sm font-medium">
+                    {plan.annualSaving}
+                  </div>
+                ) : null}
               </div>
               <div className="text-muted-foreground grid gap-2 text-sm">
                 <div>{plan.minimumTerm}</div>
@@ -135,7 +161,7 @@ export function PlanCards({
                 <div>{plan.hourlyRate}</div>
               </div>
             </CardContent>
-            <CardFooter className="mt-auto justify-center border-0 bg-transparent p-4 pt-0">
+            <div className="mt-auto flex justify-center px-4 pb-4">
               <Button
                 className="min-w-[9.75rem]"
                 onClick={() => onSelectPlan(plan.plan)}
@@ -144,7 +170,7 @@ export function PlanCards({
                 {plan.cta}
                 <ArrowRight />
               </Button>
-            </CardFooter>
+            </div>
           </Card>
         );
       })}

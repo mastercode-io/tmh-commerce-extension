@@ -19,10 +19,10 @@ const rows = [
   ['Social media alerts & reports', 'Ongoing', 'Quarterly', 'Annually'],
   ['Risk-scored threat reporting', 'Monthly', 'Quarterly', 'Annually'],
   ['Temmy portal access', 'check', 'check', 'check'],
-  ['Defence hours', 'Up to 10 hrs / 12 months', 'no', 'no'],
+  ['Defence hours', 'Up to 10 hours / 12 months', 'no', 'no'],
   [
     'Proactive takedown & opposition hours',
-    'Up to 2 hrs / 12 months',
+    'Up to 2 hours / 12 months',
     'no',
     'no',
   ],

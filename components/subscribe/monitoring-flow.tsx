@@ -422,8 +422,7 @@ export function MonitoringFlow({
               </CardTitle>
               <CardDescription className="mt-3 max-w-2xl text-sm">
                 Protect your trademarks with ongoing monitoring, review, and
-                defence support. This is a clickable MVP using mock CRM, Zoho
-                Bookings, and GoCardless data.
+                defence support.
               </CardDescription>
             </div>
             {flowMode === 'configuration' ? (
@@ -462,7 +461,17 @@ export function MonitoringFlow({
 
       {flowMode === 'plan-selection' ? (
         <div className="grid gap-6">
-          <PlanCards onSelectPlan={handlePlanSelect} busyPlan={busyPlan} />
+          <div className="flex justify-end">
+            <BillingToggle
+              value={billingFrequency}
+              onChange={setBillingFrequency}
+            />
+          </div>
+          <PlanCards
+            billingFrequency={billingFrequency}
+            onSelectPlan={handlePlanSelect}
+            busyPlan={busyPlan}
+          />
           {bookingPromptVisible ? (
             <BookingPrompt bookingUrl={clientData.bookingUrl} />
           ) : null}
@@ -569,9 +578,6 @@ export function MonitoringFlow({
           <AlertTriangle className="size-4" />
           Demo tokens: demo-monitoring-001, demo-monitoring-expired,
           demo-monitoring-empty, demo-monitoring-error
-        </div>
-        <div>
-          Mock external pages: Zoho Bookings and GoCardless hosted payment.
         </div>
       </div>
     </div>
