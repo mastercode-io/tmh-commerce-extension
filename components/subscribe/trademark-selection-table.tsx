@@ -77,16 +77,6 @@ function statusLabel(status: MonitoringTrademark['status']) {
   return 'Pending';
 }
 
-function initials(value: string) {
-  return value
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase();
-}
-
 function priceLabel(
   lineItem: MonitoringQuoteLineItem | undefined,
   billingFrequency: 'monthly' | 'annual',
@@ -190,27 +180,20 @@ export function TrademarkSelectionTable({
                       onChange={(event) =>
                         onToggleTrademark(trademark.id, event.target.checked)
                       }
-                      className="border-input size-4 rounded"
+                      className="border-input text-primary accent-primary size-4 rounded"
                     />
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="bg-muted text-foreground grid size-11 place-items-center rounded-xl border text-xs font-semibold">
-                        {initials(trademark.brandName ?? trademark.name)}
-                      </div>
-                      <div>
-                        <div className="font-medium">{trademark.name}</div>
-                        <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-xs">
-                          <Badge variant="outline">
-                            {trademark.jurisdiction}
-                          </Badge>
-                          <Badge variant="secondary">
-                            {statusLabel(trademark.status)}
-                          </Badge>
-                          {trademark.brandName ? (
-                            <span>Brand: {trademark.brandName}</span>
-                          ) : null}
-                        </div>
+                    <div>
+                      <div className="font-medium">{trademark.name}</div>
+                      <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-xs">
+                        <Badge variant="outline">{trademark.jurisdiction}</Badge>
+                        <Badge variant="secondary">
+                          {statusLabel(trademark.status)}
+                        </Badge>
+                        {trademark.brandName ? (
+                          <span>Brand: {trademark.brandName}</span>
+                        ) : null}
                       </div>
                     </div>
                   </TableCell>
@@ -300,7 +283,7 @@ export function TrademarkSelectionTable({
                     onChange={(event) =>
                       onToggleTrademark(trademark.id, event.target.checked)
                     }
-                    className="border-input mt-1 size-4 rounded"
+                    className="border-input text-primary accent-primary mt-1 size-4 rounded"
                   />
                   <div>
                     <div className="font-medium">{trademark.name}</div>

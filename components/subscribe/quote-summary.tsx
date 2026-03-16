@@ -9,7 +9,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -221,24 +220,19 @@ export function QuoteSummary({
           ) : null}
         </div>
       </CardContent>
-      <CardFooter className="flex-col items-stretch gap-3">
+      <div className="flex justify-end px-6 pb-6">
         <Button
           onClick={onCheckout}
           disabled={
             checkoutPending || quoteLoading || payableItems.length === 0
           }
-          className="w-full"
+          className="min-w-[220px]"
         >
           {checkoutPending ? <Loader2 className="animate-spin" /> : null}
           {ctaLabel}
           <ArrowRight />
         </Button>
-        <div className="text-muted-foreground text-center text-xs">
-          {payableItems.length === 0
-            ? 'Select at least one payable trademark to continue to payment.'
-            : 'The payment step redirects to a mock hosted GoCardless page in this MVP.'}
-        </div>
-      </CardFooter>
+      </div>
     </Card>
   );
 }

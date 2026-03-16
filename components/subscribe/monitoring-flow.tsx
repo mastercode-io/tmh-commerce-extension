@@ -473,43 +473,49 @@ export function MonitoringFlow({
             ) : null}
           </div>
         </CardHeader>
-        <CardContent className="grid gap-4 pt-4">
-          <div className="grid gap-3">
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-950">
-              The following trademarks require a monitoring subscription
-            </div>
-            <div className="overflow-hidden rounded-xl border">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="pl-4">Trademark Number</TableHead>
-                    <TableHead>Word</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="pr-4">Expire Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {clientData.trademarks.map((trademark) => (
-                    <TableRow key={trademark.id}>
-                      <TableCell className="pl-4 font-medium whitespace-nowrap">
-                        {trademark.registrationNumber ?? '—'}
-                      </TableCell>
-                      <TableCell className="min-w-[180px]">
-                        {trademark.name}
-                      </TableCell>
-                      <TableCell>{formatTrademarkType(trademark.type)}</TableCell>
-                      <TableCell>{formatTrademarkStatus(trademark.status)}</TableCell>
-                      <TableCell className="pr-4 whitespace-nowrap">
-                        {formatDate(trademark.expiryDate)}
-                      </TableCell>
+        {flowMode === 'plan-selection' ? (
+          <CardContent className="grid gap-4 pt-4">
+            <div className="grid gap-3">
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-950">
+                The following trademarks require a monitoring subscription
+              </div>
+              <div className="overflow-hidden rounded-xl border">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="pl-4">Trademark Number</TableHead>
+                      <TableHead>Word</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="pr-4">Expire Date</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {clientData.trademarks.map((trademark) => (
+                      <TableRow key={trademark.id}>
+                        <TableCell className="pl-4 font-medium whitespace-nowrap">
+                          {trademark.registrationNumber ?? '—'}
+                        </TableCell>
+                        <TableCell className="min-w-[180px]">
+                          {trademark.name}
+                        </TableCell>
+                        <TableCell>
+                          {formatTrademarkType(trademark.type)}
+                        </TableCell>
+                        <TableCell>
+                          {formatTrademarkStatus(trademark.status)}
+                        </TableCell>
+                        <TableCell className="pr-4 whitespace-nowrap">
+                          {formatDate(trademark.expiryDate)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
-          </div>
-        </CardContent>
+          </CardContent>
+        ) : null}
       </Card>
 
       {flowMode === 'plan-selection' ? (
