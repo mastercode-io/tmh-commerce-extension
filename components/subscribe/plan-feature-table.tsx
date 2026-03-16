@@ -1,6 +1,13 @@
 import { Check, Minus } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+
+type MonitoringPlan =
+  | 'monitoring_defence'
+  | 'monitoring_essentials'
+  | 'annual_review';
 
 const rows = [
   ['Trademark monitoring', 'check', 'check', 'check'],
@@ -23,8 +30,14 @@ const rows = [
   ['Trademark renewal reminders', 'check', 'check', 'check'],
   ['Auto renewal option', 'check', 'no', 'no'],
   ['Minimum term', '6 months', '1 month notice', '1 month notice'],
-  ['Discounted hourly rate', 'GBP99/hr', 'GBP119/hr', 'GBP149/hr'],
+  ['Discounted hourly rate', '£99/hr', '£119/hr', '£149/hr'],
 ] as const;
+
+const planActions = [
+  { plan: 'monitoring_defence', label: 'Get a Quote' },
+  { plan: 'monitoring_essentials', label: 'Select Plan' },
+  { plan: 'annual_review', label: 'Select Plan' },
+] as const satisfies Array<{ plan: MonitoringPlan; label: string }>;
 
 function FeatureCell({ value }: { value: string }) {
   if (value === 'check') {
@@ -48,7 +61,13 @@ function FeatureCell({ value }: { value: string }) {
   return <span>{value}</span>;
 }
 
-export function PlanFeatureTable() {
+export function PlanFeatureTable({
+  onSelectPlan,
+  busyPlan,
+}: {
+  onSelectPlan: (plan: MonitoringPlan) => void;
+  busyPlan?: MonitoringPlan | null;
+}) {
   return (
     <Card>
       <CardHeader className="border-b">
@@ -61,7 +80,9 @@ export function PlanFeatureTable() {
               <tr>
                 <th className="px-2 py-3 font-medium">Feature</th>
                 <th className="px-2 py-3 font-medium">MAD</th>
-                <th className="px-2 py-3 font-medium">Essentials</th>
+                <th className="bg-primary/5 border-primary/20 border-x px-2 py-3 font-medium">
+                  Essentials
+                </th>
                 <th className="px-2 py-3 font-medium">Annual Review</th>
               </tr>
             </thead>
@@ -72,7 +93,7 @@ export function PlanFeatureTable() {
                   <td className="px-2 py-3">
                     <FeatureCell value={mad} />
                   </td>
-                  <td className="px-2 py-3">
+                  <td className="bg-primary/5 border-primary/20 border-x px-2 py-3">
                     <FeatureCell value={essentials} />
                   </td>
                   <td className="px-2 py-3">
@@ -81,6 +102,42 @@ export function PlanFeatureTable() {
                 </tr>
               ))}
             </tbody>
+            <tfoot>
+              <tr>
+                <td className="pt-6" />
+                {planActions.map((action) => {
+                  const recommended = action.plan === 'monitoring_essentials';
+                  const loading = busyPlan === action.plan;
+
+                  return (
+                    <td
+                      key={action.plan}
+                      className={cn(
+                        'px-2 pt-6 text-center',
+                        recommended &&
+                          'bg-primary/5 border-primary/20 border-x border-b',
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          'bg-background mx-auto flex min-h-[92px] max-w-[180px] flex-col items-center justify-center rounded-2xl border px-4 py-4',
+                          recommended &&
+                            'border-primary/40 ring-primary/15 ring-2',
+                        )}
+                      >
+                        <Button
+                          className="min-w-[9.75rem]"
+                          onClick={() => onSelectPlan(action.plan)}
+                          disabled={loading}
+                        >
+                          {action.label}
+                        </Button>
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+            </tfoot>
           </table>
         </div>
       </CardContent>

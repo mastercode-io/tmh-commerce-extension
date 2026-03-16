@@ -26,9 +26,9 @@ const plans = [
     label: 'MAD',
     fullName: 'Monitoring, Advisory & Defence',
     badge: 'Most comprehensive',
-    price: 'From GBP49-GBP149/mo depending on risk profile',
+    price: 'From £49-£149/mo depending on risk profile',
     minimumTerm: '6 month minimum term',
-    hourlyRate: 'GBP99/hr discounted support',
+    hourlyRate: '£99/hr discounted support',
     cta: 'Get a Quote',
     icon: ShieldPlus,
   },
@@ -37,9 +37,9 @@ const plans = [
     label: 'Monitoring Essentials',
     fullName: 'Monitoring Essentials',
     badge: 'Recommended',
-    price: 'GBP24/mo for 1 trademark, +GBP12/mo each additional',
+    price: '£24/mo for 1 trademark, +£12/mo each additional',
     minimumTerm: '1 month notice',
-    hourlyRate: 'GBP119/hr discounted support',
+    hourlyRate: '£119/hr discounted support',
     cta: 'Select Plan',
     icon: Sparkles,
   },
@@ -48,9 +48,9 @@ const plans = [
     label: 'Annual Review',
     fullName: 'Annual Review & Representation',
     badge: 'Most cost effective',
-    price: 'GBP14/mo per trademark, +GBP7/mo each additional',
+    price: '£14/mo per trademark, +£7/mo each additional',
     minimumTerm: '1 month notice',
-    hourlyRate: 'GBP149/hr discounted support',
+    hourlyRate: '£149/hr discounted support',
     cta: 'Select Plan',
     icon: Wallet,
   },
@@ -88,7 +88,7 @@ export function PlanCards({
               recommended && 'ring-primary/20 border-primary/20 ring-2',
             )}
           >
-            <CardHeader className="border-b">
+            <CardHeader>
               <div className="flex items-start justify-between gap-3">
                 <div className="grid gap-2">
                   <Badge variant={recommended ? 'default' : 'secondary'}>
@@ -118,9 +118,9 @@ export function PlanCards({
                 <div>{plan.hourlyRate}</div>
               </div>
             </CardContent>
-            <CardFooter className="mt-auto bg-transparent p-4 pt-0">
+            <CardFooter className="mt-auto justify-center bg-transparent p-4 pt-0">
               <Button
-                className="w-full"
+                className="min-w-[9.75rem]"
                 onClick={() => onSelectPlan(plan.plan)}
                 disabled={loading}
               >

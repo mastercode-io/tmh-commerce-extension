@@ -413,9 +413,10 @@ export function MonitoringFlow({
         <CardHeader className="border-b">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="max-w-3xl">
-              <Badge variant="secondary" className="mb-3">
-                Monitoring subscription
-              </Badge>
+              <div className="text-muted-foreground mb-3 text-sm font-semibold tracking-tight">
+                Subscriptions <span className="mx-1">→</span>{' '}
+                <span className="text-foreground">Monitoring</span>
+              </div>
               <CardTitle className="text-3xl tracking-tight">
                 {greeting}
               </CardTitle>
@@ -465,7 +466,10 @@ export function MonitoringFlow({
           {bookingPromptVisible ? (
             <BookingPrompt bookingUrl={clientData.bookingUrl} />
           ) : null}
-          <PlanFeatureTable />
+          <PlanFeatureTable
+            onSelectPlan={handlePlanSelect}
+            busyPlan={busyPlan}
+          />
         </div>
       ) : null}
 
