@@ -30,7 +30,7 @@ const rows = [
   ['Trademark renewal reminders', 'check', 'check', 'check'],
   ['Auto renewal option', 'check', 'no', 'no'],
   ['Minimum term', '6 months', '1 month notice', '1 month notice'],
-  ['Discounted hourly rate', '£99/hr', '£119/hr', '£149/hr'],
+  ['Discounted hourly rate', '£99/hour', '£119/hour', '£149/hour'],
 ] as const;
 
 const planActions = [
@@ -106,23 +106,16 @@ export function PlanFeatureTable({
               <tr>
                 <td className="pt-6" />
                 {planActions.map((action) => {
-                  const recommended = action.plan === 'monitoring_essentials';
                   const loading = busyPlan === action.plan;
 
                   return (
                     <td
                       key={action.plan}
-                      className={cn(
-                        'px-2 pt-6 text-center',
-                        recommended &&
-                          'bg-primary/5 border-primary/20 border-x border-b',
-                      )}
+                      className="bg-background px-2 pt-6 text-center"
                     >
                       <div
                         className={cn(
-                          'bg-background mx-auto flex min-h-[92px] max-w-[180px] flex-col items-center justify-center rounded-2xl border px-4 py-4',
-                          recommended &&
-                            'border-primary/40 ring-primary/15 ring-2',
+                          'mx-auto flex min-h-[92px] max-w-[180px] flex-col items-center justify-center bg-white px-4 py-4',
                         )}
                       >
                         <Button

@@ -26,9 +26,10 @@ const plans = [
     label: 'MAD',
     fullName: 'Monitoring, Advisory & Defence',
     badge: 'Most comprehensive',
-    price: 'From £49-£149/mo depending on risk profile',
+    pricePrimary: 'From £49/month',
+    priceSecondary: 'depending on risk profile',
     minimumTerm: '6 month minimum term',
-    hourlyRate: '£99/hr discounted support',
+    hourlyRate: '£99/hour discounted support',
     cta: 'Get a Quote',
     icon: ShieldPlus,
   },
@@ -37,9 +38,11 @@ const plans = [
     label: 'Monitoring Essentials',
     fullName: 'Monitoring Essentials',
     badge: 'Recommended',
-    price: '£24/mo for 1 trademark, +£12/mo each additional',
-    minimumTerm: '1 month notice',
-    hourlyRate: '£119/hr discounted support',
+    pricePrimary: '£24/month for 1 trademark,',
+    priceSecondary: '+£12/month each additional TM',
+    minimumTerm: 'Cancel any time',
+    minimumTermSecondary: '(one month notice period)',
+    hourlyRate: '£119/hour discounted support',
     cta: 'Select Plan',
     icon: Sparkles,
   },
@@ -48,9 +51,11 @@ const plans = [
     label: 'Annual Review',
     fullName: 'Annual Review & Representation',
     badge: 'Most cost effective',
-    price: '£14/mo per trademark, +£7/mo each additional',
-    minimumTerm: '1 month notice',
-    hourlyRate: '£149/hr discounted support',
+    pricePrimary: '£14/month per trademark,',
+    priceSecondary: '+£7/month each additional TM',
+    minimumTerm: 'Cancel any time',
+    minimumTermSecondary: '(one month notice period)',
+    hourlyRate: '£149/hour discounted support',
     cta: 'Select Plan',
     icon: Wallet,
   },
@@ -59,8 +64,10 @@ const plans = [
   label: string;
   fullName: string;
   badge: string;
-  price: string;
+  pricePrimary: string;
+  priceSecondary: string;
   minimumTerm: string;
+  minimumTermSecondary?: string;
   hourlyRate: string;
   cta: string;
   icon: ComponentType<{ className?: string }>;
@@ -110,11 +117,21 @@ export function PlanCards({
               </div>
             </CardHeader>
             <CardContent className="grid gap-4 pt-4">
-              <div className="text-2xl font-semibold tracking-tight">
-                {plan.price}
+              <div className="grid gap-1">
+                <div className="text-[2rem] leading-tight font-semibold tracking-tight">
+                  {plan.pricePrimary}
+                </div>
+                <div className="text-muted-foreground text-base font-medium">
+                  {plan.priceSecondary}
+                </div>
               </div>
               <div className="text-muted-foreground grid gap-2 text-sm">
                 <div>{plan.minimumTerm}</div>
+                {plan.minimumTermSecondary ? (
+                  <div className="-mt-1 text-xs">
+                    {plan.minimumTermSecondary}
+                  </div>
+                ) : null}
                 <div>{plan.hourlyRate}</div>
               </div>
             </CardContent>
