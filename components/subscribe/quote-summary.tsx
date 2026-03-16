@@ -132,27 +132,6 @@ export function QuoteSummary({
         </div>
 
         <div className="grid gap-3">
-          <div className="rounded-xl border p-4">
-            <div className="text-sm font-medium">
-              Included in today&apos;s payment
-            </div>
-            <ul className="text-muted-foreground mt-2 grid gap-2 text-sm">
-              {payableItems.length ? (
-                payableItems.map((item) => (
-                  <li
-                    key={item.trademarkId}
-                    className="flex items-center justify-between gap-3"
-                  >
-                    <span>{item.trademarkName}</span>
-                    <span>{planLabel(item.plan)}</span>
-                  </li>
-                ))
-              ) : (
-                <li>No items are currently payable</li>
-              )}
-            </ul>
-          </div>
-
           {followUpItems.length ? (
             <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4">
               <div className="flex items-start gap-2 text-amber-950">
