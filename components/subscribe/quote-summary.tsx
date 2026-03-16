@@ -117,16 +117,6 @@ export function QuoteSummary({
               </span>
             </div>
           ) : null}
-          {billingFrequency === 'annual' && quote ? (
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-muted-foreground text-sm">
-                Annual saving
-              </span>
-              <span className="font-medium text-green-700">
-                -{formatMoney(quote.summary.annualSaving)}
-              </span>
-            </div>
-          ) : null}
           <div className="flex items-center justify-between gap-3 border-t pt-3">
             <span className="text-sm font-medium">
               Total {billingFrequency === 'annual' ? 'per year' : 'per month'}
@@ -140,7 +130,7 @@ export function QuoteSummary({
           </div>
           {billingFrequency === 'annual' && quote ? (
             <div className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800">
-              Save {formatMoney(quote.summary.annualSaving)} per year compared
+              Saved {formatMoney(quote.summary.annualSaving)} per year compared
               with the monthly subscription
             </div>
           ) : null}
