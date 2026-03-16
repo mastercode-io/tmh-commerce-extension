@@ -27,6 +27,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import type {
   BillingFrequency,
   MonitoringClientData,
@@ -120,6 +128,42 @@ function StatusBanner({ checkoutState }: { checkoutState: string | null }) {
       {message}
     </div>
   );
+}
+
+function formatTrademarkType(type: MonitoringTrademark['type']) {
+  if (type === 'word_mark') {
+    return 'Word text';
+  }
+
+  if (type === 'figurative') {
+    return 'Image';
+  }
+
+  return 'Image + text';
+}
+
+function formatTrademarkStatus(status: MonitoringTrademark['status']) {
+  if (status === 'registered') {
+    return 'Registered';
+  }
+
+  if (status === 'expired') {
+    return 'Expired';
+  }
+
+  return 'Pending';
+}
+
+function formatDate(value?: string) {
+  if (!value) {
+    return '—';
+  }
+
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(value));
 }
 
 export function MonitoringFlow({
@@ -343,9 +387,6 @@ export function MonitoringFlow({
   const greeting = clientData
     ? `Hi ${clientData.clientName}${clientData.companyName ? ` - ${clientData.companyName}` : ''}`
     : null;
-  const visibleNames = clientData?.trademarks.slice(0, 2) ?? [];
-  const remainingCount =
-    (clientData?.trademarks.length ?? 0) - visibleNames.length;
 
   if (loadState === 'loading') {
     return (
@@ -437,24 +478,40 @@ export function MonitoringFlow({
           </div>
         </CardHeader>
         <CardContent className="grid gap-4 pt-4">
-          <div className="text-muted-foreground text-sm">
-            You have{' '}
-            <span className="text-foreground font-medium">
-              {clientData.trademarks.length}
-            </span>{' '}
-            trademark{clientData.trademarks.length === 1 ? '' : 's'} that can be
-            monitored:
-            <span className="text-foreground ml-1">
-              {visibleNames.map((item) => item.name).join(', ')}
-              {remainingCount > 0 ? ` and ${remainingCount} more` : ''}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {clientData.trademarks.map((trademark) => (
-              <Badge key={trademark.id} variant="outline">
-                {trademark.name}
-              </Badge>
-            ))}
+          <div className="grid gap-3">
+            <div className="text-sm font-medium tracking-tight">
+              The following trademarks require a monitoring subscription.
+            </div>
+            <div className="overflow-hidden rounded-xl border">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="pl-4">Trademark Number</TableHead>
+                    <TableHead>Word Text</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="pr-4">Expire Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {clientData.trademarks.map((trademark) => (
+                    <TableRow key={trademark.id}>
+                      <TableCell className="pl-4 font-medium whitespace-nowrap">
+                        {trademark.registrationNumber ?? '—'}
+                      </TableCell>
+                      <TableCell className="min-w-[180px]">
+                        {trademark.name}
+                      </TableCell>
+                      <TableCell>{formatTrademarkType(trademark.type)}</TableCell>
+                      <TableCell>{formatTrademarkStatus(trademark.status)}</TableCell>
+                      <TableCell className="pr-4 whitespace-nowrap">
+                        {formatDate(trademark.expiryDate)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -69,6 +69,18 @@ function typeLabel(type: MonitoringTrademark['type']) {
   return 'Combined mark';
 }
 
+function statusLabel(status: MonitoringTrademark['status']) {
+  if (status === 'registered') {
+    return 'Registered';
+  }
+
+  if (status === 'expired') {
+    return 'Expired';
+  }
+
+  return 'Pending';
+}
+
 function initials(value: string) {
   return value
     .split(' ')
@@ -197,9 +209,7 @@ export function TrademarkSelectionTable({
                             {trademark.jurisdiction}
                           </Badge>
                           <Badge variant="secondary">
-                            {trademark.status === 'registered'
-                              ? 'Registered'
-                              : 'Pending'}
+                            {statusLabel(trademark.status)}
                           </Badge>
                           {trademark.brandName ? (
                             <span>Brand: {trademark.brandName}</span>
@@ -301,9 +311,7 @@ export function TrademarkSelectionTable({
                     <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-xs">
                       <Badge variant="outline">{trademark.jurisdiction}</Badge>
                       <Badge variant="secondary">
-                        {trademark.status === 'registered'
-                          ? 'Registered'
-                          : 'Pending'}
+                        {statusLabel(trademark.status)}
                       </Badge>
                     </div>
                   </div>

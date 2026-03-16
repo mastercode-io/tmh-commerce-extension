@@ -7,7 +7,7 @@ export type BillingFrequency = 'monthly' | 'annual';
 
 export type MonitoringRiskProfile = 'low' | 'medium' | 'high';
 
-export type MonitoringTrademarkStatus = 'pending' | 'registered';
+export type MonitoringTrademarkStatus = 'pending' | 'registered' | 'expired';
 
 export type MonitoringTrademarkType = 'word_mark' | 'figurative' | 'combined';
 
@@ -28,6 +28,7 @@ export interface MonitoringTrademark {
   jurisdiction: string;
   applicationDate: string;
   registrationDate?: string;
+  expiryDate?: string;
   registrationNumber?: string;
   status: MonitoringTrademarkStatus;
   riskProfile?: MonitoringRiskProfile;
