@@ -217,21 +217,20 @@ function MonitoringTrademarkOverview({
               </Badge>
             </div>
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Badge variant="outline">{formatTrademarkType(trademark.type)}</Badge>
-              <Badge variant="outline">{trademark.jurisdiction}</Badge>
-            </div>
-
-            <dl className="mt-3 grid grid-cols-1 gap-y-2 text-sm">
-              <div>
-                <dt className="text-muted-foreground text-xs uppercase">
-                  Expires
-                </dt>
-                <dd className="mt-1 font-medium">
-                  {formatDate(trademark.expiryDate)}
-                </dd>
+            <div className="mt-3 flex items-end justify-between gap-3">
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline">{formatTrademarkType(trademark.type)}</Badge>
+                <Badge variant="outline">{trademark.jurisdiction}</Badge>
               </div>
-            </dl>
+              <div className="text-right text-sm">
+                <div className="text-muted-foreground text-xs uppercase">
+                  Expires
+                </div>
+                <div className="mt-1 font-medium whitespace-nowrap">
+                  {formatDate(trademark.expiryDate)}
+                </div>
+              </div>
+            </div>
           </div>
         ))}
       </div>
@@ -560,7 +559,7 @@ export function MonitoringFlow({
 
       {flowMode === 'plan-selection' ? (
         <div className="grid gap-6">
-          <div className="flex justify-end">
+          <div className="hidden justify-end md:flex">
             <BillingToggle
               value={billingFrequency}
               onChange={setBillingFrequency}
@@ -569,6 +568,7 @@ export function MonitoringFlow({
           <div id="monitoring-plans" className="scroll-mt-24">
             <PlanCards
               billingFrequency={billingFrequency}
+              onBillingFrequencyChange={setBillingFrequency}
               onSelectPlan={handlePlanSelect}
               busyPlan={busyPlan}
             />
