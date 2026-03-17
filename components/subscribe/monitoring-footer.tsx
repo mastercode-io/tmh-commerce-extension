@@ -15,7 +15,7 @@ export function MonitoringFooter() {
             priority
           />
           <p className="text-xs text-slate-400">
-            © 2025, The Trademark Helpline. All Rights Reserved.
+            © 2026, The Trademark Helpline. All Rights Reserved.
           </p>
         </div>
 

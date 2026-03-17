@@ -161,39 +161,6 @@ function formatDate(value?: string) {
   }).format(new Date(value));
 }
 
-function MonitoringSectionLinks() {
-  return (
-    <nav
-      aria-label="Monitoring page sections"
-      className="grid gap-2 md:hidden"
-    >
-      <div className="text-muted-foreground text-xs font-semibold tracking-[0.12em] uppercase">
-        Jump to
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <a
-          href="#monitoring-trademarks"
-          className="bg-muted text-foreground rounded-full border px-3 py-2 text-sm font-medium"
-        >
-          Trademarks
-        </a>
-        <a
-          href="#monitoring-plans"
-          className="bg-muted text-foreground rounded-full border px-3 py-2 text-sm font-medium"
-        >
-          Plans
-        </a>
-        <a
-          href="#monitoring-compare"
-          className="bg-muted text-foreground rounded-full border px-3 py-2 text-sm font-medium"
-        >
-          Compare
-        </a>
-      </div>
-    </nav>
-  );
-}
-
 function MonitoringTrademarkOverview({
   trademarks,
 }: {
@@ -234,11 +201,13 @@ function MonitoringTrademarkOverview({
         {trademarks.map((trademark) => (
           <div
             key={trademark.id}
-            className="bg-background rounded-2xl border px-4 py-4"
+            className="bg-background rounded-2xl border px-3 py-3"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="font-semibold leading-snug">{trademark.name}</div>
+                <div className="text-sm font-semibold leading-snug">
+                  {trademark.name}
+                </div>
                 <div className="text-muted-foreground mt-1 text-sm">
                   {trademark.registrationNumber ?? 'Registration number pending'}
                 </div>
@@ -253,21 +222,13 @@ function MonitoringTrademarkOverview({
               <Badge variant="outline">{trademark.jurisdiction}</Badge>
             </div>
 
-            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+            <dl className="mt-3 grid grid-cols-1 gap-y-2 text-sm">
               <div>
                 <dt className="text-muted-foreground text-xs uppercase">
                   Expires
                 </dt>
                 <dd className="mt-1 font-medium">
                   {formatDate(trademark.expiryDate)}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground text-xs uppercase">
-                  Brand
-                </dt>
-                <dd className="mt-1 font-medium">
-                  {trademark.brandName ?? '—'}
                 </dd>
               </div>
             </dl>
@@ -605,7 +566,6 @@ export function MonitoringFlow({
               onChange={setBillingFrequency}
             />
           </div>
-          <MonitoringSectionLinks />
           <div id="monitoring-plans" className="scroll-mt-24">
             <PlanCards
               billingFrequency={billingFrequency}

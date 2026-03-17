@@ -267,13 +267,15 @@ function MobilePlanDetailCard({
           </div>
         </div>
         {action ? (
-          <Button
-            className="w-full sm:w-auto"
-            onClick={() => onSelectPlan(plan.plan)}
-            disabled={loading}
-          >
-            {action.label}
-          </Button>
+          <div className="flex w-full justify-center sm:w-auto">
+            <Button
+              className="min-w-[9.75rem]"
+              onClick={() => onSelectPlan(plan.plan)}
+              disabled={loading}
+            >
+              {action.label}
+            </Button>
+          </div>
         ) : null}
       </div>
 
@@ -299,6 +301,18 @@ function MobilePlanDetailCard({
           </div>
         ))}
       </div>
+
+      {action ? (
+        <div className="mt-5 flex justify-center">
+          <Button
+            className="min-w-[9.75rem]"
+            onClick={() => onSelectPlan(plan.plan)}
+            disabled={loading}
+          >
+            {action.label}
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }
