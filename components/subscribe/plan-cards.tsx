@@ -23,8 +23,8 @@ type MonitoringPlan =
 const plans = [
   {
     plan: 'monitoring_defence',
-    label: 'MAD',
-    fullName: 'Monitoring, Advisory & Defence',
+    label: 'Monitoring & Defence',
+    fullName: 'Monthly Monitoring + Defence Plan + Annual Audit + Representation',
     badge: 'Most comprehensive',
     monthlyPrimary: 'From £49/month',
     monthlySecondary: 'depending on risk profile',
@@ -39,7 +39,7 @@ const plans = [
   {
     plan: 'monitoring_essentials',
     label: 'Monitoring Essentials',
-    fullName: 'Monitoring Essentials',
+    fullName: 'Quarterly Monitoring + Annual Audit + Representation',
     badge: 'Recommended',
     monthlyPrimary: '£24/month per trademark',
     monthlySecondary: '+£12/month each additional TM',
@@ -54,8 +54,8 @@ const plans = [
   },
   {
     plan: 'annual_review',
-    label: 'Annual Review',
-    fullName: 'Annual Review & Representation',
+    label: 'Annual Review & Representation',
+    fullName: 'Annual Audit + Representation',
     badge: 'Most cost effective',
     monthlyPrimary: '£14/month per trademark',
     monthlySecondary: '+£7/month each additional TM',

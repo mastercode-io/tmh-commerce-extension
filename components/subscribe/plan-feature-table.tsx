@@ -42,8 +42,8 @@ const planActions = [
 const planDetails = [
   {
     plan: 'monitoring_defence',
-    shortLabel: 'MAD',
-    title: 'Monitoring, Advisory & Defence',
+    shortLabel: 'M&D',
+    title: 'Monitoring & Defence',
     badge: 'Most comprehensive',
     accent: 'border-amber-200 bg-amber-50/70',
   },
@@ -346,7 +346,7 @@ export function PlanFeatureTable({
             <thead className="text-muted-foreground border-b text-left text-xs tracking-[0.12em] uppercase">
               <tr>
                 <th className="px-2 py-3 font-medium">Feature</th>
-                <th className="px-2 py-3 font-medium">MAD</th>
+                <th className="px-2 py-3 font-medium">M&amp;D</th>
                 <th className="bg-primary/5 border-primary/20 border-x px-2 py-3 font-medium">
                   Essentials
                 </th>
