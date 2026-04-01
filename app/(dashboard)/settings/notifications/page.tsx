@@ -325,7 +325,7 @@ export default function NotificationSettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-rose-200 bg-rose-50/60">
+      <Card className="border-l-4 border-l-primary bg-rose-50/60 ring-rose-200">
         <CardContent className="flex items-center justify-between gap-4 pt-4">
           <div className="min-w-0">
             <div className="text-sm font-medium">
@@ -345,12 +345,12 @@ export default function NotificationSettingsPage() {
               'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors',
               preferences.unsubscribeMarketing
                 ? 'border-primary/20 bg-primary'
-                : 'border-rose-200 bg-background'
+                : 'border-rose-300 bg-rose-100'
             )}
           >
             <span
               className={cn(
-                'bg-background pointer-events-none inline-block size-5 rounded-full shadow-sm transition-transform',
+                'bg-background border-white/80 pointer-events-none inline-block size-5 rounded-full border shadow-sm transition-transform',
                 preferences.unsubscribeMarketing ? 'translate-x-5' : 'translate-x-0.5'
               )}
             />
