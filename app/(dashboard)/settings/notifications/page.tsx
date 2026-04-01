@@ -284,22 +284,19 @@ export default function NotificationSettingsPage() {
     setSavedPreferences(preferences);
   }
 
-  function handleDiscard() {
-    setPreferences(savedPreferences);
-  }
-
   return (
     <div className="mx-auto grid w-full max-w-4xl gap-6 pb-8">
       <PageHeader
         title="Email Preferences"
         description="Manage how we communicate with you regarding your portfolio and opportunities."
-        actions={
-          <Button size="lg" onClick={handleSave} disabled={!isDirty}>
-            <Mail className="size-4" />
-            Save Changes
-          </Button>
-        }
       />
+
+      <div className="-mt-2 flex justify-end">
+        <Button size="lg" onClick={handleSave} disabled={!isDirty}>
+          <Mail className="size-4" />
+          Save Changes
+        </Button>
+      </div>
 
       {warningVisible ? (
         <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-4">
@@ -387,6 +384,9 @@ export default function NotificationSettingsPage() {
 
       {categoryConfigs.map((category) => {
         const Icon = category.icon;
+        const isAllSelected = category.items.every(
+          (item) => preferences[item.key]
+        );
 
         return (
           <Card key={category.id} className="bg-background">
@@ -400,9 +400,10 @@ export default function NotificationSettingsPage() {
                   onClick={() =>
                     setAll(
                       category.items.map((item) => item.key),
-                      true
+                      !isAllSelected
                     )
                   }
+                  label={isAllSelected ? 'Deselect all' : 'Select all'}
                 />
               </div>
             </CardHeader>
@@ -451,11 +452,9 @@ export default function NotificationSettingsPage() {
         </CardContent>
       </Card>
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-        <Button variant="outline" onClick={handleDiscard} disabled={!isDirty}>
-          Discard Changes
-        </Button>
-        <Button onClick={handleSave} disabled={!isDirty}>
+      <div className="flex justify-end">
+        <Button size="lg" onClick={handleSave} disabled={!isDirty}>
+          <Mail className="size-4" />
           Save Changes
         </Button>
       </div>
