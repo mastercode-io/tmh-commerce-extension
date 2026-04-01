@@ -271,7 +271,7 @@ export default function NotificationSettingsPage() {
   }
 
   return (
-    <div className="grid gap-6 pb-8">
+    <div className="mx-auto grid w-full max-w-4xl gap-6 pb-8">
       <PageHeader
         title="Email Preferences"
         description="Manage how we communicate with you regarding your portfolio and opportunities."
@@ -291,32 +291,12 @@ export default function NotificationSettingsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 pt-4">
-          <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-4">
-            <PreferenceCheckbox
-              checked={preferences.essentialUpdates}
-              onChange={(checked) => updatePreference('essentialUpdates', checked)}
-              label="Essential Trademark Updates"
-              description="You are currently receiving critical notifications about your active trademarks, including legal deadlines and opposition alerts."
-            />
-
-            {warningVisible ? (
-              <div className="mt-4 rounded-lg border border-rose-200 bg-rose-100/80 p-3 text-xs text-rose-900">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-                  <div className="grid gap-1">
-                    <div className="font-semibold tracking-[0.16em] uppercase">
-                      Critical warning
-                    </div>
-                    <p className="leading-5">
-                      Unsubscribing means you may not receive urgent trademark
-                      deadlines or opposition alerts until after a deadline has
-                      passed. Save changes only if you are certain.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ) : null}
-          </div>
+          <PreferenceCheckbox
+            checked={preferences.essentialUpdates}
+            onChange={(checked) => updatePreference('essentialUpdates', checked)}
+            label="Essential Trademark Updates"
+            description="You are currently receiving critical notifications about your active trademarks, including legal deadlines and opposition alerts."
+          />
 
           <PreferenceCheckbox
             checked={preferences.trademarkUpdates}
@@ -324,10 +304,28 @@ export default function NotificationSettingsPage() {
             label="Updates about your trademarks"
             description="Important notices and reminders."
           />
+
+          {warningVisible ? (
+            <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-4 text-xs text-rose-900">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+                <div className="grid gap-1">
+                  <div className="font-semibold tracking-[0.16em] uppercase">
+                    Critical warning
+                  </div>
+                  <p className="leading-5">
+                    Unsubscribing means you may not receive urgent trademark
+                    deadlines or opposition alerts until after a deadline has
+                    passed. Save changes only if you are certain.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
-      <Card className="bg-background">
+      <Card className="border-rose-200 bg-rose-50/60">
         <CardContent className="flex items-center justify-between gap-4 pt-4">
           <div className="min-w-0">
             <div className="text-sm font-medium">
@@ -347,7 +345,7 @@ export default function NotificationSettingsPage() {
               'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors',
               preferences.unsubscribeMarketing
                 ? 'border-primary/20 bg-primary'
-                : 'border-border bg-muted'
+                : 'border-rose-200 bg-background'
             )}
           >
             <span
