@@ -18,7 +18,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 type PreferenceState = {
-  essentialUpdates: boolean;
   trademarkUpdates: boolean;
   unsubscribeMarketing: boolean;
   referralsAffiliatePrograms: boolean;
@@ -35,7 +34,7 @@ type PreferenceState = {
 
 type MarketingKey = Exclude<
   keyof PreferenceState,
-  'essentialUpdates' | 'trademarkUpdates' | 'unsubscribeMarketing'
+  'trademarkUpdates' | 'unsubscribeMarketing'
 >;
 
 type CategoryItem = {
@@ -53,7 +52,6 @@ type CategoryConfig = {
 };
 
 const defaultPreferences: PreferenceState = {
-  essentialUpdates: true,
   trademarkUpdates: true,
   unsubscribeMarketing: false,
   referralsAffiliatePrograms: false,
@@ -234,7 +232,7 @@ export default function NotificationSettingsPage() {
   const isDirty =
     JSON.stringify(preferences) !== JSON.stringify(savedPreferences);
 
-  const warningVisible = !preferences.essentialUpdates;
+  const warningVisible = !preferences.trademarkUpdates;
 
   function updatePreference<Key extends keyof PreferenceState>(
     key: Key,
@@ -311,25 +309,25 @@ export default function NotificationSettingsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 pt-4">
-          {warningVisible ? (
-            <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-4">
-              <div className="flex items-start gap-3">
-                <div className="bg-primary text-primary-foreground mt-1 inline-flex size-6 shrink-0 items-center justify-center rounded-md">
-                  <AlertTriangle className="size-3.5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <PreferenceCheckbox
-                    checked={preferences.essentialUpdates}
-                    onChange={(checked) =>
-                      updatePreference('essentialUpdates', checked)
-                    }
-                    label="Essential Trademark Updates"
-                    description="You are currently receiving critical notifications about your active trademarks, including legal deadlines and opposition alerts."
-                    className="px-0 py-0 hover:border-transparent"
-                    labelClassName="text-sm"
-                    descriptionClassName="text-foreground/70"
-                  />
+          <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-4">
+            <div className="flex items-start gap-3">
+              <div className="bg-primary text-primary-foreground mt-1 inline-flex size-6 shrink-0 items-center justify-center rounded-md">
+                <AlertTriangle className="size-3.5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <PreferenceCheckbox
+                  checked={preferences.trademarkUpdates}
+                  onChange={(checked) =>
+                    updatePreference('trademarkUpdates', checked)
+                  }
+                  label="Updates about your trademarks"
+                  description="You are currently receiving critical notifications about your active trademarks, including legal deadlines and opposition alerts."
+                  className="px-0 py-0 hover:border-transparent"
+                  labelClassName="text-sm"
+                  descriptionClassName="text-foreground/70"
+                />
 
+                {warningVisible ? (
                   <div className="mt-4 rounded-lg border border-rose-200 bg-background/60 p-3 text-xs text-rose-900">
                     <div className="grid gap-1">
                       <div className="font-semibold tracking-[0.16em] uppercase">
@@ -342,24 +340,10 @@ export default function NotificationSettingsPage() {
                       </p>
                     </div>
                   </div>
-                </div>
+                ) : null}
               </div>
             </div>
-          ) : (
-            <PreferenceCheckbox
-              checked={preferences.essentialUpdates}
-              onChange={(checked) => updatePreference('essentialUpdates', checked)}
-              label="Essential Trademark Updates"
-              description="You are currently receiving critical notifications about your active trademarks, including legal deadlines and opposition alerts."
-            />
-          )}
-
-          <PreferenceCheckbox
-            checked={preferences.trademarkUpdates}
-            onChange={(checked) => updatePreference('trademarkUpdates', checked)}
-            label="Updates about your trademarks"
-            description="Important notices and reminders."
-          />
+          </div>
         </CardContent>
       </Card>
 
