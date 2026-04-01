@@ -301,49 +301,53 @@ export default function NotificationSettingsPage() {
         }
       />
 
+      {warningVisible ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-4">
+          <div className="flex items-start gap-3">
+            <div className="bg-primary text-primary-foreground mt-1 inline-flex size-6 shrink-0 items-center justify-center rounded-md">
+              <AlertTriangle className="size-3.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-medium">
+                Essential Trademark Updates
+              </div>
+              <p className="text-foreground/70 mt-1 text-xs">
+                You are currently receiving critical notifications about your
+                active trademarks, including legal deadlines and opposition
+                alerts.
+              </p>
+
+              <div className="mt-4 rounded-lg border border-rose-200 bg-background/60 p-3 text-xs text-rose-900">
+                <div className="grid gap-1">
+                  <div className="font-semibold tracking-[0.16em] uppercase">
+                    Critical warning
+                  </div>
+                  <p className="leading-5">
+                    Unsubscribing means you may not receive urgent trademark
+                    deadlines or opposition alerts until after a deadline has
+                    passed. Save changes only if you are certain.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <Card className="bg-background">
         <CardHeader className="border-b">
           <CardTitle className="flex items-center gap-2">
             <BellRing className="text-primary size-4" />
-            Essential Trademark Updates
+            Trade Mark Updates
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 pt-4">
-          <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-4">
-            <div className="flex items-start gap-3">
-              <div className="bg-primary text-primary-foreground mt-1 inline-flex size-6 shrink-0 items-center justify-center rounded-md">
-                <AlertTriangle className="size-3.5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <PreferenceCheckbox
-                  checked={preferences.trademarkUpdates}
-                  onChange={(checked) =>
-                    updatePreference('trademarkUpdates', checked)
-                  }
-                  label="Updates about your trademarks"
-                  description="You are currently receiving critical notifications about your active trademarks, including legal deadlines and opposition alerts."
-                  className="px-0 py-0 hover:border-transparent"
-                  labelClassName="text-sm"
-                  descriptionClassName="text-foreground/70"
-                />
-
-                {warningVisible ? (
-                  <div className="mt-4 rounded-lg border border-rose-200 bg-background/60 p-3 text-xs text-rose-900">
-                    <div className="grid gap-1">
-                      <div className="font-semibold tracking-[0.16em] uppercase">
-                        Critical warning
-                      </div>
-                      <p className="leading-5">
-                        Unsubscribing means you may not receive urgent trademark
-                        deadlines or opposition alerts until after a deadline has
-                        passed. Save changes only if you are certain.
-                      </p>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </div>
+        <CardContent className="pt-4">
+          <PreferenceCheckbox
+            checked={preferences.trademarkUpdates}
+            onChange={(checked) => updatePreference('trademarkUpdates', checked)}
+            label="Updates about your trademark"
+            description="Important notices and reminders."
+          />
         </CardContent>
       </Card>
 
