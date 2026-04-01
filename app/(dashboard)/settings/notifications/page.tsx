@@ -436,8 +436,14 @@ export default function NotificationSettingsPage() {
               <span className="bg-primary/10 text-primary inline-flex size-6 items-center justify-center rounded-md">
                 <Mail className="size-3.5" />
               </span>
-              Newsletter
+              Newsletters
             </CardTitle>
+            <SelectAllButton
+              onClick={() =>
+                setAll(['newsletterTmh'], !preferences.newsletterTmh)
+              }
+              label={preferences.newsletterTmh ? 'Deselect all' : 'Select all'}
+            />
           </div>
         </CardHeader>
         <CardContent className="pt-4">
