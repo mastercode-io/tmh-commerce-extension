@@ -87,9 +87,11 @@ export function DashboardHeader({
               {userName}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <SettingsIcon />
-              Settings
+            <DropdownMenuItem asChild>
+              <Link href="/settings/notifications">
+                <SettingsIcon />
+                Settings
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive">
@@ -102,4 +104,3 @@ export function DashboardHeader({
     </header>
   );
 }
-
