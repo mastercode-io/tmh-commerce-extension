@@ -1,0 +1,99 @@
+[
+  {
+    "id": "trademark-updates",
+    "title": "Trade Mark Updates",
+    "options": [
+      {
+        "id": "trademarkUpdates",
+        "title": "Updates about your trademark",
+        "subtitle": "Important notices and reminders."
+      }
+    ]
+  },
+  {
+    "id": "referrals",
+    "title": "Earning Through Referrals",
+    "options": [
+      {
+        "id": "referralsAffiliatePrograms",
+        "title": "Affiliate Programs",
+        "subtitle": "Offers on how to earn commissions by referring new clients."
+      },
+      {
+        "id": "referralsPartnerRewards",
+        "title": "Partner Rewards",
+        "subtitle": "Exclusive bonus offers for our most active referral partners."
+      }
+    ]
+  },
+  {
+    "id": "financial",
+    "title": "Financial Advice",
+    "options": [
+      {
+        "id": "financialWealthManagement",
+        "title": "Wealth Management",
+        "subtitle": "Insights on protecting and growing your business assets."
+      },
+      {
+        "id": "financialTaxEfficiency",
+        "title": "Tax Efficiency",
+        "subtitle": "Updates on intellectual property tax benefits and credits."
+      }
+    ]
+  },
+  {
+    "id": "legal",
+    "title": "Legal Services",
+    "options": [
+      {
+        "id": "legalGlobalProtection",
+        "title": "Global Protection",
+        "subtitle": "News about international trademark laws and expansion."
+      },
+      {
+        "id": "legalContractualGuidance",
+        "title": "Contractual Guidance",
+        "subtitle": "Updates on licensing agreements and IP transfer legalities."
+      }
+    ]
+  },
+  {
+    "id": "investing",
+    "title": "Investing",
+    "options": [
+      {
+        "id": "investingValuation",
+        "title": "Valuation",
+        "subtitle": "How to value your trademarks for potential investors."
+      }
+    ]
+  },
+  {
+    "id": "business",
+    "title": "Business Services",
+    "options": [
+      {
+        "id": "businessStrategicPlanning",
+        "title": "Strategic Planning",
+        "subtitle": "Quarterly business reviews and growth strategy updates."
+      },
+      {
+        "id": "businessBrandIdentity",
+        "title": "Brand Identity",
+        "subtitle": "Resources for developing and protecting your brand’s visual identity."
+      }
+    ]
+  },
+  {
+    "id": "newsletters",
+    "title": "Newsletters",
+    "options": [
+      {
+        "id": "newsletterTmh",
+        "title": "The Trademark Helpline Newsletter",
+        "subtitle": "Latest news and insights from our team."
+      }
+    ]
+  }
+]
