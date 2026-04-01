@@ -165,14 +165,25 @@ function PreferenceCheckbox({
   onChange,
   label,
   description,
+  className,
+  labelClassName,
+  descriptionClassName,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
   label: string;
   description: string;
+  className?: string;
+  labelClassName?: string;
+  descriptionClassName?: string;
 }) {
   return (
-    <label className="flex items-start gap-3 rounded-lg border border-transparent px-1 py-1.5 transition-colors hover:border-border/80">
+    <label
+      className={cn(
+        'flex items-start gap-3 rounded-lg border border-transparent px-1 py-1.5 transition-colors hover:border-border/80',
+        className
+      )}
+    >
       <input
         type="checkbox"
         checked={checked}
@@ -180,8 +191,17 @@ function PreferenceCheckbox({
         className="border-input text-primary accent-primary mt-0.5 size-4 rounded"
       />
       <span className="min-w-0">
-        <span className="block text-sm font-medium">{label}</span>
-        <span className="text-muted-foreground mt-1 block text-xs">{description}</span>
+        <span className={cn('block text-sm font-medium', labelClassName)}>
+          {label}
+        </span>
+        <span
+          className={cn(
+            'text-muted-foreground mt-1 block text-xs',
+            descriptionClassName
+          )}
+        >
+          {description}
+        </span>
       </span>
     </label>
   );
@@ -291,12 +311,48 @@ export default function NotificationSettingsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 pt-4">
-          <PreferenceCheckbox
-            checked={preferences.essentialUpdates}
-            onChange={(checked) => updatePreference('essentialUpdates', checked)}
-            label="Essential Trademark Updates"
-            description="You are currently receiving critical notifications about your active trademarks, including legal deadlines and opposition alerts."
-          />
+          {warningVisible ? (
+            <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-4">
+              <div className="flex items-start gap-3">
+                <div className="bg-primary text-primary-foreground mt-1 inline-flex size-6 shrink-0 items-center justify-center rounded-md">
+                  <AlertTriangle className="size-3.5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <PreferenceCheckbox
+                    checked={preferences.essentialUpdates}
+                    onChange={(checked) =>
+                      updatePreference('essentialUpdates', checked)
+                    }
+                    label="Essential Trademark Updates"
+                    description="You are currently receiving critical notifications about your active trademarks, including legal deadlines and opposition alerts."
+                    className="px-0 py-0 hover:border-transparent"
+                    labelClassName="text-sm"
+                    descriptionClassName="text-foreground/70"
+                  />
+
+                  <div className="mt-4 rounded-lg border border-rose-200 bg-background/60 p-3 text-xs text-rose-900">
+                    <div className="grid gap-1">
+                      <div className="font-semibold tracking-[0.16em] uppercase">
+                        Critical warning
+                      </div>
+                      <p className="leading-5">
+                        Unsubscribing means you may not receive urgent trademark
+                        deadlines or opposition alerts until after a deadline has
+                        passed. Save changes only if you are certain.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <PreferenceCheckbox
+              checked={preferences.essentialUpdates}
+              onChange={(checked) => updatePreference('essentialUpdates', checked)}
+              label="Essential Trademark Updates"
+              description="You are currently receiving critical notifications about your active trademarks, including legal deadlines and opposition alerts."
+            />
+          )}
 
           <PreferenceCheckbox
             checked={preferences.trademarkUpdates}
@@ -304,24 +360,6 @@ export default function NotificationSettingsPage() {
             label="Updates about your trademarks"
             description="Important notices and reminders."
           />
-
-          {warningVisible ? (
-            <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-4 text-xs text-rose-900">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-                <div className="grid gap-1">
-                  <div className="font-semibold tracking-[0.16em] uppercase">
-                    Critical warning
-                  </div>
-                  <p className="leading-5">
-                    Unsubscribing means you may not receive urgent trademark
-                    deadlines or opposition alerts until after a deadline has
-                    passed. Save changes only if you are certain.
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : null}
         </CardContent>
       </Card>
 
