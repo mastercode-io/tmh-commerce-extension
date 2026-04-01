@@ -1,11 +1,11 @@
 [
   {
     "id": "trademark-updates",
-    "title": "Trade Mark Updates",
+    "title": "Essential Trademark Updates",
     "options": [
       {
         "id": "trademarkUpdates",
-        "title": "Updates about your trademark",
+        "title": "Updates about your trademarks",
         "subtitle": "Important notices and reminders."
       }
     ]
@@ -15,14 +15,19 @@
     "title": "Earning Through Referrals",
     "options": [
       {
-        "id": "referralsAffiliatePrograms",
-        "title": "Affiliate Programs",
-        "subtitle": "Offers on how to earn commissions by referring new clients."
+        "id": "referralsIntroductions",
+        "title": "Earn Rewards from Introductions",
+        "subtitle": "Earn rewards from introductions."
       },
       {
-        "id": "referralsPartnerRewards",
-        "title": "Partner Rewards",
-        "subtitle": "Exclusive bonus offers for our most active referral partners."
+        "id": "referralsProductRange",
+        "title": "Add Trademarks to your product range",
+        "subtitle": "Add trademarks to your services."
+      },
+      {
+        "id": "referralsPromoteGoodsServices",
+        "title": "Promote your Goods & Services",
+        "subtitle": "Promote your business online."
       }
     ]
   },
@@ -31,14 +36,34 @@
     "title": "Financial Advice",
     "options": [
       {
-        "id": "financialWealthManagement",
-        "title": "Wealth Management",
-        "subtitle": "Insights on protecting and growing your business assets."
+        "id": "financialPensionAdvice",
+        "title": "Pension Advice",
+        "subtitle": "Pension advice services."
       },
       {
-        "id": "financialTaxEfficiency",
-        "title": "Tax Efficiency",
-        "subtitle": "Updates on intellectual property tax benefits and credits."
+        "id": "financialInvestmentAdvice",
+        "title": "Investment Advice",
+        "subtitle": "Investment advice services."
+      },
+      {
+        "id": "financialIsaAdvice",
+        "title": "ISA Advice",
+        "subtitle": "ISA advice services."
+      },
+      {
+        "id": "financialInsuranceAdvice",
+        "title": "Insurance (Life, Critical Illness, Personal Payment Protection etc)",
+        "subtitle": "Insurance advice."
+      },
+      {
+        "id": "financialMortgages",
+        "title": "Mortgages",
+        "subtitle": "Mortgage advice services."
+      },
+      {
+        "id": "financialOtherLending",
+        "title": "Other Lending",
+        "subtitle": "Other lending advice."
       }
     ]
   },
@@ -47,14 +72,29 @@
     "title": "Legal Services",
     "options": [
       {
-        "id": "legalGlobalProtection",
-        "title": "Global Protection",
-        "subtitle": "News about international trademark laws and expansion."
+        "id": "legalPersonalGuarantees",
+        "title": "Help with Personal Guarantees",
+        "subtitle": "Personal guarantee advice."
       },
       {
-        "id": "legalContractualGuidance",
-        "title": "Contractual Guidance",
-        "subtitle": "Updates on licensing agreements and IP transfer legalities."
+        "id": "legalConsumerClaims",
+        "title": "Consumer Claims & Litigation",
+        "subtitle": "Claims and litigation support."
+      },
+      {
+        "id": "legalWillsEstatePlanning",
+        "title": "Wills & Estate Planning",
+        "subtitle": "Wills and estate planning."
+      },
+      {
+        "id": "legalConveyancing",
+        "title": "Conveyancing",
+        "subtitle": "Property conveyancing."
+      },
+      {
+        "id": "legalMatrimonial",
+        "title": "Matrimonial",
+        "subtitle": "Matrimonial legal advice."
       }
     ]
   },
@@ -63,9 +103,14 @@
     "title": "Investing",
     "options": [
       {
-        "id": "investingValuation",
-        "title": "Valuation",
-        "subtitle": "How to value your trademarks for potential investors."
+        "id": "investingOpportunities",
+        "title": "Investment Opportunities",
+        "subtitle": "Investment opportunities."
+      },
+      {
+        "id": "investingBusinessPensionPlanning",
+        "title": "Business Pension Planning",
+        "subtitle": "Business pension planning."
       }
     ]
   },
@@ -74,14 +119,49 @@
     "title": "Business Services",
     "options": [
       {
-        "id": "businessStrategicPlanning",
-        "title": "Strategic Planning",
-        "subtitle": "Quarterly business reviews and growth strategy updates."
+        "id": "businessRaisingFinance",
+        "title": "Raising Business Finance",
+        "subtitle": "Business funding and finance."
       },
       {
-        "id": "businessBrandIdentity",
-        "title": "Brand Identity",
-        "subtitle": "Resources for developing and protecting your brand’s visual identity."
+        "id": "businessCorporateAdvice",
+        "title": "Corporate Advice (Restructuring, Corporate, Governance)",
+        "subtitle": "Corporate and governance advice."
+      },
+      {
+        "id": "businessSuccessionPlanning",
+        "title": "Succession Planning & Estate Planning",
+        "subtitle": "Succession and estate planning."
+      },
+      {
+        "id": "businessGeneralInsuranceAccountancy",
+        "title": "General Insurance, Accountancy",
+        "subtitle": "General business support."
+      },
+      {
+        "id": "businessTaxPlanningRelief",
+        "title": "Tax Planning & Tax Relief",
+        "subtitle": "Tax planning and tax advice."
+      },
+      {
+        "id": "businessInsurance",
+        "title": "Business Insurance",
+        "subtitle": "Business insurance advice."
+      },
+      {
+        "id": "businessCoachingConsultancy",
+        "title": "Business Coaching & Consultancy",
+        "subtitle": "Business coaching and advice."
+      },
+      {
+        "id": "businessHrHealthSafetyIso",
+        "title": "HR, Health & Safety & ISO Certification",
+        "subtitle": "HR and compliance support."
+      },
+      {
+        "id": "businessSalesBrandingMarketingRewards",
+        "title": "Sales, Branding, Marketing & Rewards",
+        "subtitle": "Sales and marketing support."
       }
     ]
   },
@@ -91,8 +171,8 @@
     "options": [
       {
         "id": "newsletterTmh",
-        "title": "The Trademark Helpline Newsletter",
-        "subtitle": "Latest news and insights from our team."
+        "title": "Our Newsletter",
+        "subtitle": "General newsletter."
       }
     ]
   }
