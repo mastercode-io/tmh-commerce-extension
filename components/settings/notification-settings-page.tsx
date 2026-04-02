@@ -326,11 +326,15 @@ export function NotificationSettingsPage({
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-semibold">Critical warning</div>
-                  <p className="mt-1 text-sm text-rose-950/80">
+                  <div className="mt-1 text-sm text-rose-950/80">
                     Unsubscribing means you may not receive urgent trademark
                     deadlines or opposition alerts until after a deadline has
-                    passed. Save changes only if you are certain.
-                  </p>
+                    passed.
+                    <br />
+                    <strong className="font-semibold text-rose-950">
+                      Save changes only if you are certain.
+                    </strong>
+                  </div>
                 </div>
               </div>
             </div>
@@ -343,8 +347,7 @@ export function NotificationSettingsPage({
           <CardTitle>Email Preferences</CardTitle>
           <p className="text-muted-foreground text-sm">
             Choose how open you are to optional marketing and partner
-            communications. By default, every option starts in the middle
-            “I&apos;m happy to receive it” column.
+            communications.
           </p>
         </CardHeader>
         <CardContent className="grid gap-6 pt-6">
