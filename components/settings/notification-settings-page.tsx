@@ -40,7 +40,6 @@ type MarketingPreference = 'only_if_relevant' | 'happy_to_receive' | 'opt_out';
 type PreferenceChoice = {
   id: MarketingPreference;
   label: string;
-  shortLabel: string;
 };
 
 const topics = topicConfigs as TopicConfig[];
@@ -93,56 +92,16 @@ const marketingChoices: PreferenceChoice[] = [
   {
     id: 'only_if_relevant',
     label: 'I really want it',
-    shortLabel: 'Relevant',
   },
   {
     id: 'happy_to_receive',
     label: "I'm happy to receive it",
-    shortLabel: 'Happy',
   },
   {
     id: 'opt_out',
     label: 'Opt out of this',
-    shortLabel: 'Opt out',
   },
 ];
-
-function MarketingPreferenceOption({
-  checked,
-  choice,
-  name,
-  onChange,
-}: {
-  checked: boolean;
-  choice: PreferenceChoice;
-  name: string;
-  onChange: (value: MarketingPreference) => void;
-}) {
-  return (
-    <label
-      className={cn(
-        'flex min-h-14 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-colors',
-        checked
-          ? 'border-primary bg-primary/6 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.02)]'
-          : 'border-border bg-background hover:border-primary/40',
-      )}
-    >
-      <input
-        type="radio"
-        name={name}
-        checked={checked}
-        onChange={() => onChange(choice.id)}
-        className="accent-primary size-4"
-      />
-      <span className="min-w-0">
-        <span className="text-sm font-medium">{choice.label}</span>
-        <span className="text-muted-foreground mt-0.5 block text-xs md:hidden">
-          {choice.shortLabel}
-        </span>
-      </span>
-    </label>
-  );
-}
 
 export function NotificationSettingsPage({
   email,
@@ -421,20 +380,6 @@ export function NotificationSettingsPage({
           </p>
         </CardHeader>
         <CardContent className="grid gap-6 pt-6">
-          <div className="hidden gap-3 border-b border-dashed border-slate-200 pb-3 md:grid md:grid-cols-[minmax(0,1fr)_180px_220px_150px]">
-            <div className="text-muted-foreground text-xs font-semibold tracking-[0.16em] uppercase">
-              Topic
-            </div>
-            {marketingChoices.map((choice) => (
-              <div
-                key={choice.id}
-                className="text-muted-foreground text-xs font-semibold tracking-[0.16em] uppercase"
-              >
-                {choice.label}
-              </div>
-            ))}
-          </div>
-
           {marketingTopics.map((topic) => {
             const meta = topicMetaById[topic.id];
             const Icon = meta.icon;
@@ -446,11 +391,25 @@ export function NotificationSettingsPage({
                   <h2 className="text-base font-semibold">{topic.title}</h2>
                 </div>
 
-                <div className="grid gap-3">
+                <div className="hidden border-b border-dashed border-slate-200 pb-2 md:grid md:grid-cols-[minmax(0,1fr)_140px_190px_130px] md:gap-4">
+                  <div className="text-muted-foreground text-[11px] font-semibold tracking-[0.16em] uppercase">
+                    Topic
+                  </div>
+                  {marketingChoices.map((choice) => (
+                    <div
+                      key={choice.id}
+                      className="text-muted-foreground text-[11px] font-semibold tracking-[0.16em] uppercase"
+                    >
+                      {choice.label}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid gap-0">
                   {topic.options.map((option) => (
                     <div
                       key={option.id}
-                      className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/40 p-4 md:grid-cols-[minmax(0,1fr)_180px_220px_150px] md:items-start"
+                      className="grid gap-3 border-b border-slate-200 py-4 last:border-b-0 md:grid-cols-[minmax(0,1fr)_140px_190px_130px] md:gap-4 md:items-start"
                     >
                       <div className="min-w-0">
                         <div className="text-sm font-medium">{option.title}</div>
@@ -460,15 +419,21 @@ export function NotificationSettingsPage({
                       </div>
 
                       {marketingChoices.map((choice) => (
-                        <MarketingPreferenceOption
+                        <label
                           key={choice.id}
-                          name={option.id}
-                          choice={choice}
-                          checked={marketingSelections[option.id] === choice.id}
-                          onChange={(value) =>
-                            updateMarketingPreference(option.id, value)
-                          }
-                        />
+                          className="flex items-center gap-2 text-sm"
+                        >
+                          <input
+                            type="radio"
+                            name={option.id}
+                            checked={marketingSelections[option.id] === choice.id}
+                            onChange={() =>
+                              updateMarketingPreference(option.id, choice.id)
+                            }
+                            className="accent-primary size-4"
+                          />
+                          <span className="md:hidden">{choice.label}</span>
+                        </label>
                       ))}
                     </div>
                   ))}
