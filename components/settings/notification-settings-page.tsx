@@ -91,15 +91,15 @@ const defaultMarketingSelections = Object.fromEntries(
 const marketingChoices: PreferenceChoice[] = [
   {
     id: 'only_if_relevant',
-    label: 'I really want it',
+    label: 'Tell me more',
   },
   {
     id: 'happy_to_receive',
-    label: "I'm happy to receive it",
+    label: 'Keep me posted',
   },
   {
     id: 'opt_out',
-    label: 'Opt out of this',
+    label: 'No thanks',
   },
 ];
 
