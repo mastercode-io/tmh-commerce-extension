@@ -1,6 +1,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Mail, Phone } from 'lucide-react';
+import { CalendarDays, Mail, Phone } from 'lucide-react';
+
+const generalEnquiryBookingUrl =
+  process.env.TMH_GENERAL_ENQUIRY_BOOKING_URL ??
+  'https://bookings.thetrademarkhelpline.com/#/general-enquiry';
 
 export function MonitoringHeader() {
   return (
@@ -31,6 +35,15 @@ export function MonitoringHeader() {
           >
             <Mail className="size-4 text-[#E51652]" />
             <span>Email us</span>
+          </a>
+          <a
+            href={generalEnquiryBookingUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 text-[#223447] hover:text-[#223447]"
+          >
+            <CalendarDays className="size-4 text-[#E51652]" />
+            <span>Schedule a Call</span>
           </a>
         </nav>
       </div>
