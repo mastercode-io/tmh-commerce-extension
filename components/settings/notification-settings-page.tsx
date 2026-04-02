@@ -275,7 +275,7 @@ export function NotificationSettingsPage({
       </div>
 
       <Card className="overflow-hidden border-slate-300">
-        <CardHeader className="border-b bg-slate-50/80">
+        <CardHeader className="border-b">
           <CardTitle className="flex items-center gap-2">
             <BellRing className="text-primary size-4" />
             Essential Trademark Updates
@@ -286,63 +286,31 @@ export function NotificationSettingsPage({
           </p>
         </CardHeader>
         <CardContent className="grid gap-5 pt-6">
-          <div className="grid gap-3 md:grid-cols-2">
-            <button
-              type="button"
-              onClick={() => setEssentialOptIn(true)}
-              className={cn(
-                'rounded-2xl border px-5 py-4 text-left transition-colors',
-                essentialOptIn
-                  ? 'border-emerald-300 bg-emerald-50'
-                  : 'border-border bg-background hover:border-emerald-200',
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <input
-                  type="radio"
-                  name="essential-updates"
-                  checked={essentialOptIn}
-                  onChange={() => setEssentialOptIn(true)}
-                  className="accent-primary size-4"
-                />
-                <div>
-                  <div className="text-sm font-semibold">Opt in</div>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    Continue receiving essential trademark notifications.
-                  </p>
-                </div>
-              </div>
-            </button>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-8">
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <input
+                type="radio"
+                name="essential-updates"
+                checked={essentialOptIn}
+                onChange={() => setEssentialOptIn(true)}
+                className="accent-primary size-4"
+              />
+              <span>Opt in</span>
+            </label>
 
-            <button
-              type="button"
-              onClick={() => setEssentialOptIn(false)}
-              className={cn(
-                'rounded-2xl border px-5 py-4 text-left transition-colors',
-                !essentialOptIn
-                  ? 'border-rose-300 bg-rose-50'
-                  : 'border-border bg-background hover:border-rose-200',
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <input
-                  type="radio"
-                  name="essential-updates"
-                  checked={!essentialOptIn}
-                  onChange={() => setEssentialOptIn(false)}
-                  className="accent-primary size-4"
-                />
-                <div>
-                  <div className="text-sm font-semibold">Opt out</div>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    Stop essential trademark emails at your own risk.
-                  </p>
-                </div>
-              </div>
-            </button>
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <input
+                type="radio"
+                name="essential-updates"
+                checked={!essentialOptIn}
+                onChange={() => setEssentialOptIn(false)}
+                className="accent-primary size-4"
+              />
+              <span>Opt out</span>
+            </label>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-700">
+          <div className="text-sm leading-6 text-slate-700">
             Please note, if we are representative on your trademarks and you opt
             out of Essential Trademark Updates, you must remove us as
             representative on each relevant brand database to avoid missing
@@ -371,7 +339,7 @@ export function NotificationSettingsPage({
       </Card>
 
       <Card className="overflow-hidden border-slate-300">
-        <CardHeader className="border-b bg-slate-50/80">
+        <CardHeader className="border-b">
           <CardTitle>Email Preferences</CardTitle>
           <p className="text-muted-foreground text-sm">
             Choose how open you are to optional marketing and partner
@@ -391,14 +359,14 @@ export function NotificationSettingsPage({
                   <h2 className="text-base font-semibold">{topic.title}</h2>
                 </div>
 
-                <div className="hidden border-b border-dashed border-slate-200 pb-2 md:grid md:grid-cols-[minmax(0,1fr)_140px_190px_130px] md:gap-4">
-                  <div className="text-muted-foreground text-[11px] font-semibold tracking-[0.16em] uppercase">
+                <div className="hidden border-b border-dashed border-slate-200 pb-2 md:grid md:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))] md:gap-4">
+                  <div className="text-muted-foreground text-xs font-medium">
                     Topic
                   </div>
                   {marketingChoices.map((choice) => (
                     <div
                       key={choice.id}
-                      className="text-muted-foreground text-[11px] font-semibold tracking-[0.16em] uppercase"
+                      className="text-muted-foreground text-center text-xs font-medium"
                     >
                       {choice.label}
                     </div>
@@ -409,7 +377,7 @@ export function NotificationSettingsPage({
                   {topic.options.map((option) => (
                     <div
                       key={option.id}
-                      className="grid gap-3 border-b border-slate-200 py-4 last:border-b-0 md:grid-cols-[minmax(0,1fr)_140px_190px_130px] md:gap-4 md:items-start"
+                      className="grid gap-3 border-b border-slate-200 py-4 last:border-b-0 md:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))] md:gap-4 md:items-start"
                     >
                       <div className="min-w-0">
                         <div className="text-sm font-medium">{option.title}</div>
@@ -421,7 +389,7 @@ export function NotificationSettingsPage({
                       {marketingChoices.map((choice) => (
                         <label
                           key={choice.id}
-                          className="flex items-center gap-2 text-sm"
+                          className="flex items-center gap-2 text-sm md:justify-center"
                         >
                           <input
                             type="radio"
