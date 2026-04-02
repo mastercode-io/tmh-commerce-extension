@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   AlertTriangle,
   BellRing,
@@ -133,6 +134,7 @@ function SelectAllButton({
 }
 
 export function NotificationSettingsPage() {
+  const searchParams = useSearchParams();
   const [savedSelections, setSavedSelections] =
     React.useState<Record<string, boolean>>(defaultSelections);
   const [selections, setSelections] =
@@ -141,6 +143,78 @@ export function NotificationSettingsPage() {
     React.useState(false);
   const [unsubscribeMarketing, setUnsubscribeMarketing] =
     React.useState(false);
+  const [isLoadingPreferences, setIsLoadingPreferences] = React.useState(false);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
+
+  const email = searchParams.get('email')?.trim() ?? '';
+
+  React.useEffect(() => {
+    if (!email) {
+      setLoadError(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadPreferences() {
+      setIsLoadingPreferences(true);
+      setLoadError(null);
+
+      try {
+        const response = await fetch(
+          `/api/settings/notifications?email=${encodeURIComponent(email)}`,
+          {
+            method: 'GET',
+            cache: 'no-store',
+          }
+        );
+
+        const payload = (await response.json()) as
+          | { message?: string }
+          | { emailOptions?: Record<string, boolean> };
+
+        if (!response.ok) {
+          throw new Error(
+            'message' in payload && typeof payload.message === 'string'
+              ? payload.message
+              : 'Unable to load notification preferences.'
+          );
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        const nextEmailOptions =
+          'emailOptions' in payload && payload.emailOptions
+            ? payload.emailOptions
+            : {};
+
+        setSelections((current) => ({ ...current, ...nextEmailOptions }));
+        setSavedSelections((current) => ({ ...current, ...nextEmailOptions }));
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        setLoadError(
+          error instanceof Error
+            ? error.message
+            : 'Unable to load notification preferences.'
+        );
+      } finally {
+        if (!cancelled) {
+          setIsLoadingPreferences(false);
+        }
+      }
+    }
+
+    void loadPreferences();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [email]);
 
   const isDirty =
     JSON.stringify({
@@ -210,8 +284,21 @@ export function NotificationSettingsPage() {
         description="Manage how we communicate with you regarding your portfolio and opportunities."
       />
 
+      {email ? (
+        <div className="text-muted-foreground -mt-3 text-sm">
+          Managing preferences for <span className="text-foreground font-medium">{email}</span>
+          {isLoadingPreferences ? '...' : null}
+        </div>
+      ) : null}
+
+      {loadError ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
+          {loadError}
+        </div>
+      ) : null}
+
       <div className="-mt-2 flex justify-end">
-        <Button size="lg" onClick={handleSave} disabled={!isDirty}>
+        <Button size="lg" onClick={handleSave} disabled={!isDirty || isLoadingPreferences}>
           <Mail className="size-4" />
           Save Changes
         </Button>
@@ -330,7 +417,7 @@ export function NotificationSettingsPage() {
       </Card>
 
       <div className="flex justify-end">
-        <Button size="lg" onClick={handleSave} disabled={!isDirty}>
+        <Button size="lg" onClick={handleSave} disabled={!isDirty || isLoadingPreferences}>
           <Mail className="size-4" />
           Save Changes
         </Button>
