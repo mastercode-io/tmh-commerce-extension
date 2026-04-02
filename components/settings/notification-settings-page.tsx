@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { useSearchParams } from 'next/navigation';
 import {
   AlertTriangle,
   BellRing,
@@ -145,8 +144,11 @@ function MarketingPreferenceOption({
   );
 }
 
-export function NotificationSettingsPage() {
-  const searchParams = useSearchParams();
+export function NotificationSettingsPage({
+  email,
+}: {
+  email?: string;
+}) {
   const [savedEssentialOptIn, setSavedEssentialOptIn] = React.useState(true);
   const [essentialOptIn, setEssentialOptIn] = React.useState(true);
   const [savedMarketingSelections, setSavedMarketingSelections] = React.useState(
@@ -157,11 +159,10 @@ export function NotificationSettingsPage() {
   );
   const [isLoadingPreferences, setIsLoadingPreferences] = React.useState(false);
   const [loadError, setLoadError] = React.useState<string | null>(null);
-
-  const email = searchParams.get('email')?.trim() ?? '';
+  const normalizedEmail = email?.trim() ?? '';
 
   React.useEffect(() => {
-    if (!email) {
+    if (!normalizedEmail) {
       setLoadError(null);
       return;
     }
@@ -174,7 +175,7 @@ export function NotificationSettingsPage() {
 
       try {
         const response = await fetch(
-          `/api/settings/notifications?email=${encodeURIComponent(email)}`,
+          `/api/settings/notifications?email=${encodeURIComponent(normalizedEmail)}`,
           {
             method: 'GET',
             cache: 'no-store',
@@ -246,7 +247,7 @@ export function NotificationSettingsPage() {
     return () => {
       cancelled = true;
     };
-  }, [email]);
+  }, [normalizedEmail]);
 
   const isDirty =
     essentialOptIn !== savedEssentialOptIn ||
@@ -293,10 +294,10 @@ export function NotificationSettingsPage() {
         description="Manage essential trademark communications separately from optional marketing content."
       />
 
-      {email ? (
+      {normalizedEmail ? (
         <div className="text-muted-foreground -mt-3 text-sm">
           Managing preferences for{' '}
-          <span className="text-foreground font-medium">{email}</span>
+          <span className="text-foreground font-medium">{normalizedEmail}</span>
           {isLoadingPreferences ? '...' : null}
         </div>
       ) : null}

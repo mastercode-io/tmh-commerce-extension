@@ -78,13 +78,13 @@ function normalizeErrorMessage(body: unknown, fallback: string) {
 }
 
 function normalizeEmailOptions(body: unknown) {
-  const rawEmailOptions =
-    body &&
-    typeof body === 'object' &&
-    'email_options' in body &&
-    Array.isArray((body as EmailOptionsBody).email_options)
+  const candidateEmailOptions =
+    body && typeof body === 'object' && 'email_options' in body
       ? (body as EmailOptionsBody).email_options
       : null;
+  const rawEmailOptions: unknown[] | null = Array.isArray(candidateEmailOptions)
+    ? candidateEmailOptions
+    : null;
 
   if (!rawEmailOptions) {
     throw new NotificationPreferencesError(
