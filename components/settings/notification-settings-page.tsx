@@ -33,6 +33,16 @@ type NotificationPreferencesResponse = {
   message?: string;
 };
 
+class NotificationLoadError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'NotificationLoadError';
+    this.status = status;
+  }
+}
+
 type PreferenceChoice = {
   id: NotificationPreferenceOption;
   label: string;
@@ -77,6 +87,18 @@ function areCategoriesEqual(
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
+function getFriendlyLoadErrorMessage(status: number, fallback?: string) {
+  if (status === 400) {
+    return 'We could not load your email preferences because the link is missing an email address.';
+  }
+
+  if (status === 404) {
+    return 'We could not find any email preferences for this email address.';
+  }
+
+  return fallback ?? 'Unable to load notification preferences.';
+}
+
 export function NotificationSettingsPage({
   email,
   devMode,
@@ -92,20 +114,17 @@ export function NotificationSettingsPage({
     React.useState<NotificationPreferencesPayload>([]);
   const [isLoadingPreferences, setIsLoadingPreferences] = React.useState(false);
   const [isSavingPreferences, setIsSavingPreferences] = React.useState(false);
-  const [loadError, setLoadError] = React.useState<string | null>(null);
+  const [pageError, setPageError] = React.useState<string | null>(null);
+  const [hasBlockingLoadError, setHasBlockingLoadError] = React.useState(false);
   const normalizedEmail = email?.trim() ?? '';
 
   React.useEffect(() => {
-    if (!normalizedEmail && !devMode) {
-      setLoadError(null);
-      return;
-    }
-
     let cancelled = false;
 
     async function loadPreferences() {
       setIsLoadingPreferences(true);
-      setLoadError(null);
+      setPageError(null);
+      setHasBlockingLoadError(false);
 
       try {
         const url = normalizedEmail
@@ -118,7 +137,10 @@ export function NotificationSettingsPage({
         const payload = (await response.json()) as NotificationPreferencesResponse;
 
         if (!response.ok) {
-          throw new Error(payload.message ?? 'Unable to load notification preferences.');
+          throw new NotificationLoadError(
+            getFriendlyLoadErrorMessage(response.status, payload.message),
+            response.status,
+          );
         }
 
         if (cancelled) {
@@ -134,10 +156,15 @@ export function NotificationSettingsPage({
           return;
         }
 
-        setLoadError(
-          error instanceof Error
+        setCategories([]);
+        setSavedCategories([]);
+        setHasBlockingLoadError(true);
+        setPageError(
+          error instanceof NotificationLoadError
             ? error.message
-            : 'Unable to load notification preferences.',
+            : error instanceof Error
+              ? error.message
+              : 'Unable to load notification preferences.',
         );
       } finally {
         if (!cancelled) {
@@ -206,7 +233,7 @@ export function NotificationSettingsPage({
 
   async function handleSave() {
     setIsSavingPreferences(true);
-    setLoadError(null);
+    setPageError(null);
 
     try {
       const url = normalizedEmail
@@ -231,7 +258,7 @@ export function NotificationSettingsPage({
       setSavedCategories(nextCategories);
       setSavedEssentialOptIn(essentialOptIn);
     } catch (error) {
-      setLoadError(
+      setPageError(
         error instanceof Error
           ? error.message
           : 'Unable to save notification preferences.',
@@ -256,210 +283,214 @@ export function NotificationSettingsPage({
         </div>
       ) : null}
 
-      {loadError ? (
+      {pageError ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
-          {loadError}
+          {pageError}
         </div>
       ) : null}
 
-      <div className="flex justify-end">
-        <Button
-          size="lg"
-          onClick={handleSave}
-          disabled={!isDirty || isLoadingPreferences || isSavingPreferences}
-        >
-          <Mail className="size-4" />
-          Save Changes
-        </Button>
-      </div>
-
-      <Card className="overflow-hidden border-slate-300">
-        <CardHeader className="border-b">
-          <CardTitle className="flex items-center gap-2">
-            <BellRing className="text-primary size-4" />
-            Essential Trademark Updates
-          </CardTitle>
-          <p className="text-muted-foreground text-sm">
-            These communications cover important deadlines, office actions, and
-            opposition notices related to your trademarks.
-          </p>
-        </CardHeader>
-        <CardContent className="grid gap-5 pt-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-8">
-            <label className="flex items-center gap-2 text-sm font-medium">
-              <input
-                type="radio"
-                name="essential-updates"
-                checked={essentialOptIn}
-                onChange={() => setEssentialOptIn(true)}
-                className="accent-primary size-4"
-              />
-              <span>Opt in</span>
-            </label>
-
-            <label className="flex items-center gap-2 text-sm font-medium">
-              <input
-                type="radio"
-                name="essential-updates"
-                checked={!essentialOptIn}
-                onChange={() => setEssentialOptIn(false)}
-                className="accent-primary size-4"
-              />
-              <span>Opt out</span>
-            </label>
+      {!hasBlockingLoadError ? (
+        <>
+          <div className="flex justify-end">
+            <Button
+              size="lg"
+              onClick={handleSave}
+              disabled={!isDirty || isLoadingPreferences || isSavingPreferences}
+            >
+              <Mail className="size-4" />
+              Save Changes
+            </Button>
           </div>
 
-          <div className="text-sm leading-6 text-slate-700">
-            Please note, if we are representative on your trademarks and you opt
-            out of Essential Trademark Updates, you must remove us as
-            representative on each relevant brand database to avoid missing
-            essential notifications that could affect an application or
-            registration.
-          </div>
-
-          {warningVisible ? (
-            <div className="rounded-2xl border border-rose-200 bg-rose-50/90 p-4">
-              <div className="flex items-start gap-3">
-                <div className="bg-primary text-primary-foreground mt-1 inline-flex size-6 shrink-0 items-center justify-center rounded-md">
-                  <AlertTriangle className="size-3.5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold">Critical warning</div>
-                  <div className="mt-1 text-sm text-rose-950/80">
-                    Unsubscribing means you may not receive urgent trademark
-                    deadlines or opposition alerts until after a deadline has
-                    passed.
-                    <br />
-                    <strong className="font-semibold text-rose-950">
-                      Save changes only if you are certain.
-                    </strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
-
-      <Card className="overflow-hidden border-slate-300">
-        <CardHeader className="border-b">
-          <CardTitle>Email Preferences</CardTitle>
-          <p className="text-muted-foreground text-sm">
-            Choose how open you are to optional marketing and partner
-            communications.
-          </p>
-        </CardHeader>
-        <CardContent className="grid gap-6 pt-6">
-          {categories.map((category, categoryIndex) => {
-            const meta = topicMetaByCategory[category.category];
-            const Icon = meta?.icon ?? Mail;
-
-            return (
-              <section key={category.category} className="grid gap-4">
-                <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
-                  <Icon
-                    className={cn(
-                      'size-4',
-                      meta?.accentClassName ?? 'text-slate-500',
-                    )}
+          <Card className="overflow-hidden border-slate-300">
+            <CardHeader className="border-b">
+              <CardTitle className="flex items-center gap-2">
+                <BellRing className="text-primary size-4" />
+                Essential Trademark Updates
+              </CardTitle>
+              <p className="text-muted-foreground text-sm">
+                These communications cover important deadlines, office actions, and
+                opposition notices related to your trademarks.
+              </p>
+            </CardHeader>
+            <CardContent className="grid gap-5 pt-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-8">
+                <label className="flex items-center gap-2 text-sm font-medium">
+                  <input
+                    type="radio"
+                    name="essential-updates"
+                    checked={essentialOptIn}
+                    onChange={() => setEssentialOptIn(true)}
+                    className="accent-primary size-4"
                   />
-                  <h2 className="text-base font-semibold">{category.category}</h2>
-                </div>
+                  <span>Opt in</span>
+                </label>
 
-                <div className="hidden border-b border-dashed border-slate-200 pb-2 md:grid md:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))] md:gap-4">
-                  <div className="text-muted-foreground text-xs font-medium">
-                    Topic
-                  </div>
-                  {marketingChoices.map((choice) => (
-                    <div
-                      key={choice.id}
-                      className="text-muted-foreground text-center text-xs font-medium"
-                    >
-                      {choice.label}
+                <label className="flex items-center gap-2 text-sm font-medium">
+                  <input
+                    type="radio"
+                    name="essential-updates"
+                    checked={!essentialOptIn}
+                    onChange={() => setEssentialOptIn(false)}
+                    className="accent-primary size-4"
+                  />
+                  <span>Opt out</span>
+                </label>
+              </div>
+
+              <div className="text-sm leading-6 text-slate-700">
+                Please note, if we are representative on your trademarks and you opt
+                out of Essential Trademark Updates, you must remove us as
+                representative on each relevant brand database to avoid missing
+                essential notifications that could affect an application or
+                registration.
+              </div>
+
+              {warningVisible ? (
+                <div className="rounded-2xl border border-rose-200 bg-rose-50/90 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-primary text-primary-foreground mt-1 inline-flex size-6 shrink-0 items-center justify-center rounded-md">
+                      <AlertTriangle className="size-3.5" />
                     </div>
-                  ))}
-                </div>
-
-                <div className="grid gap-0">
-                  {category.topics.map((topic, topicIndex) => (
-                    <div
-                      key={`${category.category}-${topic.topic}`}
-                      className="grid gap-3 border-b border-slate-200 py-4 last:border-b-0 md:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))] md:gap-4 md:items-start"
-                    >
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium">{topic.label}</div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold">Critical warning</div>
+                      <div className="mt-1 text-sm text-rose-950/80">
+                        Unsubscribing means you may not receive urgent trademark
+                        deadlines or opposition alerts until after a deadline has
+                        passed.
+                        <br />
+                        <strong className="font-semibold text-rose-950">
+                          Save changes only if you are certain.
+                        </strong>
                       </div>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </CardContent>
+          </Card>
 
+          <Card className="overflow-hidden border-slate-300">
+            <CardHeader className="border-b">
+              <CardTitle>Email Preferences</CardTitle>
+              <p className="text-muted-foreground text-sm">
+                Choose how open you are to optional marketing and partner
+                communications.
+              </p>
+            </CardHeader>
+            <CardContent className="grid gap-6 pt-6">
+              {categories.map((category, categoryIndex) => {
+                const meta = topicMetaByCategory[category.category];
+                const Icon = meta?.icon ?? Mail;
+
+                return (
+                  <section key={category.category} className="grid gap-4">
+                    <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+                      <Icon
+                        className={cn(
+                          'size-4',
+                          meta?.accentClassName ?? 'text-slate-500',
+                        )}
+                      />
+                      <h2 className="text-base font-semibold">{category.category}</h2>
+                    </div>
+
+                    <div className="hidden border-b border-dashed border-slate-200 pb-2 md:grid md:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))] md:gap-4">
+                      <div className="text-muted-foreground text-xs font-medium">
+                        Topic
+                      </div>
                       {marketingChoices.map((choice) => (
-                        <label
+                        <div
                           key={choice.id}
-                          className="flex items-center gap-2 text-sm md:justify-center"
+                          className="text-muted-foreground text-center text-xs font-medium"
                         >
-                          <input
-                            type="radio"
-                            name={`${category.category}-${topic.topic}`}
-                            checked={topic.option === choice.id}
-                            onChange={() =>
-                              updateTopicOption(categoryIndex, topicIndex, choice.id)
-                            }
-                            className="accent-primary size-4"
-                          />
-                          <span className="md:hidden">{choice.label}</span>
-                        </label>
+                          {choice.label}
+                        </div>
                       ))}
                     </div>
-                  ))}
+
+                    <div className="grid gap-0">
+                      {category.topics.map((topic, topicIndex) => (
+                        <div
+                          key={`${category.category}-${topic.topic}`}
+                          className="grid gap-3 border-b border-slate-200 py-4 last:border-b-0 md:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))] md:gap-4 md:items-start"
+                        >
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium">{topic.label}</div>
+                          </div>
+
+                          {marketingChoices.map((choice) => (
+                            <label
+                              key={choice.id}
+                              className="flex items-center gap-2 text-sm md:justify-center"
+                            >
+                              <input
+                                type="radio"
+                                name={`${category.category}-${topic.topic}`}
+                                checked={topic.option === choice.id}
+                                onChange={() =>
+                                  updateTopicOption(categoryIndex, topicIndex, choice.id)
+                                }
+                                className="accent-primary size-4"
+                              />
+                              <span className="md:hidden">{choice.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold">Opt out of all marketing</div>
+                    <p className="text-muted-foreground mt-1 text-xs leading-5">
+                      Turn this on to move every optional marketing preference to
+                      No Thanks. If you change any single row back, this switch will
+                      automatically return to off.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={isGlobalMarketingOptOut}
+                    onClick={toggleGlobalMarketingOptOut}
+                    className={cn(
+                      'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors',
+                      isGlobalMarketingOptOut
+                        ? 'border-primary/20 bg-primary'
+                        : 'border-slate-300 bg-slate-200',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'bg-background pointer-events-none inline-block size-5 rounded-full border border-white/80 shadow-sm transition-transform',
+                        isGlobalMarketingOptOut ? 'translate-x-6' : 'translate-x-1',
+                      )}
+                    />
+                    <span className="sr-only">Toggle opt out of all marketing</span>
+                  </button>
                 </div>
-              </section>
-            );
-          })}
-
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="min-w-0">
-                <div className="text-sm font-semibold">Opt out of all marketing</div>
-                <p className="text-muted-foreground mt-1 text-xs leading-5">
-                  Turn this on to move every optional marketing preference to
-                  No Thanks. If you change any single row back, this switch will
-                  automatically return to off.
-                </p>
               </div>
+            </CardContent>
+          </Card>
 
-              <button
-                type="button"
-                role="switch"
-                aria-checked={isGlobalMarketingOptOut}
-                onClick={toggleGlobalMarketingOptOut}
-                className={cn(
-                  'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors',
-                  isGlobalMarketingOptOut
-                    ? 'border-primary/20 bg-primary'
-                    : 'border-slate-300 bg-slate-200',
-                )}
-              >
-                <span
-                  className={cn(
-                    'bg-background pointer-events-none inline-block size-5 rounded-full border border-white/80 shadow-sm transition-transform',
-                    isGlobalMarketingOptOut ? 'translate-x-6' : 'translate-x-1',
-                  )}
-                />
-                <span className="sr-only">Toggle opt out of all marketing</span>
-              </button>
-            </div>
+          <div className="flex justify-end">
+            <Button
+              size="lg"
+              onClick={handleSave}
+              disabled={!isDirty || isLoadingPreferences || isSavingPreferences}
+            >
+              <Mail className="size-4" />
+              Save Changes
+            </Button>
           </div>
-        </CardContent>
-      </Card>
-
-      <div className="flex justify-end">
-        <Button
-          size="lg"
-          onClick={handleSave}
-          disabled={!isDirty || isLoadingPreferences || isSavingPreferences}
-        >
-          <Mail className="size-4" />
-          Save Changes
-        </Button>
-      </div>
+        </>
+      ) : null}
     </div>
   );
 }
