@@ -333,13 +333,25 @@ export async function saveNotificationPreferences(
   let normalizedCategories =
     'categories' in payloadBody ? payloadBody.categories : [];
   let normalizedEmail = payloadBody.email;
+  const isOptOutRequest = 'optOut' in payloadBody && payloadBody.optOut === true;
 
   try {
     if (upstreamBody != null) {
-      const normalizedResponse = normalizeNotificationResponse(upstreamBody);
-      normalizedCategories =
-        'categories' in normalizedResponse ? normalizedResponse.categories : [];
-      normalizedEmail = normalizedResponse.email ?? payloadBody.email;
+      if (typeof upstreamBody === 'string') {
+        const normalizedSuccess = upstreamBody.trim().toLowerCase();
+
+        if (normalizedSuccess !== 'success') {
+          const normalizedResponse = normalizeNotificationResponse(upstreamBody);
+          normalizedCategories =
+            'categories' in normalizedResponse ? normalizedResponse.categories : [];
+          normalizedEmail = normalizedResponse.email ?? payloadBody.email;
+        }
+      } else {
+        const normalizedResponse = normalizeNotificationResponse(upstreamBody);
+        normalizedCategories =
+          'categories' in normalizedResponse ? normalizedResponse.categories : [];
+        normalizedEmail = normalizedResponse.email ?? payloadBody.email;
+      }
     }
   } catch (error) {
     if (error instanceof NotificationPreferencesError) {
@@ -357,6 +369,7 @@ export async function saveNotificationPreferences(
   return {
     email: normalizedEmail,
     categories: normalizedCategories,
+    ...(isOptOutRequest ? { optOut: true as const } : {}),
     debug,
   };
 }
