@@ -17,21 +17,33 @@ type CrmApiEnvelope = {
 export type NotificationPreferencesResponse = {
   email: string;
   categories: NotificationPreferencesPayload;
+  debug?: NotificationPreferencesDebug;
+};
+
+export type NotificationPreferencesDebug = {
+  requestMethod: 'GET' | 'POST';
+  requestUrl: string;
+  upstreamStatus: number;
+  responsePayload: unknown;
+  responseBody: unknown;
 };
 
 export class NotificationPreferencesError extends Error {
   status: number;
   code: 'config_error' | 'upstream_error' | 'invalid_response';
+  debug?: NotificationPreferencesDebug;
 
   constructor(
     message: string,
     status: number,
     code: 'config_error' | 'upstream_error' | 'invalid_response',
+    debug?: NotificationPreferencesDebug,
   ) {
     super(message);
     this.name = 'NotificationPreferencesError';
     this.status = status;
     this.code = code;
+    this.debug = debug;
   }
 }
 
@@ -158,6 +170,22 @@ function getCrmBaseUrl() {
   return baseUrl;
 }
 
+function createDebugPayload(
+  requestMethod: 'GET' | 'POST',
+  requestUrl: string,
+  upstreamStatus: number,
+  responsePayload: unknown,
+  responseBody: unknown,
+): NotificationPreferencesDebug {
+  return {
+    requestMethod,
+    requestUrl,
+    upstreamStatus,
+    responsePayload,
+    responseBody,
+  };
+}
+
 export async function fetchNotificationPreferences(
   email: string,
 ): Promise<NotificationPreferencesResponse> {
@@ -177,6 +205,13 @@ export async function fetchNotificationPreferences(
   const upstreamStatus = envelope?.status_code ?? response.status;
   const upstreamBody =
     typeof envelope?.body === 'string' ? parseMaybeJson(envelope.body) : envelope?.body;
+  const debug = createDebugPayload(
+    'GET',
+    requestUrl.toString(),
+    upstreamStatus || 502,
+    payload,
+    upstreamBody,
+  );
 
   if (!response.ok || upstreamStatus >= 400) {
     throw new NotificationPreferencesError(
@@ -186,12 +221,14 @@ export async function fetchNotificationPreferences(
       ),
       upstreamStatus || 502,
       'upstream_error',
+      debug,
     );
   }
 
   return {
     email,
     categories: normalizeNotificationCategories(upstreamBody),
+    debug,
   };
 }
 
@@ -217,6 +254,13 @@ export async function saveNotificationPreferences(
   const upstreamStatus = envelope?.status_code ?? response.status;
   const upstreamBody =
     typeof envelope?.body === 'string' ? parseMaybeJson(envelope.body) : envelope?.body;
+  const debug = createDebugPayload(
+    'POST',
+    requestUrl.toString(),
+    upstreamStatus || 502,
+    payload,
+    upstreamBody,
+  );
 
   if (!response.ok || upstreamStatus >= 400) {
     throw new NotificationPreferencesError(
@@ -226,6 +270,7 @@ export async function saveNotificationPreferences(
       ),
       upstreamStatus || 502,
       'upstream_error',
+      debug,
     );
   }
 
@@ -235,5 +280,6 @@ export async function saveNotificationPreferences(
   return {
     email,
     categories: normalizedCategories,
+    debug,
   };
 }
