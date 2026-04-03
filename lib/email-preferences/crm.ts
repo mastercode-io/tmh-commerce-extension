@@ -211,8 +211,11 @@ export async function fetchNotificationPreferences(
   const payload = await parseResponsePayload(response);
   const envelope = extractEnvelope(payload);
   const upstreamStatus = envelope?.status_code ?? response.status;
-  const upstreamBody =
-    typeof envelope?.body === 'string' ? parseMaybeJson(envelope.body) : envelope?.body;
+  const upstreamBody = envelope
+    ? typeof envelope.body === 'string'
+      ? parseMaybeJson(envelope.body)
+      : envelope.body
+    : payload;
   const debug = createDebugPayload(
     'GET',
     requestUrl.toString(),
@@ -275,8 +278,11 @@ export async function saveNotificationPreferences(
   const payload = await parseResponsePayload(response);
   const envelope = extractEnvelope(payload);
   const upstreamStatus = envelope?.status_code ?? response.status;
-  const upstreamBody =
-    typeof envelope?.body === 'string' ? parseMaybeJson(envelope.body) : envelope?.body;
+  const upstreamBody = envelope
+    ? typeof envelope.body === 'string'
+      ? parseMaybeJson(envelope.body)
+      : envelope.body
+    : payload;
   const debug = createDebugPayload(
     'POST',
     requestUrl.toString(),
