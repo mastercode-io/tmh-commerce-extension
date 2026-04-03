@@ -209,6 +209,7 @@ export function NotificationSettingsPage({
     essentialOptIn !== savedEssentialOptIn || !areCategoriesEqual(categories, savedCategories);
 
   const warningVisible = !essentialOptIn;
+  const showMarketingPreferences = essentialOptIn;
   const isGlobalMarketingOptOut =
     categories.length > 0 &&
     categories.every((category) =>
@@ -399,125 +400,129 @@ export function NotificationSettingsPage({
                 </CardContent>
               </Card>
 
-              <Card className="overflow-hidden border-slate-300">
-                <CardHeader className="border-b">
-                  <CardTitle>Email Preferences</CardTitle>
-                  <p className="text-muted-foreground text-sm">
-                    Choose how open you are to optional marketing and partner
-                    communications.
-                  </p>
-                </CardHeader>
-                <CardContent className="grid gap-6 pt-6">
-                  {categories.map((category, categoryIndex) => {
-                    const meta = topicMetaByCategory[category.category];
-                    const Icon = meta?.icon ?? Mail;
+              {showMarketingPreferences ? (
+                <>
+                  <Card className="overflow-hidden border-slate-300">
+                    <CardHeader className="border-b">
+                      <CardTitle>Email Preferences</CardTitle>
+                      <p className="text-muted-foreground text-sm">
+                        Choose how open you are to optional marketing and partner
+                        communications.
+                      </p>
+                    </CardHeader>
+                    <CardContent className="grid gap-6 pt-6">
+                      {categories.map((category, categoryIndex) => {
+                        const meta = topicMetaByCategory[category.category];
+                        const Icon = meta?.icon ?? Mail;
 
-                    return (
-                      <section key={category.category} className="grid gap-4">
-                        <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
-                          <Icon
-                            className={cn(
-                              'size-4',
-                              meta?.accentClassName ?? 'text-slate-500',
-                            )}
-                          />
-                          <h2 className="text-base font-semibold">{category.category}</h2>
-                        </div>
-
-                        <div className="hidden border-b border-dashed border-slate-200 pb-2 md:grid md:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))] md:gap-4">
-                          <div className="text-muted-foreground text-xs font-medium">
-                            Topic
-                          </div>
-                          {marketingChoices.map((choice) => (
-                            <div
-                              key={choice.id}
-                              className="text-muted-foreground text-center text-xs font-medium"
-                            >
-                              {choice.label}
+                        return (
+                          <section key={category.category} className="grid gap-4">
+                            <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+                              <Icon
+                                className={cn(
+                                  'size-4',
+                                  meta?.accentClassName ?? 'text-slate-500',
+                                )}
+                              />
+                              <h2 className="text-base font-semibold">{category.category}</h2>
                             </div>
-                          ))}
-                        </div>
 
-                        <div className="grid gap-0">
-                          {category.topics.map((topic, topicIndex) => (
-                            <div
-                              key={`${category.category}-${topic.topic}`}
-                              className="grid gap-3 border-b border-slate-200 py-4 last:border-b-0 md:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))] md:gap-4 md:items-start"
-                            >
-                              <div className="min-w-0">
-                                <div className="text-sm font-medium">{topic.label}</div>
+                            <div className="hidden border-b border-dashed border-slate-200 pb-2 md:grid md:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))] md:gap-4">
+                              <div className="text-muted-foreground text-xs font-medium">
+                                Topic
                               </div>
-
                               {marketingChoices.map((choice) => (
-                                <label
+                                <div
                                   key={choice.id}
-                                  className="flex items-center gap-2 text-sm md:justify-center"
+                                  className="text-muted-foreground text-center text-xs font-medium"
                                 >
-                                  <input
-                                    type="radio"
-                                    name={`${category.category}-${topic.topic}`}
-                                    checked={topic.option === choice.id}
-                                    onChange={() =>
-                                      updateTopicOption(categoryIndex, topicIndex, choice.id)
-                                    }
-                                    className="accent-primary size-4"
-                                  />
-                                  <span className="md:hidden">{choice.label}</span>
-                                </label>
+                                  {choice.label}
+                                </div>
                               ))}
                             </div>
-                          ))}
+
+                            <div className="grid gap-0">
+                              {category.topics.map((topic, topicIndex) => (
+                                <div
+                                  key={`${category.category}-${topic.topic}`}
+                                  className="grid gap-3 border-b border-slate-200 py-4 last:border-b-0 md:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))] md:gap-4 md:items-start"
+                                >
+                                  <div className="min-w-0">
+                                    <div className="text-sm font-medium">{topic.label}</div>
+                                  </div>
+
+                                  {marketingChoices.map((choice) => (
+                                    <label
+                                      key={choice.id}
+                                      className="flex items-center gap-2 text-sm md:justify-center"
+                                    >
+                                      <input
+                                        type="radio"
+                                        name={`${category.category}-${topic.topic}`}
+                                        checked={topic.option === choice.id}
+                                        onChange={() =>
+                                          updateTopicOption(categoryIndex, topicIndex, choice.id)
+                                        }
+                                        className="accent-primary size-4"
+                                      />
+                                      <span className="md:hidden">{choice.label}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              ))}
+                            </div>
+                          </section>
+                        );
+                      })}
+
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                          <div className="min-w-0">
+                            <div className="text-sm font-semibold">Opt out of all marketing</div>
+                            <p className="text-muted-foreground mt-1 text-xs leading-5">
+                              Turn this on to move every optional marketing preference to
+                              No Thanks. If you change any single row back, this switch will
+                              automatically return to off.
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={isGlobalMarketingOptOut}
+                            onClick={toggleGlobalMarketingOptOut}
+                            className={cn(
+                              'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors',
+                              isGlobalMarketingOptOut
+                                ? 'border-primary/20 bg-primary'
+                                : 'border-slate-300 bg-slate-200',
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                'bg-background pointer-events-none inline-block size-5 rounded-full border border-white/80 shadow-sm transition-transform',
+                                isGlobalMarketingOptOut ? 'translate-x-6' : 'translate-x-1',
+                              )}
+                            />
+                            <span className="sr-only">Toggle opt out of all marketing</span>
+                          </button>
                         </div>
-                      </section>
-                    );
-                  })}
-
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold">Opt out of all marketing</div>
-                        <p className="text-muted-foreground mt-1 text-xs leading-5">
-                          Turn this on to move every optional marketing preference to
-                          No Thanks. If you change any single row back, this switch will
-                          automatically return to off.
-                        </p>
                       </div>
+                    </CardContent>
+                  </Card>
 
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={isGlobalMarketingOptOut}
-                        onClick={toggleGlobalMarketingOptOut}
-                        className={cn(
-                          'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors',
-                          isGlobalMarketingOptOut
-                            ? 'border-primary/20 bg-primary'
-                            : 'border-slate-300 bg-slate-200',
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            'bg-background pointer-events-none inline-block size-5 rounded-full border border-white/80 shadow-sm transition-transform',
-                            isGlobalMarketingOptOut ? 'translate-x-6' : 'translate-x-1',
-                          )}
-                        />
-                        <span className="sr-only">Toggle opt out of all marketing</span>
-                      </button>
-                    </div>
+                  <div className="flex justify-end">
+                    <Button
+                      size="lg"
+                      onClick={handleSave}
+                      disabled={!isDirty || isLoadingPreferences || isSavingPreferences}
+                    >
+                      <Mail className="size-4" />
+                      Save Changes
+                    </Button>
                   </div>
-                </CardContent>
-              </Card>
-
-              <div className="flex justify-end">
-                <Button
-                  size="lg"
-                  onClick={handleSave}
-                  disabled={!isDirty || isLoadingPreferences || isSavingPreferences}
-                >
-                  <Mail className="size-4" />
-                  Save Changes
-                </Button>
-              </div>
+                </>
+              ) : null}
             </>
           ) : null}
 
