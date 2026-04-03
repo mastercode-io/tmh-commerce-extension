@@ -193,10 +193,14 @@ export async function fetchNotificationPreferences(
   requestUrl.searchParams.set('email', email);
 
   const response = await fetch(requestUrl.toString(), {
-    method: 'GET',
+    // The current CRM function returns email_options on non-GET requests and
+    // the published endpoint reports a missing body when called as a raw GET.
+    method: 'POST',
     headers: {
       Accept: 'application/json',
+      'Content-Type': 'application/json',
     },
+    body: JSON.stringify({ email }),
     cache: 'no-store',
   });
 
@@ -206,7 +210,7 @@ export async function fetchNotificationPreferences(
   const upstreamBody =
     typeof envelope?.body === 'string' ? parseMaybeJson(envelope.body) : envelope?.body;
   const debug = createDebugPayload(
-    'GET',
+    'POST',
     requestUrl.toString(),
     upstreamStatus || 502,
     payload,
