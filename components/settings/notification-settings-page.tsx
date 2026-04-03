@@ -116,6 +116,20 @@ function getFriendlyLoadErrorMessage(status: number, fallback?: string) {
   return fallback ?? 'Unable to load notification preferences.';
 }
 
+function getUserFacingClientError(
+  error: unknown,
+  action: 'load' | 'save',
+  devMode: boolean,
+) {
+  if (devMode && error instanceof Error) {
+    return error.message;
+  }
+
+  return action === 'load'
+    ? 'Something went wrong. Please try again later.'
+    : 'Something went wrong while saving your preferences. Please try again later.';
+}
+
 export function NotificationSettingsPage({
   email,
   devMode,
@@ -199,9 +213,7 @@ export function NotificationSettingsPage({
         setPageError(
           error instanceof NotificationLoadError
             ? error.message
-            : error instanceof Error
-              ? error.message
-              : 'Unable to load notification preferences.',
+            : getUserFacingClientError(error, 'load', devMode),
         );
         setDebugPayload(
           error instanceof NotificationLoadError ? error.debug ?? null : null,
@@ -323,11 +335,7 @@ export function NotificationSettingsPage({
       );
       setIsGloballyBlocked(!essentialOptIn);
     } catch (error) {
-      setPageError(
-        error instanceof Error
-          ? error.message
-          : 'Unable to save notification preferences.',
-      );
+      setPageError(getUserFacingClientError(error, 'save', devMode));
     } finally {
       setIsSavingPreferences(false);
     }
