@@ -2,6 +2,11 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+Optional environment variables:
+
+- `DEV_MODE`: when set to `true`, the notification settings page still calls CRM but also exposes the raw upstream response in a debug card.
+- `TMH_GENERAL_ENQUIRY_BOOKING_URL`: external booking link used by the shared header `Schedule a Call` action. Defaults to `https://bookings.thetrademarkhelpline.com/#/general-enquiry`.
+
 First, run the development server:
 
 ```bash

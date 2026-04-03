@@ -1,0 +1,57 @@
+[
+  {
+    "category": "Newsletters",
+    "topics": [
+      { "topic": "Our Newsletter", "label": "Our Newsletter", "option": "Keep Me Posted" }
+    ]
+  },
+  {
+    "category": "Earning Through Referrals",
+    "topics": [
+      { "topic": "Personal Benefit from Business Cash", "label": "Earn Rewards from Introductions", "option": "Keep Me Posted" },
+      { "topic": "Referral Reward Programme", "label": "Add Trademarks to your product range", "option": "Keep Me Posted" },
+      { "topic": "Website Feature / Case Study", "label": "Promote your Goods & Services", "option": "Keep Me Posted" }
+    ]
+  },
+  {
+    "category": "Financial Advice",
+    "topics": [
+      { "topic": "Investments", "label": "Investment Advice", "option": "Keep Me Posted" },
+      { "topic": "ISA", "label": "ISA Advice", "option": "Keep Me Posted" },
+      { "topic": "Keyman & Relevant Life Cover", "label": "Insurance (Life, Critical Illness, Personal Payment Protection etc)", "option": "Keep Me Posted" },
+      { "topic": "Pensions & Investments", "label": "Pension Advice", "option": "Keep Me Posted" },
+      { "topic": "Personal Lending", "label": "Other Lending", "option": "Keep Me Posted" },
+      { "topic": "Personal Mortgages", "label": "Mortgages", "option": "Keep Me Posted" }
+    ]
+  },
+  {
+    "category": "Legal Services",
+    "topics": [
+      { "topic": "Consumer Claims & Litigation", "label": "Consumer Claims & Litigation", "option": "Keep Me Posted" },
+      { "topic": "Conveyancing", "label": "Conveyancing", "option": "Keep Me Posted" },
+      { "topic": "Help with Personal Guarantees", "label": "Help with Personal Guarantees", "option": "Keep Me Posted" },
+      { "topic": "Matrimonial", "label": "Matrimonial", "option": "Keep Me Posted" },
+      { "topic": "Wills & Estate Planning", "label": "Wills & Estate Planning", "option": "Keep Me Posted" }
+    ]
+  },
+  {
+    "category": "Investing",
+    "topics": [
+      { "topic": "Business Pensions", "label": "Business Pension Planning", "option": "Keep Me Posted" },
+      { "topic": "Private Investing", "label": "Investment Opportunities", "option": "Keep Me Posted" }
+    ]
+  },
+  {
+    "category": "Business Services",
+    "topics": [
+      { "topic": "Coaching & Consultancy", "label": "Business Coaching & Consultancy", "option": "Keep Me Posted" },
+      { "topic": "Corporate Governance", "label": "Corporate Advice (Restructuring, Corporate Governance)", "option": "Keep Me Posted" },
+      { "topic": "Funding for Cashflow", "label": "Raising Business Finance", "option": "Keep Me Posted" },
+      { "topic": "General Business Insurance", "label": "Business Insurance", "option": "Keep Me Posted" },
+      { "topic": "HR, Health & Safety & ISO Certification", "label": "HR, Health & Safety & ISO Certification", "option": "Keep Me Posted" },
+      { "topic": "Marketing & SEO", "label": "Sales, Branding, Marketing & Rewards", "option": "Keep Me Posted" },
+      { "topic": "Succcession, Wills & Estate Planning", "label": "Succession Planning & Estate Planning", "option": "Keep Me Posted" },
+      { "topic": "Tax Planning & Relief", "label": "Tax Planning & Tax Relief", "option": "Keep Me Posted" }
+    ]
+  }
+]
