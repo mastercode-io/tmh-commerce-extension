@@ -116,6 +116,7 @@ export function NotificationSettingsPage({
   const [isSavingPreferences, setIsSavingPreferences] = React.useState(false);
   const [pageError, setPageError] = React.useState<string | null>(null);
   const [hasBlockingLoadError, setHasBlockingLoadError] = React.useState(false);
+  const [hasResolvedInitialLoad, setHasResolvedInitialLoad] = React.useState(false);
   const normalizedEmail = email?.trim() ?? '';
 
   React.useEffect(() => {
@@ -125,6 +126,7 @@ export function NotificationSettingsPage({
       setIsLoadingPreferences(true);
       setPageError(null);
       setHasBlockingLoadError(false);
+      setHasResolvedInitialLoad(false);
 
       try {
         const url = normalizedEmail
@@ -151,6 +153,7 @@ export function NotificationSettingsPage({
 
         setCategories(nextCategories);
         setSavedCategories(nextCategories);
+        setHasResolvedInitialLoad(true);
       } catch (error) {
         if (cancelled) {
           return;
@@ -166,6 +169,7 @@ export function NotificationSettingsPage({
               ? error.message
               : 'Unable to load notification preferences.',
         );
+        setHasResolvedInitialLoad(true);
       } finally {
         if (!cancelled) {
           setIsLoadingPreferences(false);
@@ -270,12 +274,14 @@ export function NotificationSettingsPage({
 
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-6 pb-10">
+      {!hasResolvedInitialLoad ? null : (
+        <>
       <PageHeader
         title="Email Preferences"
         description="Manage essential trademark communications separately from optional marketing content."
       />
 
-      {normalizedEmail ? (
+      {normalizedEmail && !hasBlockingLoadError ? (
         <div className="text-muted-foreground -mt-3 text-sm">
           Managing preferences for{' '}
           <span className="text-foreground font-medium">{normalizedEmail}</span>
@@ -491,6 +497,8 @@ export function NotificationSettingsPage({
           </div>
         </>
       ) : null}
+        </>
+      )}
     </div>
   );
 }

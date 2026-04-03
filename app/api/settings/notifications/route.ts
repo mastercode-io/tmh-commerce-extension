@@ -14,6 +14,25 @@ function isDevModeEnabled() {
   return process.env.DEV_MODE?.toLowerCase() === 'true';
 }
 
+function getUserFacingError(
+  error: NotificationPreferencesError,
+  action: 'load' | 'save',
+) {
+  if (error.status === 400) {
+    return action === 'load'
+      ? 'Bad request. Please check the link and try again.'
+      : 'Bad request. Please review your changes and try again.';
+  }
+
+  if (error.status === 404) {
+    return 'User not found. We could not find email preferences for this email address.';
+  }
+
+  return action === 'load'
+    ? 'We could not load email preferences right now. Please try again later.'
+    : 'We could not save email preferences right now. Please try again later.';
+}
+
 function validateCategories(
   payload: unknown,
 ): payload is NotificationPreferencesPayload {
@@ -48,7 +67,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           code: error.code,
-          message: error.message,
+          message: getUserFacingError(error, 'load'),
         },
         { status: error.status },
       );
@@ -103,7 +122,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           code: error.code,
-          message: error.message,
+          message: getUserFacingError(error, 'save'),
         },
         { status: error.status },
       );
