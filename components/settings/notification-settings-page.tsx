@@ -60,6 +60,22 @@ class NotificationLoadError extends Error {
   }
 }
 
+class NotificationApiResponseError extends Error {
+  status: number;
+  debug?: NotificationPreferencesResponse['debug'];
+
+  constructor(
+    message: string,
+    status: number,
+    debug?: NotificationPreferencesResponse['debug'],
+  ) {
+    super(message);
+    this.name = 'NotificationApiResponseError';
+    this.status = status;
+    this.debug = debug;
+  }
+}
+
 type PreferenceChoice = {
   id: NotificationPreferenceOption;
   label: string;
@@ -130,6 +146,34 @@ function getUserFacingClientError(
     : 'Something went wrong while saving your preferences. Please try again later.';
 }
 
+async function parseApiResponse(
+  response: Response,
+  requestMethod: 'GET' | 'POST',
+  requestUrl: string,
+): Promise<NotificationPreferencesResponse> {
+  const responseText = await response.text();
+
+  if (!responseText) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(responseText) as NotificationPreferencesResponse;
+  } catch {
+    throw new NotificationApiResponseError(
+      'The server returned a non-JSON response.',
+      response.status,
+      {
+        requestMethod,
+        requestUrl,
+        upstreamStatus: response.status,
+        responsePayload: responseText,
+        responseBody: responseText,
+      },
+    );
+  }
+}
+
 export function NotificationSettingsPage({
   email,
   devMode,
@@ -178,7 +222,7 @@ export function NotificationSettingsPage({
           method: 'GET',
           cache: 'no-store',
         });
-        const payload = (await response.json()) as NotificationPreferencesResponse;
+        const payload = await parseApiResponse(response, 'GET', url);
 
         if (!response.ok) {
           throw new NotificationLoadError(
@@ -213,10 +257,15 @@ export function NotificationSettingsPage({
         setPageError(
           error instanceof NotificationLoadError
             ? error.message
+            : error instanceof NotificationApiResponseError
+              ? getUserFacingClientError(error, 'load', devMode)
             : getUserFacingClientError(error, 'load', devMode),
         );
         setDebugPayload(
-          error instanceof NotificationLoadError ? error.debug ?? null : null,
+          error instanceof NotificationLoadError ||
+            error instanceof NotificationApiResponseError
+            ? error.debug ?? null
+            : null,
         );
         setHasResolvedInitialLoad(true);
       } finally {
@@ -314,7 +363,7 @@ export function NotificationSettingsPage({
         },
         body: JSON.stringify(requestBody),
       });
-      const payload = (await response.json()) as NotificationPreferencesResponse;
+      const payload = await parseApiResponse(response, 'POST', url);
 
       if (!response.ok) {
         setDebugPayload(payload.debug ?? debugPayload);
@@ -335,6 +384,9 @@ export function NotificationSettingsPage({
       );
       setIsGloballyBlocked(!essentialOptIn);
     } catch (error) {
+      if (error instanceof NotificationApiResponseError) {
+        setDebugPayload(error.debug ?? null);
+      }
       setPageError(getUserFacingClientError(error, 'save', devMode));
     } finally {
       setIsSavingPreferences(false);
