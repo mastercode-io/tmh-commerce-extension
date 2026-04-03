@@ -70,6 +70,7 @@ export async function GET(request: NextRequest) {
       email: preferences.email,
       categories: preferences.categories,
       ...(preferences.optOut ? { optOut: true as const } : {}),
+      ...(preferences.new ? { new: true as const } : {}),
       ...(isDevModeEnabled() && preferences.debug ? { debug: preferences.debug } : {}),
     });
   } catch (error) {

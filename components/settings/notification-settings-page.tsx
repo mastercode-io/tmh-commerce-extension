@@ -33,6 +33,7 @@ type NotificationPreferencesResponse = {
   email?: string;
   categories?: NotificationPreferencesPayload;
   optOut?: true;
+  new?: true;
   message?: string;
   debug?: {
     requestMethod: 'GET' | 'POST';
@@ -139,6 +140,7 @@ export function NotificationSettingsPage({
     React.useState<NotificationPreferencesResponse['debug'] | null>(null);
   const [saveSuccessMessage, setSaveSuccessMessage] = React.useState<string | null>(null);
   const [isGloballyBlocked, setIsGloballyBlocked] = React.useState(false);
+  const [isNewPreferenceSet, setIsNewPreferenceSet] = React.useState(false);
   const normalizedEmail = email?.trim() ?? '';
 
   React.useEffect(() => {
@@ -152,6 +154,7 @@ export function NotificationSettingsPage({
       setDebugPayload(null);
       setSaveSuccessMessage(null);
       setIsGloballyBlocked(false);
+      setIsNewPreferenceSet(false);
 
       try {
         const url = normalizedEmail
@@ -183,6 +186,7 @@ export function NotificationSettingsPage({
         setSavedCategories(nextCategories);
         setDebugPayload(payload.debug ?? null);
         setIsGloballyBlocked(payload.optOut === true);
+        setIsNewPreferenceSet(payload.new === true);
         setHasResolvedInitialLoad(true);
       } catch (error) {
         if (cancelled) {
@@ -218,7 +222,9 @@ export function NotificationSettingsPage({
   }, [devMode, normalizedEmail]);
 
   const isDirty =
-    essentialOptIn !== savedEssentialOptIn || !areCategoriesEqual(categories, savedCategories);
+    isNewPreferenceSet ||
+    essentialOptIn !== savedEssentialOptIn ||
+    !areCategoriesEqual(categories, savedCategories);
 
   const warningVisible = !essentialOptIn;
   const showMarketingPreferences = essentialOptIn;
@@ -309,6 +315,7 @@ export function NotificationSettingsPage({
       setSavedCategories(nextCategories);
       setSavedEssentialOptIn(essentialOptIn);
       setDebugPayload(payload.debug ?? debugPayload);
+      setIsNewPreferenceSet(false);
       setSaveSuccessMessage(
         essentialOptIn
           ? 'Your preferences have been updated, thank you.'
@@ -405,7 +412,7 @@ export function NotificationSettingsPage({
                   disabled={!isDirty || isLoadingPreferences || isSavingPreferences}
                 >
                   <Mail className="size-4" />
-                  Save Changes
+                  {isSavingPreferences ? 'Saving...' : 'Save Changes'}
                 </Button>
               </div>
 
@@ -595,7 +602,7 @@ export function NotificationSettingsPage({
                       disabled={!isDirty || isLoadingPreferences || isSavingPreferences}
                     >
                       <Mail className="size-4" />
-                      Save Changes
+                      {isSavingPreferences ? 'Saving...' : 'Save Changes'}
                     </Button>
                   </div>
                 </>

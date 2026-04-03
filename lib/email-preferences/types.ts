@@ -31,5 +31,5 @@ export type NotificationPreferencesOptOutRequest = {
 };
 
 export type NotificationPreferencesGetResponse =
-  | NotificationPreferencesSaveRequest
-  | NotificationPreferencesOptOutRequest;
+  | (NotificationPreferencesSaveRequest & { new?: true })
+  | (NotificationPreferencesOptOutRequest & { new?: true });

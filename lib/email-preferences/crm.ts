@@ -20,17 +20,20 @@ type NotificationPreferencesEnvelope = {
   email?: unknown;
   categories?: unknown;
   optOut?: unknown;
+  new?: unknown;
 };
 
 type NormalizedNotificationCategoriesResponse = {
   email?: string;
   categories: NotificationPreferencesPayload;
+  new?: true;
 };
 
 export type NotificationPreferencesResponse = {
   email: string;
   categories: NotificationPreferencesPayload;
   optOut?: true;
+  new?: true;
   debug?: NotificationPreferencesDebug;
 };
 
@@ -163,6 +166,7 @@ function normalizeNotificationResponse(
     return {
       email: envelope.email,
       optOut: true,
+      ...(envelope.new === true ? { new: true as const } : {}),
     };
   }
 
@@ -185,6 +189,7 @@ function normalizeNotificationResponse(
   return {
     email: typeof envelope.email === 'string' ? envelope.email : undefined,
     categories: envelope.categories,
+    ...(envelope.new === true ? { new: true as const } : {}),
   };
 }
 
@@ -268,6 +273,9 @@ export async function fetchNotificationPreferences(
       categories:
         'categories' in normalizedResponse ? normalizedResponse.categories : [],
       ...('optOut' in normalizedResponse ? { optOut: true as const } : {}),
+      ...('new' in normalizedResponse && normalizedResponse.new
+        ? { new: true as const }
+        : {}),
       debug,
     };
   } catch (error) {
