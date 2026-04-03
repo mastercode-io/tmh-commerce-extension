@@ -32,6 +32,7 @@ type TopicMeta = {
 type NotificationPreferencesResponse = {
   email?: string;
   categories?: NotificationPreferencesPayload;
+  optOut?: true;
   message?: string;
   debug?: {
     requestMethod: 'GET' | 'POST';
@@ -176,9 +177,12 @@ export function NotificationSettingsPage({
 
         const nextCategories = payload.categories ?? [];
 
+        setEssentialOptIn(!payload.optOut);
+        setSavedEssentialOptIn(!payload.optOut);
         setCategories(nextCategories);
         setSavedCategories(nextCategories);
         setDebugPayload(payload.debug ?? null);
+        setIsGloballyBlocked(payload.optOut === true);
         setHasResolvedInitialLoad(true);
       } catch (error) {
         if (cancelled) {
@@ -370,6 +374,25 @@ export function NotificationSettingsPage({
                   or call us on 0161 833 5400 between 9am and 5pm Monday to Friday.
                 </div>
               ) : null}
+            </div>
+          ) : null}
+
+          {isGloballyBlocked && !saveSuccessMessage ? (
+            <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-950">
+              <div className="font-medium">Email delivery has been blocked globally.</div>
+              <div className="mt-2 leading-6">
+                Your email has been blocked globally on our systems, therefore if
+                you have done this in error, you need to book an appointment{' '}
+                <a
+                  href={bookingUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary font-medium underline underline-offset-2"
+                >
+                  here
+                </a>{' '}
+                or call us on 0161 833 5400 between 9am and 5pm Monday to Friday.
+              </div>
             </div>
           ) : null}
 

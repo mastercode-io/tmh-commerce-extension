@@ -29,3 +29,7 @@ export type NotificationPreferencesOptOutRequest = {
   email: string;
   optOut: true;
 };
+
+export type NotificationPreferencesGetResponse =
+  | NotificationPreferencesSaveRequest
+  | NotificationPreferencesOptOutRequest;

@@ -69,6 +69,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       email: preferences.email,
       categories: preferences.categories,
+      ...(preferences.optOut ? { optOut: true as const } : {}),
       ...(isDevModeEnabled() && preferences.debug ? { debug: preferences.debug } : {}),
     });
   } catch (error) {
@@ -106,18 +107,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (isDevModeEnabled()) {
-    return NextResponse.json({
-      email: payload.email,
-      categories: 'categories' in payload ? payload.categories : [],
-    });
-  }
-
   try {
     const preferences = await saveNotificationPreferences(payload);
     return NextResponse.json({
       email: preferences.email,
       categories: preferences.categories,
+      ...(preferences.optOut ? { optOut: true as const } : {}),
       ...(isDevModeEnabled() && preferences.debug ? { debug: preferences.debug } : {}),
     });
   } catch (error) {

@@ -19,11 +19,18 @@ type CrmApiEnvelope = {
 type NotificationPreferencesEnvelope = {
   email?: unknown;
   categories?: unknown;
+  optOut?: unknown;
+};
+
+type NormalizedNotificationCategoriesResponse = {
+  email?: string;
+  categories: NotificationPreferencesPayload;
 };
 
 export type NotificationPreferencesResponse = {
   email: string;
   categories: NotificationPreferencesPayload;
+  optOut?: true;
   debug?: NotificationPreferencesDebug;
 };
 
@@ -131,9 +138,9 @@ function isNotificationPreferenceCategory(
   });
 }
 
-function normalizeNotificationCategories(
+function normalizeNotificationResponse(
   body: unknown,
-): { email?: string; categories: NotificationPreferencesPayload } {
+): NormalizedNotificationCategoriesResponse | NotificationPreferencesOptOutRequest {
   if (!body || typeof body !== 'object') {
     throw new NotificationPreferencesError(
       'CRM response did not include a notification preferences object.',
@@ -143,6 +150,21 @@ function normalizeNotificationCategories(
   }
 
   const envelope = body as NotificationPreferencesEnvelope;
+
+  if (envelope.optOut === true) {
+    if (typeof envelope.email !== 'string') {
+      throw new NotificationPreferencesError(
+        'CRM response did not include an email for the opt-out state.',
+        502,
+        'invalid_response',
+      );
+    }
+
+    return {
+      email: envelope.email,
+      optOut: true,
+    };
+  }
 
   if (!Array.isArray(envelope.categories)) {
     throw new NotificationPreferencesError(
@@ -239,11 +261,13 @@ export async function fetchNotificationPreferences(
   }
 
   try {
-    const normalizedResponse = normalizeNotificationCategories(upstreamBody);
+    const normalizedResponse = normalizeNotificationResponse(upstreamBody);
 
     return {
       email: normalizedResponse.email ?? email,
-      categories: normalizedResponse.categories,
+      categories:
+        'categories' in normalizedResponse ? normalizedResponse.categories : [],
+      ...('optOut' in normalizedResponse ? { optOut: true as const } : {}),
       debug,
     };
   } catch (error) {
@@ -312,8 +336,9 @@ export async function saveNotificationPreferences(
 
   try {
     if (upstreamBody != null) {
-      const normalizedResponse = normalizeNotificationCategories(upstreamBody);
-      normalizedCategories = normalizedResponse.categories;
+      const normalizedResponse = normalizeNotificationResponse(upstreamBody);
+      normalizedCategories =
+        'categories' in normalizedResponse ? normalizedResponse.categories : [];
       normalizedEmail = normalizedResponse.email ?? payloadBody.email;
     }
   } catch (error) {
