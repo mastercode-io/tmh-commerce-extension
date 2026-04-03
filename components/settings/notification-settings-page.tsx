@@ -16,8 +16,10 @@ import { PageHeader } from '@/components/common/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type {
+  NotificationPreferencesOptOutRequest,
   NotificationPreferenceOption,
   NotificationPreferencesPayload,
+  NotificationPreferencesSaveRequest,
 } from '@/lib/email-preferences/types';
 import { NOTIFICATION_OPTION_LABELS } from '@/lib/email-preferences/types';
 import { cn } from '@/lib/utils';
@@ -115,9 +117,11 @@ function getFriendlyLoadErrorMessage(status: number, fallback?: string) {
 export function NotificationSettingsPage({
   email,
   devMode,
+  bookingUrl,
 }: {
   email?: string;
   devMode: boolean;
+  bookingUrl: string;
 }) {
   const [savedEssentialOptIn, setSavedEssentialOptIn] = React.useState(true);
   const [essentialOptIn, setEssentialOptIn] = React.useState(true);
@@ -132,6 +136,8 @@ export function NotificationSettingsPage({
   const [hasResolvedInitialLoad, setHasResolvedInitialLoad] = React.useState(false);
   const [debugPayload, setDebugPayload] =
     React.useState<NotificationPreferencesResponse['debug'] | null>(null);
+  const [saveSuccessMessage, setSaveSuccessMessage] = React.useState<string | null>(null);
+  const [isGloballyBlocked, setIsGloballyBlocked] = React.useState(false);
   const normalizedEmail = email?.trim() ?? '';
 
   React.useEffect(() => {
@@ -143,6 +149,8 @@ export function NotificationSettingsPage({
       setHasBlockingLoadError(false);
       setHasResolvedInitialLoad(false);
       setDebugPayload(null);
+      setSaveSuccessMessage(null);
+      setIsGloballyBlocked(false);
 
       try {
         const url = normalizedEmail
@@ -260,17 +268,29 @@ export function NotificationSettingsPage({
   async function handleSave() {
     setIsSavingPreferences(true);
     setPageError(null);
+    setSaveSuccessMessage(null);
 
     try {
       const url = normalizedEmail
         ? `/api/settings/notifications?email=${encodeURIComponent(normalizedEmail)}`
         : '/api/settings/notifications';
+      const requestBody:
+        | NotificationPreferencesSaveRequest
+        | NotificationPreferencesOptOutRequest = essentialOptIn
+        ? {
+            email: normalizedEmail,
+            categories,
+          }
+        : {
+            email: normalizedEmail,
+            optOut: true,
+          };
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(categories),
+        body: JSON.stringify(requestBody),
       });
       const payload = (await response.json()) as NotificationPreferencesResponse;
 
@@ -285,6 +305,12 @@ export function NotificationSettingsPage({
       setSavedCategories(nextCategories);
       setSavedEssentialOptIn(essentialOptIn);
       setDebugPayload(payload.debug ?? debugPayload);
+      setSaveSuccessMessage(
+        essentialOptIn
+          ? 'Your preferences have been updated, thank you.'
+          : 'Thank you for updating your preferences.',
+      );
+      setIsGloballyBlocked(!essentialOptIn);
     } catch (error) {
       setPageError(
         error instanceof Error
@@ -319,7 +345,35 @@ export function NotificationSettingsPage({
             </div>
           ) : null}
 
-          {!hasBlockingLoadError ? (
+          {saveSuccessMessage ? (
+            <div
+              className={cn(
+                'rounded-xl p-4 text-sm',
+                isGloballyBlocked
+                  ? 'border border-rose-200 bg-rose-50/80 text-rose-950'
+                  : 'border border-emerald-200 bg-emerald-50/80 text-emerald-950',
+              )}
+            >
+              <div className="font-medium">{saveSuccessMessage}</div>
+              {isGloballyBlocked ? (
+                <div className="mt-2 leading-6">
+                  Your email has been blocked globally on our systems, therefore if
+                  you have done this in error, you need to book an appointment{' '}
+                  <a
+                    href={bookingUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary font-medium underline underline-offset-2"
+                  >
+                    here
+                  </a>{' '}
+                  or call us on 0161 833 5400 between 9am and 5pm Monday to Friday.
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {!hasBlockingLoadError && !isGloballyBlocked ? (
             <>
               <div className="flex justify-end">
                 <Button

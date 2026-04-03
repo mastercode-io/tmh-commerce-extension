@@ -19,3 +19,13 @@ export type NotificationPreferenceCategory = {
 };
 
 export type NotificationPreferencesPayload = NotificationPreferenceCategory[];
+
+export type NotificationPreferencesSaveRequest = {
+  email: string;
+  categories: NotificationPreferencesPayload;
+};
+
+export type NotificationPreferencesOptOutRequest = {
+  email: string;
+  optOut: true;
+};

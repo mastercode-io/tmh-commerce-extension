@@ -5,7 +5,10 @@ import {
   NotificationPreferencesError,
   saveNotificationPreferences,
 } from '@/lib/email-preferences/crm';
-import type { NotificationPreferencesPayload } from '@/lib/email-preferences/types';
+import type {
+  NotificationPreferencesOptOutRequest,
+  NotificationPreferencesSaveRequest,
+} from '@/lib/email-preferences/types';
 
 export const runtime = 'edge';
 
@@ -32,10 +35,30 @@ function getUserFacingError(
     : 'We could not save email preferences right now. Please try again later.';
 }
 
-function validateCategories(
+function isCategoriesPayload(
   payload: unknown,
-): payload is NotificationPreferencesPayload {
-  return Array.isArray(payload);
+): payload is NotificationPreferencesSaveRequest {
+  return Boolean(
+    payload &&
+      typeof payload === 'object' &&
+      'email' in payload &&
+      typeof payload.email === 'string' &&
+      'categories' in payload &&
+      Array.isArray(payload.categories),
+  );
+}
+
+function isGlobalOptOutPayload(
+  payload: unknown,
+): payload is NotificationPreferencesOptOutRequest {
+  return Boolean(
+    payload &&
+      typeof payload === 'object' &&
+      'email' in payload &&
+      typeof payload.email === 'string' &&
+      'optOut' in payload &&
+      payload.optOut === true,
+  );
 }
 
 export async function GET(request: NextRequest) {
@@ -71,14 +94,13 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const email = request.nextUrl.searchParams.get('email')?.trim() ?? '';
   const payload = (await request.json()) as unknown;
 
-  if (!validateCategories(payload)) {
+  if (!isCategoriesPayload(payload) && !isGlobalOptOutPayload(payload)) {
     return NextResponse.json(
       {
         code: 'invalid_request',
-        message: 'A notification categories array is required.',
+        message: 'A valid email preferences payload is required.',
       },
       { status: 400 },
     );
@@ -86,23 +108,13 @@ export async function POST(request: NextRequest) {
 
   if (isDevModeEnabled()) {
     return NextResponse.json({
-      email,
-      categories: payload,
+      email: payload.email,
+      categories: 'categories' in payload ? payload.categories : [],
     });
   }
 
-  if (!email) {
-    return NextResponse.json(
-      {
-        code: 'invalid_request',
-        message: 'Email is required.',
-      },
-      { status: 400 },
-    );
-  }
-
   try {
-    const preferences = await saveNotificationPreferences(email, payload);
+    const preferences = await saveNotificationPreferences(payload);
     return NextResponse.json({
       email: preferences.email,
       categories: preferences.categories,

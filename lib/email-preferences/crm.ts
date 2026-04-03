@@ -1,6 +1,8 @@
 import type {
   NotificationPreferenceCategory,
+  NotificationPreferencesOptOutRequest,
   NotificationPreferencesPayload,
+  NotificationPreferencesSaveRequest,
 } from '@/lib/email-preferences/types';
 import { NOTIFICATION_OPTION_LABELS } from '@/lib/email-preferences/types';
 
@@ -259,11 +261,12 @@ export async function fetchNotificationPreferences(
 }
 
 export async function saveNotificationPreferences(
-  email: string,
-  categories: NotificationPreferencesPayload,
+  payloadBody:
+    | NotificationPreferencesSaveRequest
+    | NotificationPreferencesOptOutRequest,
 ): Promise<NotificationPreferencesResponse> {
   const requestUrl = new URL(getCrmBaseUrl());
-  requestUrl.searchParams.set('email', email);
+  requestUrl.searchParams.set('email', payloadBody.email);
 
   const response = await fetch(requestUrl.toString(), {
     method: 'POST',
@@ -271,7 +274,7 @@ export async function saveNotificationPreferences(
       Accept: 'application/json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(categories),
+    body: JSON.stringify(payloadBody),
     cache: 'no-store',
   });
 
@@ -303,14 +306,15 @@ export async function saveNotificationPreferences(
     );
   }
 
-  let normalizedCategories = categories;
-  let normalizedEmail = email;
+  let normalizedCategories =
+    'categories' in payloadBody ? payloadBody.categories : [];
+  let normalizedEmail = payloadBody.email;
 
   try {
     if (upstreamBody != null) {
       const normalizedResponse = normalizeNotificationCategories(upstreamBody);
       normalizedCategories = normalizedResponse.categories;
-      normalizedEmail = normalizedResponse.email ?? email;
+      normalizedEmail = normalizedResponse.email ?? payloadBody.email;
     }
   } catch (error) {
     if (error instanceof NotificationPreferencesError) {
