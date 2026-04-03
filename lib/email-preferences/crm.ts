@@ -1,3 +1,9 @@
+import type {
+  NotificationPreferenceCategory,
+  NotificationPreferencesPayload,
+} from '@/lib/email-preferences/types';
+import { NOTIFICATION_OPTION_LABELS } from '@/lib/email-preferences/types';
+
 const NOTIFICATION_SETTINGS_URL_ENV =
   'ZOHO_CLIENT_PORTAL_SETTINGS_NOTIFICATIONS_URL';
 
@@ -8,13 +14,9 @@ type CrmApiEnvelope = {
   };
 };
 
-type EmailOptionsBody = {
-  email_options?: unknown;
-};
-
-export type NotificationPreferences = {
+export type NotificationPreferencesResponse = {
   email: string;
-  emailOptions: Record<string, boolean>;
+  categories: NotificationPreferencesPayload;
 };
 
 export class NotificationPreferencesError extends Error {
@@ -77,53 +79,72 @@ function normalizeErrorMessage(body: unknown, fallback: string) {
   return fallback;
 }
 
-function normalizeEmailOptions(body: unknown) {
-  const candidateEmailOptions =
-    body && typeof body === 'object' && 'email_options' in body
-      ? (body as EmailOptionsBody).email_options
-      : null;
-  const rawEmailOptions: unknown[] | null = Array.isArray(candidateEmailOptions)
-    ? candidateEmailOptions
-    : null;
+function isNotificationPreferenceCategory(
+  value: unknown,
+): value is NotificationPreferenceCategory {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
 
-  if (!rawEmailOptions) {
+  if (
+    !('category' in value) ||
+    typeof value.category !== 'string' ||
+    !('topics' in value) ||
+    !Array.isArray(value.topics)
+  ) {
+    return false;
+  }
+
+  return value.topics.every((topic) => {
+    if (!topic || typeof topic !== 'object') {
+      return false;
+    }
+
+    return (
+      'topic' in topic &&
+      typeof topic.topic === 'string' &&
+      'label' in topic &&
+      typeof topic.label === 'string' &&
+      'option' in topic &&
+      typeof topic.option === 'string' &&
+      NOTIFICATION_OPTION_LABELS.includes(topic.option as never)
+    );
+  });
+}
+
+function normalizeNotificationCategories(
+  body: unknown,
+): NotificationPreferencesPayload {
+  const directCategories = Array.isArray(body) ? body : null;
+  const nestedCategories =
+    body &&
+    typeof body === 'object' &&
+    'email_options' in body &&
+    Array.isArray(body.email_options)
+      ? body.email_options
+      : null;
+  const candidateCategories = directCategories ?? nestedCategories;
+
+  if (!candidateCategories) {
     throw new NotificationPreferencesError(
-      'CRM response did not include an email_options array.',
+      'CRM response did not include a notification categories array.',
       502,
       'invalid_response',
     );
   }
 
-  const emailOptions: Record<string, boolean> = {};
-
-  for (const item of rawEmailOptions) {
-    if (!item || typeof item !== 'object') {
-      continue;
-    }
-
-    for (const [key, value] of Object.entries(item)) {
-      if (typeof value === 'boolean') {
-        emailOptions[key] = value;
-        continue;
-      }
-
-      if (value === 'true') {
-        emailOptions[key] = true;
-        continue;
-      }
-
-      if (value === 'false') {
-        emailOptions[key] = false;
-      }
-    }
+  if (!candidateCategories.every(isNotificationPreferenceCategory)) {
+    throw new NotificationPreferencesError(
+      'CRM response included invalid notification category data.',
+      502,
+      'invalid_response',
+    );
   }
 
-  return emailOptions;
+  return candidateCategories;
 }
 
-export async function fetchNotificationPreferences(
-  email: string,
-): Promise<NotificationPreferences> {
+function getCrmBaseUrl() {
   const baseUrl = process.env[NOTIFICATION_SETTINGS_URL_ENV];
 
   if (!baseUrl) {
@@ -134,7 +155,13 @@ export async function fetchNotificationPreferences(
     );
   }
 
-  const requestUrl = new URL(baseUrl);
+  return baseUrl;
+}
+
+export async function fetchNotificationPreferences(
+  email: string,
+): Promise<NotificationPreferencesResponse> {
+  const requestUrl = new URL(getCrmBaseUrl());
   requestUrl.searchParams.set('email', email);
 
   const response = await fetch(requestUrl.toString(), {
@@ -164,6 +191,49 @@ export async function fetchNotificationPreferences(
 
   return {
     email,
-    emailOptions: normalizeEmailOptions(upstreamBody),
+    categories: normalizeNotificationCategories(upstreamBody),
+  };
+}
+
+export async function saveNotificationPreferences(
+  email: string,
+  categories: NotificationPreferencesPayload,
+): Promise<NotificationPreferencesResponse> {
+  const requestUrl = new URL(getCrmBaseUrl());
+  requestUrl.searchParams.set('email', email);
+
+  const response = await fetch(requestUrl.toString(), {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(categories),
+    cache: 'no-store',
+  });
+
+  const payload = await parseResponsePayload(response);
+  const envelope = extractEnvelope(payload);
+  const upstreamStatus = envelope?.status_code ?? response.status;
+  const upstreamBody =
+    typeof envelope?.body === 'string' ? parseMaybeJson(envelope.body) : envelope?.body;
+
+  if (!response.ok || upstreamStatus >= 400) {
+    throw new NotificationPreferencesError(
+      normalizeErrorMessage(
+        upstreamBody,
+        `CRM save request failed with status ${upstreamStatus}.`,
+      ),
+      upstreamStatus || 502,
+      'upstream_error',
+    );
+  }
+
+  const normalizedCategories =
+    upstreamBody == null ? categories : normalizeNotificationCategories(upstreamBody);
+
+  return {
+    email,
+    categories: normalizedCategories,
   };
 }

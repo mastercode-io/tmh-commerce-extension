@@ -1,179 +1,57 @@
 [
   {
-    "id": "trademark-updates",
-    "title": "Essential Trademark Updates",
-    "options": [
-      {
-        "id": "trademarkUpdates",
-        "title": "Updates about your trademarks",
-        "subtitle": "Important notices and reminders."
-      }
+    "category": "Newsletters",
+    "topics": [
+      { "topic": "Our Newsletter", "label": "Our Newsletter", "option": "Keep Me Posted" }
     ]
   },
   {
-    "id": "referrals",
-    "title": "Earning Through Referrals",
-    "options": [
-      {
-        "id": "referralsIntroductions",
-        "title": "Earn Rewards from Introductions",
-        "subtitle": "Earn rewards from introductions."
-      },
-      {
-        "id": "referralsProductRange",
-        "title": "Add Trademarks to your product range",
-        "subtitle": "Add trademarks to your services."
-      },
-      {
-        "id": "referralsPromoteGoodsServices",
-        "title": "Promote your Goods & Services",
-        "subtitle": "Promote your business online."
-      }
+    "category": "Earning Through Referrals",
+    "topics": [
+      { "topic": "Personal Benefit from Business Cash", "label": "Earn Rewards from Introductions", "option": "Keep Me Posted" },
+      { "topic": "Referral Reward Programme", "label": "Add Trademarks to your product range", "option": "Keep Me Posted" },
+      { "topic": "Website Feature / Case Study", "label": "Promote your Goods & Services", "option": "Keep Me Posted" }
     ]
   },
   {
-    "id": "financial",
-    "title": "Financial Advice",
-    "options": [
-      {
-        "id": "financialPensionAdvice",
-        "title": "Pension Advice",
-        "subtitle": "Pension advice services."
-      },
-      {
-        "id": "financialInvestmentAdvice",
-        "title": "Investment Advice",
-        "subtitle": "Investment advice services."
-      },
-      {
-        "id": "financialIsaAdvice",
-        "title": "ISA Advice",
-        "subtitle": "ISA advice services."
-      },
-      {
-        "id": "financialInsuranceAdvice",
-        "title": "Insurance (Life, Critical Illness, Personal Payment Protection etc)",
-        "subtitle": "Insurance advice."
-      },
-      {
-        "id": "financialMortgages",
-        "title": "Mortgages",
-        "subtitle": "Mortgage advice services."
-      },
-      {
-        "id": "financialOtherLending",
-        "title": "Other Lending",
-        "subtitle": "Other lending advice."
-      }
+    "category": "Financial Advice",
+    "topics": [
+      { "topic": "Investments", "label": "Investment Advice", "option": "Keep Me Posted" },
+      { "topic": "ISA", "label": "ISA Advice", "option": "Keep Me Posted" },
+      { "topic": "Keyman & Relevant Life Cover", "label": "Insurance (Life, Critical Illness, Personal Payment Protection etc)", "option": "Keep Me Posted" },
+      { "topic": "Pensions & Investments", "label": "Pension Advice", "option": "Keep Me Posted" },
+      { "topic": "Personal Lending", "label": "Other Lending", "option": "Keep Me Posted" },
+      { "topic": "Personal Mortgages", "label": "Mortgages", "option": "Keep Me Posted" }
     ]
   },
   {
-    "id": "legal",
-    "title": "Legal Services",
-    "options": [
-      {
-        "id": "legalPersonalGuarantees",
-        "title": "Help with Personal Guarantees",
-        "subtitle": "Personal guarantee advice."
-      },
-      {
-        "id": "legalConsumerClaims",
-        "title": "Consumer Claims & Litigation",
-        "subtitle": "Claims and litigation support."
-      },
-      {
-        "id": "legalWillsEstatePlanning",
-        "title": "Wills & Estate Planning",
-        "subtitle": "Wills and estate planning."
-      },
-      {
-        "id": "legalConveyancing",
-        "title": "Conveyancing",
-        "subtitle": "Property conveyancing."
-      },
-      {
-        "id": "legalMatrimonial",
-        "title": "Matrimonial",
-        "subtitle": "Matrimonial legal advice."
-      }
+    "category": "Legal Services",
+    "topics": [
+      { "topic": "Consumer Claims & Litigation", "label": "Consumer Claims & Litigation", "option": "Keep Me Posted" },
+      { "topic": "Conveyancing", "label": "Conveyancing", "option": "Keep Me Posted" },
+      { "topic": "Help with Personal Guarantees", "label": "Help with Personal Guarantees", "option": "Keep Me Posted" },
+      { "topic": "Matrimonial", "label": "Matrimonial", "option": "Keep Me Posted" },
+      { "topic": "Wills & Estate Planning", "label": "Wills & Estate Planning", "option": "Keep Me Posted" }
     ]
   },
   {
-    "id": "investing",
-    "title": "Investing",
-    "options": [
-      {
-        "id": "investingOpportunities",
-        "title": "Investment Opportunities",
-        "subtitle": "Investment opportunities."
-      },
-      {
-        "id": "investingBusinessPensionPlanning",
-        "title": "Business Pension Planning",
-        "subtitle": "Business pension planning."
-      }
+    "category": "Investing",
+    "topics": [
+      { "topic": "Business Pensions", "label": "Business Pension Planning", "option": "Keep Me Posted" },
+      { "topic": "Private Investing", "label": "Investment Opportunities", "option": "Keep Me Posted" }
     ]
   },
   {
-    "id": "business",
-    "title": "Business Services",
-    "options": [
-      {
-        "id": "businessRaisingFinance",
-        "title": "Raising Business Finance",
-        "subtitle": "Business funding and finance."
-      },
-      {
-        "id": "businessCorporateAdvice",
-        "title": "Corporate Advice (Restructuring, Corporate, Governance)",
-        "subtitle": "Corporate and governance advice."
-      },
-      {
-        "id": "businessSuccessionPlanning",
-        "title": "Succession Planning & Estate Planning",
-        "subtitle": "Succession and estate planning."
-      },
-      {
-        "id": "businessGeneralInsuranceAccountancy",
-        "title": "General Insurance, Accountancy",
-        "subtitle": "General business support."
-      },
-      {
-        "id": "businessTaxPlanningRelief",
-        "title": "Tax Planning & Tax Relief",
-        "subtitle": "Tax planning and tax advice."
-      },
-      {
-        "id": "businessInsurance",
-        "title": "Business Insurance",
-        "subtitle": "Business insurance advice."
-      },
-      {
-        "id": "businessCoachingConsultancy",
-        "title": "Business Coaching & Consultancy",
-        "subtitle": "Business coaching and advice."
-      },
-      {
-        "id": "businessHrHealthSafetyIso",
-        "title": "HR, Health & Safety & ISO Certification",
-        "subtitle": "HR and compliance support."
-      },
-      {
-        "id": "businessSalesBrandingMarketingRewards",
-        "title": "Sales, Branding, Marketing & Rewards",
-        "subtitle": "Sales and marketing support."
-      }
-    ]
-  },
-  {
-    "id": "newsletters",
-    "title": "Newsletters",
-    "options": [
-      {
-        "id": "newsletterTmh",
-        "title": "Our Newsletter",
-        "subtitle": "General newsletter."
-      }
+    "category": "Business Services",
+    "topics": [
+      { "topic": "Coaching & Consultancy", "label": "Business Coaching & Consultancy", "option": "Keep Me Posted" },
+      { "topic": "Corporate Governance", "label": "Corporate Advice (Restructuring, Corporate Governance)", "option": "Keep Me Posted" },
+      { "topic": "Funding for Cashflow", "label": "Raising Business Finance", "option": "Keep Me Posted" },
+      { "topic": "General Business Insurance", "label": "Business Insurance", "option": "Keep Me Posted" },
+      { "topic": "HR, Health & Safety & ISO Certification", "label": "HR, Health & Safety & ISO Certification", "option": "Keep Me Posted" },
+      { "topic": "Marketing & SEO", "label": "Sales, Branding, Marketing & Rewards", "option": "Keep Me Posted" },
+      { "topic": "Succcession, Wills & Estate Planning", "label": "Succession Planning & Estate Planning", "option": "Keep Me Posted" },
+      { "topic": "Tax Planning & Relief", "label": "Tax Planning & Tax Relief", "option": "Keep Me Posted" }
     ]
   }
 ]

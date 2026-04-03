@@ -13,115 +13,90 @@ import {
 } from 'lucide-react';
 
 import { PageHeader } from '@/components/common/page-header';
-import topicConfigs from '@/lib/email-preferences/topics.json';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type {
+  NotificationPreferenceOption,
+  NotificationPreferencesPayload,
+} from '@/lib/email-preferences/types';
+import { NOTIFICATION_OPTION_LABELS } from '@/lib/email-preferences/types';
 import { cn } from '@/lib/utils';
-
-type TopicOption = {
-  id: string;
-  title: string;
-  subtitle: string;
-};
-
-type TopicConfig = {
-  id: string;
-  title: string;
-  options: TopicOption[];
-};
 
 type TopicMeta = {
   accentClassName: string;
   icon: React.ComponentType<{ className?: string }>;
 };
 
-type MarketingPreference = 'only_if_relevant' | 'happy_to_receive' | 'opt_out';
+type NotificationPreferencesResponse = {
+  email?: string;
+  categories?: NotificationPreferencesPayload;
+  message?: string;
+};
 
 type PreferenceChoice = {
-  id: MarketingPreference;
+  id: NotificationPreferenceOption;
   label: string;
 };
 
-const topics = topicConfigs as TopicConfig[];
+const marketingChoices: PreferenceChoice[] = NOTIFICATION_OPTION_LABELS.map((label) => ({
+  id: label,
+  label,
+}));
 
-const topicMetaById: Record<string, TopicMeta> = {
-  'trademark-updates': {
-    accentClassName: 'text-primary',
-    icon: BellRing,
-  },
-  referrals: {
-    accentClassName: 'text-emerald-600',
-    icon: Gem,
-  },
-  financial: {
-    accentClassName: 'text-rose-500',
-    icon: Landmark,
-  },
-  legal: {
-    accentClassName: 'text-slate-700',
-    icon: Scale,
-  },
-  investing: {
-    accentClassName: 'text-lime-700',
-    icon: Sparkles,
-  },
-  business: {
-    accentClassName: 'text-stone-700',
-    icon: Briefcase,
-  },
-  newsletters: {
+const topicMetaByCategory: Record<string, TopicMeta> = {
+  Newsletters: {
     accentClassName: 'text-primary',
     icon: Mail,
   },
+  'Earning Through Referrals': {
+    accentClassName: 'text-emerald-600',
+    icon: Gem,
+  },
+  'Financial Advice': {
+    accentClassName: 'text-rose-500',
+    icon: Landmark,
+  },
+  'Legal Services': {
+    accentClassName: 'text-slate-700',
+    icon: Scale,
+  },
+  Investing: {
+    accentClassName: 'text-lime-700',
+    icon: Sparkles,
+  },
+  'Business Services': {
+    accentClassName: 'text-stone-700',
+    icon: Briefcase,
+  },
 };
 
-const TRADEMARK_TOPIC_ID = 'trademark-updates';
-const TRADEMARK_OPTION_ID = 'trademarkUpdates';
-const DEFAULT_MARKETING_PREFERENCE: MarketingPreference = 'happy_to_receive';
-
-const marketingTopics = topics.filter((topic) => topic.id !== TRADEMARK_TOPIC_ID);
-const marketingOptionIds = marketingTopics.flatMap((topic) =>
-  topic.options.map((option) => option.id),
-);
-
-const defaultMarketingSelections = Object.fromEntries(
-  marketingOptionIds.map((optionId) => [optionId, DEFAULT_MARKETING_PREFERENCE]),
-) as Record<string, MarketingPreference>;
-
-const marketingChoices: PreferenceChoice[] = [
-  {
-    id: 'only_if_relevant',
-    label: 'Tell Me More',
-  },
-  {
-    id: 'happy_to_receive',
-    label: 'Keep Me Posted',
-  },
-  {
-    id: 'opt_out',
-    label: 'No Thanks',
-  },
-];
+function areCategoriesEqual(
+  left: NotificationPreferencesPayload,
+  right: NotificationPreferencesPayload,
+) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
 
 export function NotificationSettingsPage({
   email,
+  devMode,
 }: {
   email?: string;
+  devMode: boolean;
 }) {
   const [savedEssentialOptIn, setSavedEssentialOptIn] = React.useState(true);
   const [essentialOptIn, setEssentialOptIn] = React.useState(true);
-  const [savedMarketingSelections, setSavedMarketingSelections] = React.useState(
-    defaultMarketingSelections,
-  );
-  const [marketingSelections, setMarketingSelections] = React.useState(
-    defaultMarketingSelections,
-  );
+  const [savedCategories, setSavedCategories] =
+    React.useState<NotificationPreferencesPayload>([]);
+  const [categories, setCategories] =
+    React.useState<NotificationPreferencesPayload>([]);
   const [isLoadingPreferences, setIsLoadingPreferences] = React.useState(false);
+  const [isSavingPreferences, setIsSavingPreferences] = React.useState(false);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const normalizedEmail = email?.trim() ?? '';
 
   React.useEffect(() => {
-    if (!normalizedEmail) {
+    if (!normalizedEmail && !devMode) {
       setLoadError(null);
       return;
     }
@@ -133,57 +108,27 @@ export function NotificationSettingsPage({
       setLoadError(null);
 
       try {
-        const response = await fetch(
-          `/api/settings/notifications?email=${encodeURIComponent(normalizedEmail)}`,
-          {
-            method: 'GET',
-            cache: 'no-store',
-          },
-        );
-
-        const payload = (await response.json()) as
-          | { message?: string }
-          | { emailOptions?: Record<string, boolean> };
+        const url = normalizedEmail
+          ? `/api/settings/notifications?email=${encodeURIComponent(normalizedEmail)}`
+          : '/api/settings/notifications';
+        const response = await fetch(url, {
+          method: 'GET',
+          cache: 'no-store',
+        });
+        const payload = (await response.json()) as NotificationPreferencesResponse;
 
         if (!response.ok) {
-          throw new Error(
-            'message' in payload && typeof payload.message === 'string'
-              ? payload.message
-              : 'Unable to load notification preferences.',
-          );
+          throw new Error(payload.message ?? 'Unable to load notification preferences.');
         }
 
         if (cancelled) {
           return;
         }
 
-        const nextEmailOptions =
-          'emailOptions' in payload && payload.emailOptions
-            ? payload.emailOptions
-            : {};
-        const nextEssentialOptIn =
-          typeof nextEmailOptions[TRADEMARK_OPTION_ID] === 'boolean'
-            ? nextEmailOptions[TRADEMARK_OPTION_ID]
-            : true;
+        const nextCategories = payload.categories ?? [];
 
-        const nextMarketingSelections = { ...defaultMarketingSelections };
-
-        for (const optionId of marketingOptionIds) {
-          const optionValue = nextEmailOptions[optionId];
-
-          if (optionValue === true) {
-            nextMarketingSelections[optionId] = DEFAULT_MARKETING_PREFERENCE;
-          }
-
-          if (optionValue === false) {
-            nextMarketingSelections[optionId] = 'opt_out';
-          }
-        }
-
-        setEssentialOptIn(nextEssentialOptIn);
-        setSavedEssentialOptIn(nextEssentialOptIn);
-        setMarketingSelections(nextMarketingSelections);
-        setSavedMarketingSelections(nextMarketingSelections);
+        setCategories(nextCategories);
+        setSavedCategories(nextCategories);
       } catch (error) {
         if (cancelled) {
           return;
@@ -206,44 +151,94 @@ export function NotificationSettingsPage({
     return () => {
       cancelled = true;
     };
-  }, [normalizedEmail]);
+  }, [devMode, normalizedEmail]);
 
   const isDirty =
-    essentialOptIn !== savedEssentialOptIn ||
-    JSON.stringify(marketingSelections) !== JSON.stringify(savedMarketingSelections);
+    essentialOptIn !== savedEssentialOptIn || !areCategoriesEqual(categories, savedCategories);
 
   const warningVisible = !essentialOptIn;
-  const isGlobalMarketingOptOut = marketingOptionIds.every(
-    (optionId) => marketingSelections[optionId] === 'opt_out',
-  );
+  const isGlobalMarketingOptOut =
+    categories.length > 0 &&
+    categories.every((category) =>
+      category.topics.every((topic) => topic.option === 'No Thanks'),
+    );
 
-  function updateMarketingPreference(
-    optionId: string,
-    value: MarketingPreference,
+  function updateTopicOption(
+    categoryIndex: number,
+    topicIndex: number,
+    option: NotificationPreferenceOption,
   ) {
-    setMarketingSelections((current) => ({
-      ...current,
-      [optionId]: value,
-    }));
+    setCategories((current) =>
+      current.map((category, currentCategoryIndex) => {
+        if (currentCategoryIndex !== categoryIndex) {
+          return category;
+        }
+
+        return {
+          ...category,
+          topics: category.topics.map((topic, currentTopicIndex) =>
+            currentTopicIndex === topicIndex ? { ...topic, option } : topic,
+          ),
+        };
+      }),
+    );
   }
 
   function toggleGlobalMarketingOptOut() {
-    setMarketingSelections((current) => {
-      const nextValue = Object.values(current).every(
-        (selection) => selection === 'opt_out',
-      )
-        ? DEFAULT_MARKETING_PREFERENCE
-        : 'opt_out';
+    setCategories((current) => {
+      const nextOption: NotificationPreferenceOption =
+        current.length > 0 &&
+        current.every((category) =>
+          category.topics.every((topic) => topic.option === 'No Thanks'),
+        )
+          ? 'Keep Me Posted'
+          : 'No Thanks';
 
-      return Object.fromEntries(
-        marketingOptionIds.map((optionId) => [optionId, nextValue]),
-      ) as Record<string, MarketingPreference>;
+      return current.map((category) => ({
+        ...category,
+        topics: category.topics.map((topic) => ({
+          ...topic,
+          option: nextOption,
+        })),
+      }));
     });
   }
 
-  function handleSave() {
-    setSavedEssentialOptIn(essentialOptIn);
-    setSavedMarketingSelections(marketingSelections);
+  async function handleSave() {
+    setIsSavingPreferences(true);
+    setLoadError(null);
+
+    try {
+      const url = normalizedEmail
+        ? `/api/settings/notifications?email=${encodeURIComponent(normalizedEmail)}`
+        : '/api/settings/notifications';
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(categories),
+      });
+      const payload = (await response.json()) as NotificationPreferencesResponse;
+
+      if (!response.ok) {
+        throw new Error(payload.message ?? 'Unable to save notification preferences.');
+      }
+
+      const nextCategories = payload.categories ?? categories;
+
+      setCategories(nextCategories);
+      setSavedCategories(nextCategories);
+      setSavedEssentialOptIn(essentialOptIn);
+    } catch (error) {
+      setLoadError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to save notification preferences.',
+      );
+    } finally {
+      setIsSavingPreferences(false);
+    }
   }
 
   return (
@@ -268,7 +263,11 @@ export function NotificationSettingsPage({
       ) : null}
 
       <div className="flex justify-end">
-        <Button size="lg" onClick={handleSave} disabled={!isDirty || isLoadingPreferences}>
+        <Button
+          size="lg"
+          onClick={handleSave}
+          disabled={!isDirty || isLoadingPreferences || isSavingPreferences}
+        >
           <Mail className="size-4" />
           Save Changes
         </Button>
@@ -351,15 +350,20 @@ export function NotificationSettingsPage({
           </p>
         </CardHeader>
         <CardContent className="grid gap-6 pt-6">
-          {marketingTopics.map((topic) => {
-            const meta = topicMetaById[topic.id];
-            const Icon = meta.icon;
+          {categories.map((category, categoryIndex) => {
+            const meta = topicMetaByCategory[category.category];
+            const Icon = meta?.icon ?? Mail;
 
             return (
-              <section key={topic.id} className="grid gap-4">
+              <section key={category.category} className="grid gap-4">
                 <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
-                  <Icon className={cn('size-4', meta.accentClassName)} />
-                  <h2 className="text-base font-semibold">{topic.title}</h2>
+                  <Icon
+                    className={cn(
+                      'size-4',
+                      meta?.accentClassName ?? 'text-slate-500',
+                    )}
+                  />
+                  <h2 className="text-base font-semibold">{category.category}</h2>
                 </div>
 
                 <div className="hidden border-b border-dashed border-slate-200 pb-2 md:grid md:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))] md:gap-4">
@@ -377,16 +381,13 @@ export function NotificationSettingsPage({
                 </div>
 
                 <div className="grid gap-0">
-                  {topic.options.map((option) => (
+                  {category.topics.map((topic, topicIndex) => (
                     <div
-                      key={option.id}
+                      key={`${category.category}-${topic.topic}`}
                       className="grid gap-3 border-b border-slate-200 py-4 last:border-b-0 md:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))] md:gap-4 md:items-start"
                     >
                       <div className="min-w-0">
-                        <div className="text-sm font-medium">{option.title}</div>
-                        <p className="text-muted-foreground mt-1 text-xs leading-5">
-                          {option.subtitle}
-                        </p>
+                        <div className="text-sm font-medium">{topic.label}</div>
                       </div>
 
                       {marketingChoices.map((choice) => (
@@ -396,10 +397,10 @@ export function NotificationSettingsPage({
                         >
                           <input
                             type="radio"
-                            name={option.id}
-                            checked={marketingSelections[option.id] === choice.id}
+                            name={`${category.category}-${topic.topic}`}
+                            checked={topic.option === choice.id}
                             onChange={() =>
-                              updateMarketingPreference(option.id, choice.id)
+                              updateTopicOption(categoryIndex, topicIndex, choice.id)
                             }
                             className="accent-primary size-4"
                           />
@@ -419,7 +420,7 @@ export function NotificationSettingsPage({
                 <div className="text-sm font-semibold">Opt out of all marketing</div>
                 <p className="text-muted-foreground mt-1 text-xs leading-5">
                   Turn this on to move every optional marketing preference to
-                  opt out. If you change any single row back, this switch will
+                  No Thanks. If you change any single row back, this switch will
                   automatically return to off.
                 </p>
               </div>
@@ -450,7 +451,11 @@ export function NotificationSettingsPage({
       </Card>
 
       <div className="flex justify-end">
-        <Button size="lg" onClick={handleSave} disabled={!isDirty || isLoadingPreferences}>
+        <Button
+          size="lg"
+          onClick={handleSave}
+          disabled={!isDirty || isLoadingPreferences || isSavingPreferences}
+        >
           <Mail className="size-4" />
           Save Changes
         </Button>
