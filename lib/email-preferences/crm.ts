@@ -14,6 +14,11 @@ type CrmApiEnvelope = {
   };
 };
 
+type NotificationPreferencesEnvelope = {
+  email?: unknown;
+  categories?: unknown;
+};
+
 export type NotificationPreferencesResponse = {
   email: string;
   categories: NotificationPreferencesPayload;
@@ -126,26 +131,26 @@ function isNotificationPreferenceCategory(
 
 function normalizeNotificationCategories(
   body: unknown,
-): NotificationPreferencesPayload {
-  const directCategories = Array.isArray(body) ? body : null;
-  const nestedCategories =
-    body &&
-    typeof body === 'object' &&
-    'email_options' in body &&
-    Array.isArray(body.email_options)
-      ? body.email_options
-      : null;
-  const candidateCategories = directCategories ?? nestedCategories;
-
-  if (!candidateCategories) {
+): { email?: string; categories: NotificationPreferencesPayload } {
+  if (!body || typeof body !== 'object') {
     throw new NotificationPreferencesError(
-      'CRM response did not include a notification categories array.',
+      'CRM response did not include a notification preferences object.',
       502,
       'invalid_response',
     );
   }
 
-  if (!candidateCategories.every(isNotificationPreferenceCategory)) {
+  const envelope = body as NotificationPreferencesEnvelope;
+
+  if (!Array.isArray(envelope.categories)) {
+    throw new NotificationPreferencesError(
+      'CRM response did not include a categories array.',
+      502,
+      'invalid_response',
+    );
+  }
+
+  if (!envelope.categories.every(isNotificationPreferenceCategory)) {
     throw new NotificationPreferencesError(
       'CRM response included invalid notification category data.',
       502,
@@ -153,7 +158,10 @@ function normalizeNotificationCategories(
     );
   }
 
-  return candidateCategories;
+  return {
+    email: typeof envelope.email === 'string' ? envelope.email : undefined,
+    categories: envelope.categories,
+  };
 }
 
 function getCrmBaseUrl() {
@@ -193,14 +201,10 @@ export async function fetchNotificationPreferences(
   requestUrl.searchParams.set('email', email);
 
   const response = await fetch(requestUrl.toString(), {
-    // The current CRM function returns email_options on non-GET requests and
-    // the published endpoint reports a missing body when called as a raw GET.
-    method: 'POST',
+    method: 'GET',
     headers: {
       Accept: 'application/json',
-      'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ email }),
     cache: 'no-store',
   });
 
@@ -210,7 +214,7 @@ export async function fetchNotificationPreferences(
   const upstreamBody =
     typeof envelope?.body === 'string' ? parseMaybeJson(envelope.body) : envelope?.body;
   const debug = createDebugPayload(
-    'POST',
+    'GET',
     requestUrl.toString(),
     upstreamStatus || 502,
     payload,
@@ -229,11 +233,26 @@ export async function fetchNotificationPreferences(
     );
   }
 
-  return {
-    email,
-    categories: normalizeNotificationCategories(upstreamBody),
-    debug,
-  };
+  try {
+    const normalizedResponse = normalizeNotificationCategories(upstreamBody);
+
+    return {
+      email: normalizedResponse.email ?? email,
+      categories: normalizedResponse.categories,
+      debug,
+    };
+  } catch (error) {
+    if (error instanceof NotificationPreferencesError) {
+      throw new NotificationPreferencesError(
+        error.message,
+        error.status,
+        error.code,
+        debug,
+      );
+    }
+
+    throw error;
+  }
 }
 
 export async function saveNotificationPreferences(
@@ -278,11 +297,30 @@ export async function saveNotificationPreferences(
     );
   }
 
-  const normalizedCategories =
-    upstreamBody == null ? categories : normalizeNotificationCategories(upstreamBody);
+  let normalizedCategories = categories;
+  let normalizedEmail = email;
+
+  try {
+    if (upstreamBody != null) {
+      const normalizedResponse = normalizeNotificationCategories(upstreamBody);
+      normalizedCategories = normalizedResponse.categories;
+      normalizedEmail = normalizedResponse.email ?? email;
+    }
+  } catch (error) {
+    if (error instanceof NotificationPreferencesError) {
+      throw new NotificationPreferencesError(
+        error.message,
+        error.status,
+        error.code,
+        debug,
+      );
+    }
+
+    throw error;
+  }
 
   return {
-    email,
+    email: normalizedEmail,
     categories: normalizedCategories,
     debug,
   };
