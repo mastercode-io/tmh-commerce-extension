@@ -1,5 +1,13 @@
 # Temmy Portal - Data Model
 
+## Archive Notice
+
+This document is archived reference material from the earlier portal and multi-tenant architecture direction.
+
+It is not the active data model for the TMH Commerce Extension.
+
+Use `TMH_Commerce_Extension_Canonical_Domain_Model_v1.md` and related canonical docs for current implementation work.
+
 ## Document Info
 - **Version:** 1.1
 - **Date:** February 2026

@@ -16,11 +16,14 @@ export default function LoginPage() {
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    router.push('/welcome');
+    router.push('/settings/notifications');
   }
 
   return (
-    <AuthCard title="Sign in" description="Welcome back. Enter your details to continue.">
+    <AuthCard
+      title="Sign in"
+      description="Access your TMH account to manage preferences, subscriptions, and requests."
+    >
       <form onSubmit={handleSubmit} className="grid gap-4">
         <div className="grid gap-2">
           <Label htmlFor="email">Email</Label>
@@ -53,4 +56,3 @@ export default function LoginPage() {
     </AuthCard>
   );
 }
-

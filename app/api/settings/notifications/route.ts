@@ -1,10 +1,14 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 import {
-  fetchNotificationPreferences,
+  attachCorrelationIdHeader,
+  getOrCreateCorrelationId,
+} from '@/lib/server/correlation';
+import {
+  getPreferenceProfile,
   NotificationPreferencesError,
-  saveNotificationPreferences,
-} from '@/lib/email-preferences/crm';
+  savePreferenceProfile,
+} from '@/lib/zoho/preferences';
 import type {
   NotificationPreferencesOptOutRequest,
   NotificationPreferencesSaveRequest,
@@ -35,6 +39,14 @@ function getUserFacingError(
     : 'We could not save email preferences right now. Please try again later.';
 }
 
+function createJsonResponse(
+  payload: unknown,
+  correlationId: string,
+  init?: ResponseInit,
+) {
+  return attachCorrelationIdHeader(NextResponse.json(payload, init), correlationId);
+}
+
 function isCategoriesPayload(
   payload: unknown,
 ): payload is NotificationPreferencesSaveRequest {
@@ -62,77 +74,90 @@ function isGlobalOptOutPayload(
 }
 
 export async function GET(request: NextRequest) {
+  const correlationId = getOrCreateCorrelationId(request);
   const email = request.nextUrl.searchParams.get('email')?.trim() ?? '';
 
   try {
-    const preferences = await fetchNotificationPreferences(email);
-    return NextResponse.json({
-      email: preferences.email,
-      categories: preferences.categories,
-      ...(preferences.optOut ? { optOut: true as const } : {}),
-      ...(preferences.new ? { new: true as const } : {}),
-      ...(isDevModeEnabled() && preferences.debug ? { debug: preferences.debug } : {}),
-    });
+    const preferences = await getPreferenceProfile(email, correlationId);
+    return createJsonResponse(
+      {
+        email: preferences.email,
+        categories: preferences.categories,
+        ...(preferences.globalOptOut ? { optOut: true as const } : {}),
+        ...(preferences.isNew ? { new: true as const } : {}),
+        ...(isDevModeEnabled() && preferences.debug ? { debug: preferences.debug } : {}),
+      },
+      correlationId,
+    );
   } catch (error) {
     if (error instanceof NotificationPreferencesError) {
-      return NextResponse.json(
+      return createJsonResponse(
         {
           code: error.code,
           message: getUserFacingError(error, 'load'),
           ...(isDevModeEnabled() && error.debug ? { debug: error.debug } : {}),
         },
+        correlationId,
         { status: error.status },
       );
     }
 
-    return NextResponse.json(
+    return createJsonResponse(
       {
         code: 'server_error',
         message: 'Unable to load notification preferences.',
       },
+      correlationId,
       { status: 500 },
     );
   }
 }
 
 export async function POST(request: NextRequest) {
+  const correlationId = getOrCreateCorrelationId(request);
   const payload = (await request.json()) as unknown;
 
   if (!isCategoriesPayload(payload) && !isGlobalOptOutPayload(payload)) {
-    return NextResponse.json(
+    return createJsonResponse(
       {
         code: 'invalid_request',
         message: 'A valid email preferences payload is required.',
       },
+      correlationId,
       { status: 400 },
     );
   }
 
   try {
-    const preferences = await saveNotificationPreferences(payload);
-    return NextResponse.json({
-      email: preferences.email,
-      categories: preferences.categories,
-      ...(preferences.optOut ? { optOut: true as const } : {}),
-      ...(isDevModeEnabled() && preferences.debug ? { debug: preferences.debug } : {}),
-    });
+    const preferences = await savePreferenceProfile(payload, correlationId);
+    return createJsonResponse(
+      {
+        email: preferences.email,
+        categories: preferences.categories,
+        ...(preferences.globalOptOut ? { optOut: true as const } : {}),
+        ...(isDevModeEnabled() && preferences.debug ? { debug: preferences.debug } : {}),
+      },
+      correlationId,
+    );
   } catch (error) {
     if (error instanceof NotificationPreferencesError) {
-      return NextResponse.json(
+      return createJsonResponse(
         {
           code: error.code,
           message: getUserFacingError(error, 'save'),
           ...(isDevModeEnabled() && error.debug ? { debug: error.debug } : {}),
         },
+        correlationId,
         { status: error.status },
       );
     }
 
-    return NextResponse.json(
+    return createJsonResponse(
       {
         code: 'server_error',
         message: 'Unable to save notification preferences.',
       },
+      correlationId,
       { status: 500 },
     );
   }

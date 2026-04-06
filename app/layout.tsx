@@ -11,8 +11,8 @@ const fontVars: Record<string, string> = {
 };
 
 export const metadata: Metadata = {
-  title: 'Temmy Portal',
-  description: 'Client-facing trademark management portal (POC)',
+  title: 'TMH Commerce Extension',
+  description: 'TMH customer account experience for subscriptions, preferences, payments, and requests.',
 };
 
 export default function RootLayout({

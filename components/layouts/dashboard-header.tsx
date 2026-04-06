@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 
 import {
   DropdownMenu,
@@ -14,28 +13,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { LogOutIcon, SettingsIcon, UserIcon } from 'lucide-react';
-
-function NavTab({
-  href,
-  label,
-  active,
-}: {
-  href: string;
-  label: string;
-  active: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        'text-muted-foreground hover:text-foreground rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-        active && 'bg-muted text-foreground'
-      )}
-    >
-      {label}
-    </Link>
-  );
-}
 
 function InitialAvatar({ name }: { name: string }) {
   const initials = name
@@ -59,20 +36,20 @@ export function DashboardHeader({
   userName?: string;
   className?: string;
 }) {
-  const pathname = usePathname();
-  const isPortfolio = pathname === '/portfolio' || pathname?.startsWith('/asset/') || pathname?.startsWith('/renew/');
-  const isWatchlist = pathname === '/watchlist';
-
   return (
     <header className={cn('border-b', className)}>
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <Link href="/portfolio" className="text-sm font-semibold tracking-tight">
-          Temmy Portal
-        </Link>
+        <div className="flex min-w-0 flex-col">
+          <Link href="/settings/notifications" className="text-sm font-semibold tracking-tight">
+            TMH Account
+          </Link>
+          <span className="text-muted-foreground text-xs">
+            Preferences, requests, and subscription support
+          </span>
+        </div>
 
-        <nav className="bg-muted/50 inline-flex items-center gap-1 rounded-lg p-1">
-          <NavTab href="/portfolio" label="Portfolio" active={isPortfolio} />
-          <NavTab href="/watchlist" label="Watchlist" active={isWatchlist} />
+        <nav className="text-muted-foreground hidden text-sm sm:flex">
+          Customer account
         </nav>
 
         <DropdownMenu>
@@ -90,7 +67,7 @@ export function DashboardHeader({
             <DropdownMenuItem asChild>
               <Link href="/settings/notifications">
                 <SettingsIcon />
-                Settings
+                Preferences
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />

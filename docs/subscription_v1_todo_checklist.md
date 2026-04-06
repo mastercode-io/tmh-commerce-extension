@@ -1,62 +1,70 @@
 # Subscription Onboarding v1 Todo Checklist
 
+## Provider Decision Update
+
+As of April 6, 2026:
+
+- v1 subscriptions use the **Xero payment gateway**
+- app-level identifiers and statuses must remain provider-neutral
+- direct Stripe and direct GoCardless integrations are deferred
+
+Use `TMH_Commerce_Extension_Subscription_Payment_Strategy_v1.md` as the canonical payment-strategy reference where this checklist still reflects older provider-specific assumptions.
+
 ## CRM
 
 - [ ] Add subscription fields to **Order**:
   - [ ] `is_subscription_order`
   - [ ] `subscription_interval`
   - [ ] `subscription_status`
-  - [ ] `stripe_customer_id`
-  - [ ] `stripe_subscription_id`
-  - [ ] `stripe_checkout_session_id`
-  - [ ] `stripe_latest_invoice_id`
+  - [ ] `provider_customer_id`
+  - [ ] `provider_subscription_id`
+  - [ ] `provider_session_id`
+  - [ ] `provider_latest_invoice_id`
   - [ ] `xero_latest_invoice_id`
   - [ ] `subscription_reference`
   - [ ] `current_period_end`
   - [ ] `cancel_at_period_end`
   - [ ] `cancelled_at`
   - [ ] `last_paid_at`
-- [ ] Add Stripe fields to **Service Package**:
-  - [ ] `stripe_product_id`
-  - [ ] `stripe_monthly_price_id`
-  - [ ] `stripe_annual_price_id`
-- [ ] Add `stripe_customer_id` to payer record
+- [ ] Add provider-backed package fields to **Service Package**:
+  - [ ] `provider_product_id`
+  - [ ] `provider_monthly_price_id`
+  - [ ] `provider_annual_price_id`
+- [ ] Add `provider_customer_id` to payer record
 - [ ] Define `subscription_reference` format
 - [ ] Enforce validation: one Order = one subscription agreement
 - [ ] Enforce validation: all selected subscription packages must share the same billing frequency
 
-## Stripe
+## Payment gateway
 
-- [ ] Create Stripe Products for all subscription Service Packages
-- [ ] Create Stripe Prices for monthly variants
-- [ ] Create Stripe Prices for annual variants
-- [ ] Decide naming convention for Products and Prices
-- [ ] Set up Stripe test mode
-- [ ] Set up webhook endpoint in Stripe dashboard
-- [ ] Store webhook signing secret securely
+- [ ] Configure the Xero payment gateway for the v1 subscription flow
+- [ ] Define how provider-backed package and pricing identifiers are stored
+- [ ] Set up test/sandbox mode for the hosted payment/setup journey
+- [ ] Set up any required webhook or callback verification
+- [ ] Store gateway secrets securely
 
 ## Backend / Custom API
 
 - [ ] Build endpoint: `create subscription checkout session`
 - [ ] Validate selected packages and interval compatibility
 - [ ] Create or update Order and Deals in `Pending Checkout`
-- [ ] Find or create Stripe Customer
-- [ ] Create Stripe Checkout Session in `subscription` mode
+- [ ] Find or create the provider-backed customer via the v1 gateway
+- [ ] Create hosted checkout/setup session
 - [ ] Pass CRM order identifier in `client_reference_id`
 - [ ] Pass useful metadata for webhook reconciliation
 - [ ] Return Checkout URL to frontend
 - [ ] Build endpoint: `get order/subscription status`
 
-## Webhooks
+## Reconciliation
 
-- [ ] Verify Stripe webhook signature
-- [ ] Handle `checkout.session.completed`
-- [ ] Handle `invoice.paid`
-- [ ] Handle `invoice.payment_failed`
-- [ ] Handle `customer.subscription.updated`
-- [ ] Handle `customer.subscription.deleted`
+- [ ] Verify gateway callback/webhook signatures where required
+- [ ] Handle checkout/session completion
+- [ ] Handle successful recurring payment
+- [ ] Handle failed recurring payment
+- [ ] Handle subscription updates
+- [ ] Handle subscription cancellation/deletion
 - [ ] Update CRM Order status based on webhook events
-- [ ] Store Stripe IDs and billing dates on Order
+- [ ] Store provider IDs and billing dates on Order
 - [ ] Make webhook processing idempotent
 
 ## Xero
@@ -72,7 +80,7 @@
 ## Frontend
 
 - [ ] Call backend checkout endpoint from landing page
-- [ ] Redirect to hosted Stripe Checkout URL
+- [ ] Redirect to hosted Xero payment gateway URL
 - [ ] Implement success page
 - [ ] Implement cancel page
 - [ ] Poll backend order status after redirect
@@ -86,7 +94,7 @@
 - [ ] No proration
 - [ ] No pause/resume
 - [ ] No self-service plan changes
-- [ ] No GoCardless in v1
+- [ ] No direct provider integration in v1
 - [ ] No CRM Invoice module
 - [ ] No Xero repeating invoices
 
@@ -104,4 +112,4 @@
 
 ## Final implementation rule
 
-**CRM owns the commercial order, Stripe owns subscription billing, and Xero receives accounting invoices and payments after successful Stripe charges.**
+**CRM owns the commercial order, the v1 Xero payment gateway handles hosted payment/setup, and the app stores only normalized provider-neutral identifiers and statuses.**

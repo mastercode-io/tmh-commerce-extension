@@ -2,7 +2,13 @@
 
 ## Objective
 
-Build `/subscribe/monitoring?token=...` as a single-page subscription flow inside the existing TMH portal codebase. The page must reuse the current portal UI system, collapse from plan comparison into configuration/checkout mode after plan selection, and hand off externally to Zoho Bookings and GoCardless when required.
+Build `/subscribe/monitoring?token=...` as a single-page subscription flow inside the existing TMH portal codebase. The page must reuse the current portal UI system, collapse from plan comparison into configuration/checkout mode after plan selection, and hand off externally to Zoho Bookings and the v1 Xero payment gateway when required.
+
+## Provider Decision Update
+
+As of April 6, 2026, the hosted payment/setup surface for v1 subscriptions is the **Xero payment gateway**.
+
+Where this document still implies direct GoCardless integration, treat that as superseded implementation direction. Public route contracts stay the same, but payment-gateway internals are now governed by `TMH_Commerce_Extension_Subscription_Payment_Strategy_v1.md`.
 
 ---
 
@@ -11,7 +17,7 @@ Build `/subscribe/monitoring?token=...` as a single-page subscription flow insid
 - Single-page flow with collapsible sections and rerendering driven by user actions and backend responses
 - User-facing plan name is **MAD**
 - Zoho Bookings is an external booking handoff and should open in a new tab in v1
-- GoCardless uses hosted checkout redirect
+- Xero payment gateway uses hosted checkout/setup redirect
 - Mixed baskets are supported: payable items can proceed now, non-quotable MAD items are separated and carried into confirmation follow-up
 - Portal visual language must be preserved: shared shadcn/ui primitives, pink primary accent, neutral base, current font stack, existing radius/spacing/button styles
 
@@ -65,7 +71,7 @@ Use a single client flow container with explicit stages:
 4. `configuration`
 5. `redirecting-to-payment`
 
-Keep confirmation as its own route because it is driven by a GoCardless return state.
+Keep confirmation as its own route because it is driven by a hosted payment-gateway return state.
 
 ### Core Client State
 
@@ -114,7 +120,7 @@ Keep confirmation as its own route because it is driven by a GoCardless return s
 ### Phase 4: Checkout Handoff
 
 - Wire quote submission and checkout creation
-- Redirect to GoCardless hosted checkout
+- Redirect to the Xero payment gateway hosted checkout/setup flow
 - Handle retryable backend failures
 - Preserve state for mixed payable + booking scenarios
 

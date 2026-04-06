@@ -1,6 +1,14 @@
 # TMH Portal — Implementation Specification
 # Phase 0 (Scaffolding) → Phase 3 (Track A Complete)
 
+## Archive Notice
+
+This document is archived reference material from the earlier TMH Portal implementation direction.
+
+It is not an active execution spec for the TMH Commerce Extension.
+
+Current implementation work should follow the TMH Commerce Extension planning and tracker documents instead.
+
 **Version:** 1.0  
 **Date:** April 2026  
 **Repo:** `mastercode-io/tmh-portal`  

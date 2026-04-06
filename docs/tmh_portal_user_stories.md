@@ -1,5 +1,13 @@
 # Temmy Portal - User Stories
 
+## Archive Notice
+
+This document is archived reference material from the earlier portal/workspace product direction.
+
+It is not an active requirements document for the TMH Commerce Extension.
+
+Use the TMH Commerce Extension planning artifacts for current scope and implementation decisions.
+
 ## Document Info
 - **Version:** 1.0 Draft
 - **Date:** January 2026

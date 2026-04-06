@@ -8,13 +8,21 @@
 - **Purpose:** Initial API contract for replacing the monitoring subscription mock backend with CRM-backed integration
 - **Related Docs:** `monitoring-subscription-prd.md`, `monitoring-subscription-user-stories.md`, `monitoring-subscription-implementation-plan.md`
 
+### Provider Decision Update
+
+As of April 6, 2026, v1 subscriptions in this repo use the **Xero payment gateway** as the hosted payment/setup surface.
+
+Where this document refers to later direct GoCardless integration, treat that as superseded planning. Public route contracts remain valid, but provider-specific internals must now be implemented through the Xero gateway strategy documented in `TMH_Commerce_Extension_Subscription_Payment_Strategy_v1.md`.
+
+For normalized payloads, route responsibilities, and persistence writes across this flow, also use `TMH_Commerce_Extension_API_And_Persistence_Contract_v1.md` as canonical where this route-focused draft is underspecified.
+
 ---
 
 ## 1. Scope
 
 This document defines the first backend API shape needed to support the implemented monitoring subscription flow in the TMH portal.
 
-It is intentionally based on the current frontend behavior, not on a generic future-state architecture. The goal is to create a stable draft that can evolve as CRM integration and later GoCardless integration are implemented.
+It is intentionally based on the current frontend behavior, not on a generic future-state architecture. The goal is to create a stable draft that can evolve as CRM integration and the v1 Xero payment gateway implementation are completed.
 
 Current focus:
 
@@ -26,7 +34,7 @@ Current focus:
 
 Out of scope for this first draft:
 
-- Final GoCardless API contract
+- direct provider API contracts beyond the v1 Xero gateway
 - webhook processing
 - staff back-office workflows
 - analytics events
@@ -46,7 +54,8 @@ Out of scope for this first draft:
 - Allow staged rollout:
   - CRM first
   - checkout persistence second
-  - GoCardless hosted payment later
+  - Xero payment gateway hosted payment/setup for v1
+  - direct provider integrations later
 
 ---
 
@@ -365,11 +374,11 @@ Same input shape as quote:
 
 ### Initial CRM-First Behavior
 
-Before GoCardless is wired:
+For v1:
 
 - create the checkout intent in CRM or in portal persistence
-- return a mock hosted payment redirect
-- preserve the same route contract so GoCardless can replace the redirect target later
+- return the hosted redirect from the Xero payment gateway
+- preserve the same route contract so direct provider integrations can replace the internal adapter later
 
 ### Errors
 

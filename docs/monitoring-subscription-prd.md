@@ -8,11 +8,17 @@
 - **Parent Project:** Temmy Portal (tmh-portal)
 - **Related Docs:** `tmh_portal_user_stories.md`, `tmh_portal_data_model.md`, `monitoring-subscription-user-stories.md`
 
+### Provider Decision Update
+
+As of April 6, 2026, v1 subscriptions in this repo use the **Xero payment gateway** as the hosted payment/setup surface.
+
+Where this document refers to direct GoCardless behavior, interpret that as historical implementation direction. The canonical v1 payment strategy is now defined in `TMH_Commerce_Extension_Subscription_Payment_Strategy_v1.md`.
+
 ---
 
 ## 1. Overview
 
-A standalone subscription landing page where existing TMH clients select and purchase trademark monitoring plans. Clients receive personalised links (`/subscribe/monitoring?token=<ENCODED_TOKEN>`) via email or post-trademark-application flow. The page fetches client context from the CRM backend, presents three tiered monitoring plans, and guides the user through plan selection -> trademark assignment -> payment via GoCardless Direct Debit.
+A standalone subscription landing page where existing TMH clients select and purchase trademark monitoring plans. Clients receive personalised links (`/subscribe/monitoring?token=<ENCODED_TOKEN>`) via email or post-trademark-application flow. The page fetches client context from the CRM backend, presents three tiered monitoring plans, and guides the user through plan selection -> trademark assignment -> hosted payment/setup via the v1 Xero payment gateway.
 
 This page is part of the Temmy Portal codebase but operates independently of the authenticated portal experience. No login is required for subscription setup. The token-based access model mirrors the existing client-data pattern in the old portal.
 
@@ -87,7 +93,7 @@ Backend is a Vercel API route (or serverless function) that decodes the token, c
         |
         +-- Essentials / Annual Review -> [Trademark Selection & Quote]
         |                                         |
-        |                                         +-- [Payment: GoCardless DD Setup]
+        |                                         +-- [Payment: Xero payment gateway hosted setup]
         |                                                      |
         |                                                      +-- [Confirmation Page]
         |
@@ -259,26 +265,26 @@ If any selected trademark requires a quote:
 
 ---
 
-### 5.3 Payment — GoCardless Direct Debit Setup
+### 5.3 Payment — Xero Payment Gateway Hosted Setup
 
 This is **not a page we build**. After clicking the payment CTA, the backend:
 
-1. Creates a GoCardless billing request via API
+1. Creates the hosted payment/setup session via the Xero payment gateway
 2. Returns a redirect URL
-3. Frontend redirects the user to the GoCardless hosted payment page
+3. Frontend redirects the user to the hosted payment/setup page
 
-GoCardless handles DD mandate setup. On completion, GoCardless redirects back to our confirmation route.
+The payment gateway handles the hosted payment/setup journey. On completion, it redirects back to our confirmation route.
 
 Decision:
 
-- Use GoCardless hosted payment flow via redirect URL as the default and preferred UX
+- Use the Xero payment gateway hosted redirect flow as the default and preferred UX
 - Do not rely on an embedded drop-in payment component in v1
 - The portal should not attempt to replicate or embed sensitive payment UI beyond initiating checkout and handling return states
 
 **Backend responsibilities (out of scope for frontend PRD but noted for contract):**
 
 - Create or update relevant CRM subscription records
-- Create GoCardless customer, mandate, and subscription/billing request
+- Create the provider-backed customer and subscription/payment setup through the v1 gateway
 - Return redirect URL plus session/state token
 
 ---
@@ -350,7 +356,7 @@ The main route should own the full single-page flow. Internal flow changes shoul
 |----------|--------|---------|
 | `/api/subscribe/monitoring` | GET | Fetch client data by token |
 | `/api/subscribe/monitoring/quote` | POST | Calculate pricing for current selections and billing mode |
-| `/api/subscribe/monitoring/checkout` | POST | Create GoCardless billing request and return redirect URL |
+| `/api/subscribe/monitoring/checkout` | POST | Create hosted payment/setup intent and return redirect URL |
 | `/api/subscribe/monitoring/confirm` | GET | Fetch confirmation details after payment return |
 
 ### 6.4 New Types
@@ -513,8 +519,8 @@ components/
    - Booking URL comes from Zoho Bookings
    - v1 treats booking as an external flow
    - Safe baseline is to open in a new tab and preserve portal state
-2. **GoCardless behavior**
-   - Use hosted payment page redirect
+2. **Payment gateway behavior**
+   - Use hosted payment/setup page redirect
    - No embedded payment component in v1
 3. **Mixed MAD scenario**
    - Users may pay immediately for quotable/payable items

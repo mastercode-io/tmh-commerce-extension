@@ -1,5 +1,13 @@
 # Temmy Portal - Flow Diagrams
 
+## Archive Notice
+
+This document is archived reference material from the earlier portal proof-of-concept scope.
+
+It is not an active source of truth for the TMH Commerce Extension route model or customer flows.
+
+Use the TMH Commerce Extension planning artifacts for current implementation decisions.
+
 ## Document Info
 - **Version:** 1.0 Draft
 - **Date:** January 2026
