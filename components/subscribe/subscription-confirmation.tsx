@@ -70,9 +70,11 @@ async function fetchConfirmation(token: string, session: string) {
 export function SubscriptionConfirmation({
   token,
   session,
+  showDemoHelpers,
 }: {
   token: string | null;
   session: string | null;
+  showDemoHelpers: boolean;
 }) {
   const [state, setState] = React.useState<'loading' | 'error' | 'ready'>(
     token && session ? 'loading' : 'error',
@@ -129,7 +131,7 @@ export function SubscriptionConfirmation({
         <CardHeader className="border-b">
           <CardTitle>Loading confirmation</CardTitle>
           <CardDescription>
-            Fetching the result of your mock GoCardless checkout session.
+            Fetching the result of your hosted subscription setup.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 pt-4">
@@ -150,12 +152,21 @@ export function SubscriptionConfirmation({
           <div className="text-muted-foreground text-sm">
             Please return to the quote and try again.
           </div>
-          <Button variant="outline" asChild>
-            <Link href="/subscribe/monitoring?token=demo-monitoring-001">
-              <ArrowLeft />
-              Back to demo quote
-            </Link>
-          </Button>
+          {showDemoHelpers ? (
+            <Button variant="outline" asChild>
+              <Link href="/subscribe/monitoring?token=demo-monitoring-001">
+                <ArrowLeft />
+                Back to subscription quote
+              </Link>
+            </Button>
+          ) : (
+            <Button variant="outline" asChild>
+              <Link href="/subscribe/monitoring">
+                <ArrowLeft />
+                Back to subscription quote
+              </Link>
+            </Button>
+          )}
         </CardFooter>
       </Card>
     );
@@ -180,12 +191,12 @@ export function SubscriptionConfirmation({
                 You&apos;re all set, {payload.clientName}
               </CardTitle>
               <CardDescription className="mt-3 max-w-2xl">
-                Your monitoring subscription has been created in the mock CRM
-                and linked to the mock Direct Debit setup.
+                Your monitoring subscription setup has been received and is
+                being reconciled against your TMH account.
               </CardDescription>
             </div>
             <Button variant="outline" asChild>
-              <Link href="/portfolio">Go to portal</Link>
+              <Link href="/settings/notifications">Go to account</Link>
             </Button>
           </div>
         </CardHeader>
@@ -242,8 +253,8 @@ export function SubscriptionConfirmation({
               <li>Your monitoring service will begin within 24 hours.</li>
               <li>You will receive a confirmation email shortly.</li>
               <li>
-                Monitoring items will appear in the portal once the backend
-                integration is live.
+                Monitoring items will appear in your TMH account once the
+                integration has confirmed the account state.
               </li>
             </ul>
           </div>
@@ -276,7 +287,7 @@ export function SubscriptionConfirmation({
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Open mock Zoho Bookings
+                    Schedule a follow-up call
                     <ExternalLink />
                   </Link>
                 </Button>
@@ -292,14 +303,14 @@ export function SubscriptionConfirmation({
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" asChild>
               <Link
-                href={`/subscribe/monitoring?token=${encodeURIComponent(token ?? 'demo-monitoring-001')}`}
+                href={`/subscribe/monitoring?token=${encodeURIComponent(token ?? '')}`}
               >
                 <ArrowLeft />
                 Back to quote
               </Link>
             </Button>
             <Button asChild>
-              <Link href="/portfolio">Portal overview</Link>
+              <Link href="/settings/notifications">Account overview</Link>
             </Button>
           </div>
         </CardFooter>

@@ -40,7 +40,7 @@ export function DashboardHeader({
     <header className={cn('border-b', className)}>
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div className="flex min-w-0 flex-col">
-          <Link href="/settings/notifications" className="text-sm font-semibold tracking-tight">
+          <Link href="/account" className="text-sm font-semibold tracking-tight">
             TMH Account
           </Link>
           <span className="text-muted-foreground text-xs">
@@ -64,6 +64,12 @@ export function DashboardHeader({
               {userName}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/account">
+                <UserIcon />
+                Account overview
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href="/settings/notifications">
                 <SettingsIcon />

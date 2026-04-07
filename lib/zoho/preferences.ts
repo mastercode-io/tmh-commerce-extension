@@ -1,10 +1,9 @@
 import type {
-  NotificationPreferenceCategory,
   NotificationPreferencesOptOutRequest,
   NotificationPreferencesPayload,
   NotificationPreferencesSaveRequest,
 } from '@/lib/email-preferences/types';
-import { NOTIFICATION_OPTION_LABELS } from '@/lib/email-preferences/types';
+import { isNotificationPreferenceCategory } from '@/lib/email-preferences/validators';
 import {
   executeZohoRequest,
   requireZohoBaseUrl,
@@ -74,39 +73,6 @@ function createPreferencesRequestUrl(email: string) {
   const requestUrl = new URL(requireZohoBaseUrl(NOTIFICATION_SETTINGS_URL_ENV));
   requestUrl.searchParams.set('email', email);
   return requestUrl.toString();
-}
-
-function isNotificationPreferenceCategory(
-  value: unknown,
-): value is NotificationPreferenceCategory {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  if (
-    !('category' in value) ||
-    typeof value.category !== 'string' ||
-    !('topics' in value) ||
-    !Array.isArray(value.topics)
-  ) {
-    return false;
-  }
-
-  return value.topics.every((topic) => {
-    if (!topic || typeof topic !== 'object') {
-      return false;
-    }
-
-    return (
-      'topic' in topic &&
-      typeof topic.topic === 'string' &&
-      'label' in topic &&
-      typeof topic.label === 'string' &&
-      'option' in topic &&
-      typeof topic.option === 'string' &&
-      NOTIFICATION_OPTION_LABELS.includes(topic.option as never)
-    );
-  });
 }
 
 function normalizeNotificationResponse(
@@ -213,7 +179,9 @@ export async function getPreferenceProfile(
         categories:
           'categories' in normalizedResponse ? normalizedResponse.categories : [],
         crmSyncStatus: 'synced',
-        ...(normalizedResponse.new ? { isNew: true as const } : {}),
+        ...('new' in normalizedResponse && normalizedResponse.new
+          ? { isNew: true as const }
+          : {}),
         correlationId,
         debug: result.debug,
       };
@@ -260,7 +228,9 @@ export async function savePreferenceProfile(
         categories:
           'categories' in normalizedResponse ? normalizedResponse.categories : [],
         crmSyncStatus: 'synced',
-        ...(normalizedResponse.new ? { isNew: true as const } : {}),
+        ...('new' in normalizedResponse && normalizedResponse.new
+          ? { isNew: true as const }
+          : {}),
         correlationId,
         debug: result.debug,
       };

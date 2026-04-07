@@ -18,7 +18,7 @@ const rows = [
   ['Domain name alerts & reports', 'Monthly', 'Quarterly', 'Annually'],
   ['Social media alerts & reports', 'Ongoing', 'Quarterly', 'Annually'],
   ['Risk-scored threat reporting', 'Monthly', 'Quarterly', 'Annually'],
-  ['Temmy portal access', 'check', 'check', 'check'],
+  ['TMH account access', 'check', 'check', 'check'],
   ['Defence hours', 'Up to 10 hours / 12 months', 'no', 'no'],
   [
     'Proactive takedown & opposition hours',
@@ -145,10 +145,10 @@ const mobileFeatureSections = [
     ],
   },
   {
-    title: 'Portal & Renewal',
+    title: 'Account & Renewal',
     features: [
       {
-        label: 'Temmy portal access',
+        label: 'TMH account access',
         values: {
           monitoring_defence: 'check',
           monitoring_essentials: 'check',

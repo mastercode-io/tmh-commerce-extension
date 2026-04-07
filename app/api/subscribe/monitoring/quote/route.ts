@@ -1,42 +1,48 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
+import { MonitoringServiceError } from '@/lib/monitoring/errors';
+import { getMonitoringQuote } from '@/lib/monitoring/service';
 import {
-  getMockMonitoringClientData,
-  resolveMonitoringScenario,
-  simulateMockLatency,
-} from '@/lib/monitoring/mock-data';
-import { calculateMonitoringQuote } from '@/lib/monitoring/pricing';
-import type { MonitoringQuoteRequest } from '@/lib/types/monitoring';
+  attachCorrelationIdHeader,
+  getOrCreateCorrelationId,
+} from '@/lib/server/correlation';
+import { parseJsonRequestBody } from '@/lib/server/request-json';
 
 export const runtime = 'edge';
 
+function createJsonResponse(
+  payload: unknown,
+  correlationId: string,
+  init?: ResponseInit,
+) {
+  return attachCorrelationIdHeader(NextResponse.json(payload, init), correlationId);
+}
+
 export async function POST(request: NextRequest) {
-  const body = (await request.json()) as Partial<MonitoringQuoteRequest>;
-  const scenario = resolveMonitoringScenario(body.token ?? null);
+  const correlationId = getOrCreateCorrelationId(request);
 
-  await simulateMockLatency();
+  try {
+    const quote = await getMonitoringQuote({
+      body: (await parseJsonRequestBody(request)) ?? {},
+      origin: request.nextUrl.origin,
+      correlationId,
+    });
 
-  if (!scenario.ok) {
-    return NextResponse.json(scenario.error, { status: scenario.status });
-  }
+    return createJsonResponse(quote, correlationId);
+  } catch (error) {
+    if (error instanceof MonitoringServiceError) {
+      return createJsonResponse(error.response, correlationId, {
+        status: error.status,
+      });
+    }
 
-  if (!body.billingFrequency || !body.selections) {
-    return NextResponse.json(
+    return createJsonResponse(
       {
-        code: 'invalid_request',
-        message: 'Token, billing frequency, and selections are required.',
+        code: 'server_error',
+        message: 'We hit a temporary problem while loading this subscription quote.',
       },
-      { status: 400 },
+      correlationId,
+      { status: 500 },
     );
   }
-
-  const origin = request.nextUrl.origin;
-  const clientData = getMockMonitoringClientData(origin, scenario.token);
-  const quote = calculateMonitoringQuote(
-    clientData,
-    body.billingFrequency,
-    body.selections,
-  );
-
-  return NextResponse.json(quote);
 }
