@@ -84,6 +84,7 @@ Record workstream task execution, outcomes, and follow-up actions against the lo
 | Task | Status | Result | Follow-up |
 | --- | --- | --- | --- |
 | WS7.1 Production configuration checklist | Complete | Added `TMH_Commerce_Extension_Production_Config_Checklist_v1.md` with required env vars, route validation checks, quality gates, and external dependency gates | Use this as the deployment handoff checklist once Zoho and Xero gateway plumbing are available |
+| WS7.2 Blockers and next handoff TODO | Complete | Added `TMH_Commerce_Extension_Blockers_Next_Handoff_TODO_v1.md` with blockers, next tasks, app endpoint contracts, Zoho request/response shapes, env vars, and acceptance criteria | Keep this current as Zoho endpoints and auth/customer context are delivered |
 
 ## Activity Log
 
@@ -146,3 +147,4 @@ Record workstream task execution, outcomes, and follow-up actions against the lo
 - Verified the portal-route redirect cleanup with `npm test`, `npm run lint`, and `npm run build` successfully.
 - Started WS7.
 - Added the production configuration checklist covering environment variables, route validation, quality gates, and external dependency gates.
+- Added the blockers, next handoff, and TODO document with endpoint contracts, request/response shapes, environment variables, and acceptance criteria.
