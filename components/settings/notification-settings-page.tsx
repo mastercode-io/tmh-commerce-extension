@@ -212,8 +212,6 @@ export function NotificationSettingsPage({
   const [saveSuccessMessage, setSaveSuccessMessage] = React.useState<string | null>(null);
   const [isGloballyBlocked, setIsGloballyBlocked] = React.useState(false);
   const [isNewPreferenceSet, setIsNewPreferenceSet] = React.useState(false);
-  const [crmSyncStatus, setCrmSyncStatus] =
-    React.useState<NotificationPreferencesResponse['crmSyncStatus']>();
   const [correlationId, setCorrelationId] = React.useState<string | null>(null);
   const normalizedEmail = email?.trim() ?? '';
 
@@ -229,7 +227,6 @@ export function NotificationSettingsPage({
       setSaveSuccessMessage(null);
       setIsGloballyBlocked(false);
       setIsNewPreferenceSet(false);
-      setCrmSyncStatus(undefined);
       setCorrelationId(null);
 
       try {
@@ -263,7 +260,6 @@ export function NotificationSettingsPage({
         setDebugPayload(payload.debug ?? null);
         setIsGloballyBlocked(payload.optOut === true);
         setIsNewPreferenceSet(payload.new === true);
-        setCrmSyncStatus(payload.crmSyncStatus);
         setCorrelationId(payload.correlationId ?? null);
         setHasResolvedInitialLoad(true);
       } catch (error) {
@@ -287,7 +283,6 @@ export function NotificationSettingsPage({
             ? error.debug ?? null
             : null,
         );
-        setCrmSyncStatus('sync_failed');
         setHasResolvedInitialLoad(true);
       } finally {
         if (!cancelled) {
@@ -388,7 +383,6 @@ export function NotificationSettingsPage({
 
       if (!response.ok) {
         setDebugPayload(payload.debug ?? debugPayload);
-        setCrmSyncStatus(payload.crmSyncStatus ?? 'sync_failed');
         setCorrelationId(payload.correlationId ?? correlationId);
         throw new Error(payload.message ?? 'Unable to save email preferences.');
       }
@@ -399,7 +393,6 @@ export function NotificationSettingsPage({
       setSavedCategories(nextCategories);
       setSavedEssentialOptIn(essentialOptIn);
       setDebugPayload(payload.debug ?? debugPayload);
-      setCrmSyncStatus(payload.crmSyncStatus);
       setCorrelationId(payload.correlationId ?? correlationId);
       setIsNewPreferenceSet(false);
       setSaveSuccessMessage(
@@ -412,7 +405,6 @@ export function NotificationSettingsPage({
       if (error instanceof NotificationApiResponseError) {
         setDebugPayload(error.debug ?? null);
       }
-      setCrmSyncStatus('sync_failed');
       setPageError(getUserFacingClientError(error, 'save', devMode));
     } finally {
       setIsSavingPreferences(false);
@@ -429,26 +421,10 @@ export function NotificationSettingsPage({
           />
 
           {normalizedEmail && !hasBlockingLoadError ? (
-            <div className="text-muted-foreground -mt-3 flex flex-wrap items-center gap-2 text-sm">
-              <span>
-                Managing preferences for{' '}
-                <span className="text-foreground font-medium">{normalizedEmail}</span>
-                {isLoadingPreferences ? '...' : null}
-              </span>
-              {crmSyncStatus ? (
-                <span
-                  className={cn(
-                    'rounded-full border px-2 py-0.5 text-xs',
-                    crmSyncStatus === 'synced'
-                      ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-                      : crmSyncStatus === 'pending_sync'
-                        ? 'border-amber-200 bg-amber-50 text-amber-900'
-                        : 'border-rose-200 bg-rose-50 text-rose-900',
-                  )}
-                >
-                  CRM {crmSyncStatus.replace('_', ' ')}
-                </span>
-              ) : null}
+            <div className="text-muted-foreground -mt-3 text-sm">
+              Managing preferences for{' '}
+              <span className="text-foreground font-medium">{normalizedEmail}</span>
+              {isLoadingPreferences ? '...' : null}
             </div>
           ) : null}
 
