@@ -241,9 +241,11 @@ function MonitoringTrademarkOverview({
 export function MonitoringFlow({
   initialToken,
   initialCheckoutState,
+  showDemoHelpers,
 }: {
   initialToken: string | null;
   initialCheckoutState: string | null;
+  showDemoHelpers: boolean;
 }) {
   const [token] = React.useState(initialToken);
   const [clientData, setClientData] =
@@ -470,7 +472,7 @@ export function MonitoringFlow({
             </Badge>
             <CardTitle>Preparing your subscription options</CardTitle>
             <CardDescription>
-              Fetching client context and trademark records from the mock CRM
+              Fetching client context and trademark records for this subscription link
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 pt-4">
@@ -492,26 +494,30 @@ export function MonitoringFlow({
           <CardTitle>We couldn&apos;t open this monitoring link</CardTitle>
           <CardDescription>{errorMessage}</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 pt-4">
-          <div className="bg-muted/40 rounded-xl border p-4 text-sm">
-            For the MVP, you can open the sample client journey using the demo
-            token
-          </div>
-        </CardContent>
+        {showDemoHelpers ? (
+          <CardContent className="grid gap-4 pt-4">
+            <div className="bg-muted/40 rounded-xl border p-4 text-sm">
+              Local demo mode is available, so you can open the sample client
+              journey using the demo token.
+            </div>
+          </CardContent>
+        ) : null}
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-4">
           <div className="text-muted-foreground text-sm">
             Need help? 0800 689 1700
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" asChild>
-              <a href="mailto:help@temmyportal.example">Contact us</a>
+              <a href="mailto:care@thetrademarkhelpline.com">Contact us</a>
             </Button>
-            <Button asChild>
-              <Link href="/subscribe/monitoring?token=demo-monitoring-001">
-                Open demo link
-                <ArrowRight />
-              </Link>
-            </Button>
+            {showDemoHelpers ? (
+              <Button asChild>
+                <Link href="/subscribe/monitoring?token=demo-monitoring-001">
+                  Open demo link
+                  <ArrowRight />
+                </Link>
+              </Button>
+            ) : null}
           </div>
         </div>
       </Card>
@@ -676,13 +682,15 @@ export function MonitoringFlow({
         </div>
       ) : null}
 
-      <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-3 text-sm">
-        <div className="flex items-center gap-2">
-          <AlertTriangle className="size-4" />
-          Demo tokens: demo-monitoring-001, demo-monitoring-expired,
-          demo-monitoring-empty, demo-monitoring-error
+      {showDemoHelpers ? (
+        <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-3 text-sm">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="size-4" />
+            Demo tokens: demo-monitoring-001, demo-monitoring-expired,
+            demo-monitoring-empty, demo-monitoring-error
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

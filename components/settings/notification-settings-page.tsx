@@ -35,7 +35,20 @@ type NotificationPreferencesResponse = {
   optOut?: true;
   new?: true;
   message?: string;
+  correlationId?: string;
+  crmSyncStatus?: 'synced' | 'pending_sync' | 'sync_failed';
+  profile?: {
+    customerId?: string;
+    email: string;
+    globalOptOut: boolean;
+    categories: NotificationPreferencesPayload;
+    updatedAt?: string;
+    crmSyncStatus?: 'synced' | 'pending_sync' | 'sync_failed';
+    isNew?: true;
+  };
   debug?: {
+    correlationId?: string;
+    operation?: string;
     requestMethod: 'GET' | 'POST';
     requestUrl: string;
     upstreamStatus: number;
@@ -129,7 +142,7 @@ function getFriendlyLoadErrorMessage(status: number, fallback?: string) {
     return 'We could not find any email preferences for this email address.';
   }
 
-  return fallback ?? 'Unable to load notification preferences.';
+  return fallback ?? 'Unable to load email preferences.';
 }
 
 function getUserFacingClientError(
@@ -199,6 +212,9 @@ export function NotificationSettingsPage({
   const [saveSuccessMessage, setSaveSuccessMessage] = React.useState<string | null>(null);
   const [isGloballyBlocked, setIsGloballyBlocked] = React.useState(false);
   const [isNewPreferenceSet, setIsNewPreferenceSet] = React.useState(false);
+  const [crmSyncStatus, setCrmSyncStatus] =
+    React.useState<NotificationPreferencesResponse['crmSyncStatus']>();
+  const [correlationId, setCorrelationId] = React.useState<string | null>(null);
   const normalizedEmail = email?.trim() ?? '';
 
   React.useEffect(() => {
@@ -213,6 +229,8 @@ export function NotificationSettingsPage({
       setSaveSuccessMessage(null);
       setIsGloballyBlocked(false);
       setIsNewPreferenceSet(false);
+      setCrmSyncStatus(undefined);
+      setCorrelationId(null);
 
       try {
         const url = normalizedEmail
@@ -245,6 +263,8 @@ export function NotificationSettingsPage({
         setDebugPayload(payload.debug ?? null);
         setIsGloballyBlocked(payload.optOut === true);
         setIsNewPreferenceSet(payload.new === true);
+        setCrmSyncStatus(payload.crmSyncStatus);
+        setCorrelationId(payload.correlationId ?? null);
         setHasResolvedInitialLoad(true);
       } catch (error) {
         if (cancelled) {
@@ -267,6 +287,7 @@ export function NotificationSettingsPage({
             ? error.debug ?? null
             : null,
         );
+        setCrmSyncStatus('sync_failed');
         setHasResolvedInitialLoad(true);
       } finally {
         if (!cancelled) {
@@ -367,7 +388,9 @@ export function NotificationSettingsPage({
 
       if (!response.ok) {
         setDebugPayload(payload.debug ?? debugPayload);
-        throw new Error(payload.message ?? 'Unable to save notification preferences.');
+        setCrmSyncStatus(payload.crmSyncStatus ?? 'sync_failed');
+        setCorrelationId(payload.correlationId ?? correlationId);
+        throw new Error(payload.message ?? 'Unable to save email preferences.');
       }
 
       const nextCategories = payload.categories ?? categories;
@@ -376,6 +399,8 @@ export function NotificationSettingsPage({
       setSavedCategories(nextCategories);
       setSavedEssentialOptIn(essentialOptIn);
       setDebugPayload(payload.debug ?? debugPayload);
+      setCrmSyncStatus(payload.crmSyncStatus);
+      setCorrelationId(payload.correlationId ?? correlationId);
       setIsNewPreferenceSet(false);
       setSaveSuccessMessage(
         essentialOptIn
@@ -387,6 +412,7 @@ export function NotificationSettingsPage({
       if (error instanceof NotificationApiResponseError) {
         setDebugPayload(error.debug ?? null);
       }
+      setCrmSyncStatus('sync_failed');
       setPageError(getUserFacingClientError(error, 'save', devMode));
     } finally {
       setIsSavingPreferences(false);
@@ -399,14 +425,30 @@ export function NotificationSettingsPage({
         <>
           <PageHeader
             title="Email Preferences"
-            description="Manage essential trademark communications separately from optional marketing content."
+            description="Manage essential trademark communications separately from optional marketing and partner content."
           />
 
           {normalizedEmail && !hasBlockingLoadError ? (
-            <div className="text-muted-foreground -mt-3 text-sm">
-              Managing preferences for{' '}
-              <span className="text-foreground font-medium">{normalizedEmail}</span>
-              {isLoadingPreferences ? '...' : null}
+            <div className="text-muted-foreground -mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <span>
+                Managing preferences for{' '}
+                <span className="text-foreground font-medium">{normalizedEmail}</span>
+                {isLoadingPreferences ? '...' : null}
+              </span>
+              {crmSyncStatus ? (
+                <span
+                  className={cn(
+                    'rounded-full border px-2 py-0.5 text-xs',
+                    crmSyncStatus === 'synced'
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                      : crmSyncStatus === 'pending_sync'
+                        ? 'border-amber-200 bg-amber-50 text-amber-900'
+                        : 'border-rose-200 bg-rose-50 text-rose-900',
+                  )}
+                >
+                  CRM {crmSyncStatus.replace('_', ' ')}
+                </span>
+              ) : null}
             </div>
           ) : null}
 
@@ -675,13 +717,18 @@ export function NotificationSettingsPage({
               <CardContent className="pt-4">
                 <details className="group">
                   <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
-                    CRM Debug Response
+                    CRM Sync Debug
                   </summary>
                   <div className="text-muted-foreground mt-3 text-xs">
                     {debugPayload.requestMethod} {debugPayload.requestUrl}
                     <span className="ml-3 font-medium text-slate-700">
                       Status {debugPayload.upstreamStatus}
                     </span>
+                    {debugPayload.correlationId ?? correlationId ? (
+                      <span className="ml-3 font-medium text-slate-700">
+                        Correlation {debugPayload.correlationId ?? correlationId}
+                      </span>
+                    ) : null}
                   </div>
                   <pre className="mt-3 overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-800">
                     {JSON.stringify(debugPayload.responsePayload, null, 2)}

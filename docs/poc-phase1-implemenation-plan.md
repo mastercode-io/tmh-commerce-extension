@@ -1,5 +1,13 @@
 # TMH Portal UI-Only MVP Plan (Mock Data, No Integrations)
 
+## Archive Notice
+
+This document is archived reference material from the UI-only portal proof-of-concept phase.
+
+It is not part of the current TMH Commerce Extension implementation path.
+
+Retain it only as historical reference for prior route and component decisions.
+
 ## Outcome (what “done” looks like)
 
 A clickable, polished UI POC that matches docs/tmh_portal_dev_spec.md route structure and flows (Landing → Register/Login → Verify Email →

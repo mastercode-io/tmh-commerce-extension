@@ -161,7 +161,7 @@ export function QuoteSummary({
                   {bookingUrl ? (
                     <Button asChild size="sm" className="mt-3">
                       <Link href={bookingUrl} target="_blank" rel="noreferrer">
-                        Open mock Zoho Bookings
+                        Schedule follow-up call
                         <ExternalLink />
                       </Link>
                     </Button>

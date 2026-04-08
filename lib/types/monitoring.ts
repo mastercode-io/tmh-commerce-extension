@@ -16,6 +16,8 @@ export type MonitoringApiErrorCode =
   | 'expired_token'
   | 'no_trademarks'
   | 'server_error'
+  | 'upstream_error'
+  | 'config_error'
   | 'invalid_request'
   | 'invalid_session'
   | 'nothing_payable';

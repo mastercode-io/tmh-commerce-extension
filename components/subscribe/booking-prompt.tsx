@@ -44,12 +44,12 @@ export function BookingPrompt({
       </CardContent>
       <CardFooter className="flex flex-wrap justify-between gap-3 border-amber-200/80 bg-amber-100/40">
         <div className="text-sm text-amber-900/80">
-          The booking flow opens in a new tab in this MVP.
+          The booking flow opens in a new tab so your subscription quote stays intact.
         </div>
         {bookingUrl ? (
           <Button asChild>
             <Link href={bookingUrl} target="_blank" rel="noreferrer">
-              Open mock Zoho Bookings
+              Schedule follow-up call
               <ExternalLink />
             </Link>
           </Button>

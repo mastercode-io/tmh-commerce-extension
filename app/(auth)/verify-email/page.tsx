@@ -29,7 +29,7 @@ export default async function VerifyEmailPage({
             Resend Verification
           </Button>
           <Button asChild>
-            <Link href="/welcome">Skip for now →</Link>
+            <Link href="/settings/notifications">Continue to account</Link>
           </Button>
         </div>
       </div>

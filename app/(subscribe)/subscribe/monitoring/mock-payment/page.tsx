@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import {
   ArrowLeft,
   BadgePoundSterling,
@@ -18,6 +19,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import type { MockCheckoutSession } from '@/lib/types/monitoring';
+import { canUseMockMonitoringSubscription } from '@/lib/monitoring/config';
 
 function formatMoney(amount: number) {
   return new Intl.NumberFormat('en-GB', {
@@ -41,6 +43,10 @@ export default async function MockPaymentPage({
 }: {
   searchParams: Promise<{ token?: string; session?: string }>;
 }) {
+  if (!canUseMockMonitoringSubscription()) {
+    notFound();
+  }
+
   const { token, session: sessionParam } = await searchParams;
 
   let session: MockCheckoutSession | null = null;
@@ -59,7 +65,7 @@ export default async function MockPaymentPage({
         <CardHeader className="border-b">
           <CardTitle>Hosted payment unavailable</CardTitle>
           <CardDescription>
-            The mock payment session is missing or invalid.
+            The local payment session is missing or invalid.
           </CardDescription>
         </CardHeader>
         <CardFooter className="justify-between">
@@ -69,7 +75,7 @@ export default async function MockPaymentPage({
           <Button variant="outline" asChild>
             <Link href="/subscribe/monitoring?token=demo-monitoring-001">
               <ArrowLeft />
-              Open demo quote
+              Open subscription quote
             </Link>
           </Button>
         </CardFooter>
@@ -91,15 +97,15 @@ export default async function MockPaymentPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <Badge variant="secondary" className="mb-3">
-            Mock GoCardless Hosted Payment
+            Local hosted payment simulator
           </Badge>
           <h1 className="text-3xl font-semibold tracking-tight">
-            Set up your Direct Debit
+            Set up your subscription payment
           </h1>
           <p className="text-muted-foreground mt-2 text-sm">
-            This simulates the external GoCardless hosted payment page so the
-            MVP can exercise success, cancel, and failure return states end to
-            end.
+            This local-only page simulates the external hosted payment journey
+            so success, cancel, and failure return states can be exercised end
+            to end before the Zoho/Xero hosted gateway is available.
           </p>
         </div>
         <Button variant="outline" asChild>
@@ -174,7 +180,7 @@ export default async function MockPaymentPage({
         <CardFooter className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-muted-foreground flex items-center gap-2 text-sm">
             <CreditCard className="size-4" />
-            No real payment details are collected in this demo.
+            No real payment details are collected in this local simulator.
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" asChild>
@@ -184,7 +190,7 @@ export default async function MockPaymentPage({
               <Link href={failureHref}>Simulate failure</Link>
             </Button>
             <Button asChild>
-              <Link href={successHref}>Complete Direct Debit</Link>
+              <Link href={successHref}>Complete setup</Link>
             </Button>
           </div>
         </CardFooter>

@@ -1,35 +1,49 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
-import { parseMockCheckoutSession } from '@/lib/monitoring/session';
+import {
+  confirmMonitoringCheckout,
+} from '@/lib/monitoring/service';
+import { MonitoringServiceError } from '@/lib/monitoring/errors';
+import {
+  attachCorrelationIdHeader,
+  getOrCreateCorrelationId,
+} from '@/lib/server/correlation';
 
 export const runtime = 'edge';
 
-export async function GET(request: NextRequest) {
-  const token = request.nextUrl.searchParams.get('token');
-  const sessionValue = request.nextUrl.searchParams.get('session');
-  const session = parseMockCheckoutSession(sessionValue);
+function createJsonResponse(
+  payload: unknown,
+  correlationId: string,
+  init?: ResponseInit,
+) {
+  return attachCorrelationIdHeader(NextResponse.json(payload, init), correlationId);
+}
 
-  if (!token || !session || session.token !== token) {
-    return NextResponse.json(
+export async function GET(request: NextRequest) {
+  const correlationId = getOrCreateCorrelationId(request);
+
+  try {
+    const confirmation = await confirmMonitoringCheckout({
+      token: request.nextUrl.searchParams.get('token'),
+      sessionValue: request.nextUrl.searchParams.get('session'),
+      correlationId,
+    });
+
+    return createJsonResponse(confirmation, correlationId);
+  } catch (error) {
+    if (error instanceof MonitoringServiceError) {
+      return createJsonResponse(error.response, correlationId, {
+        status: error.status,
+      });
+    }
+
+    return createJsonResponse(
       {
-        code: 'invalid_session',
+        code: 'server_error',
         message: 'We could not verify this payment confirmation session.',
       },
-      { status: 400 },
+      correlationId,
+      { status: 500 },
     );
   }
-
-  return NextResponse.json({
-    clientName: session.clientName,
-    companyName: session.companyName,
-    helpPhoneNumber: session.helpPhoneNumber,
-    helpEmail: session.helpEmail,
-    bookingUrl: session.bookingUrl,
-    billingFrequency: session.billingFrequency,
-    firstPaymentDate: session.firstPaymentDate,
-    reference: session.reference,
-    paidItems: session.quote.payableNowLineItems,
-    followUpItems: session.quote.followUpLineItems,
-    summary: session.quote.summary,
-  });
 }

@@ -1,41 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TMH Commerce Extension
 
-## Getting Started
+This repository is the TMH-specific commerce and account extension for subscription, preferences, payment, and request flows. It is no longer being developed as a general portal or workspace product.
 
-Optional environment variables:
+Planning and execution artifacts for the refocus live in `docs/`, especially:
 
-- `DEV_MODE`: when set to `true`, the notification settings page still calls CRM but also exposes the raw upstream response in a debug card.
-- `TMH_GENERAL_ENQUIRY_BOOKING_URL`: external booking link used by the shared header `Schedule a Call` action. Defaults to `https://bookings.thetrademarkhelpline.com/#/general-enquiry`.
+- `TMH_Commerce_Extension_Production_Scope_v1.md`
+- `TMH_Commerce_Extension_Implementation_Order_v1.md`
+- `TMH_Commerce_Extension_Implementation_Workstreams_v1.md`
+- `TMH_Commerce_Extension_Implementation_Tracker.md`
 
-First, run the development server:
+## Local Development
+
+Install dependencies and start the Next.js app:
 
 ```bash
+npm ci
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Commands
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `npm run dev`: start the local development server
+- `npm test`: run the lightweight Node test suite
+- `npm run build`: create a production build
+- `npm run start`: run the production server
+- `npm run lint`: run ESLint
 
-## Learn More
+## Optional Environment Variables
 
-To learn more about Next.js, take a look at the following resources:
+- `DEV_MODE`: when set to `true`, the notification settings page still calls CRM but also exposes the raw upstream response in a debug card
+- `TMH_GENERAL_ENQUIRY_BOOKING_URL`: external booking link used by the shared `Schedule a Call` action; defaults to `https://bookings.thetrademarkhelpline.com/#/general-enquiry`
+- `ZOHO_CLIENT_PORTAL_SETTINGS_NOTIFICATIONS_URL`: Zoho custom API URL for notification preferences
+- `ZOHO_MONITORING_SUBSCRIPTION_CUSTOM_API_URL`: Zoho custom API URL for the monitoring subscription flow; when omitted, the flow keeps using mock data for local/demo work
+- `TMH_REQUIRE_ZOHO_MONITORING_SUBSCRIPTION`: when set to `true`, the monitoring subscription route fails clearly instead of using local mock fallback if the Zoho subscription custom API URL is missing; production Vercel deployments enforce the same behavior
+- `ZOHO_COMMERCE_CUSTOM_API_URL`: Zoho custom API URL for normalized account/customer/order/subscription/payment/request operations
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Current Implementation Focus
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The current implementation sequence is:
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. scope and surface cleanup
+2. Zoho and integration boundary cleanup
+3. monitoring subscription production path
+4. preferences flow hardening
+5. account visibility surfaces
+6. request flows
+7. production hardening and supportability

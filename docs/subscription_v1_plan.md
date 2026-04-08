@@ -1,14 +1,24 @@
 # Subscription Onboarding v1 Plan
 
+## Provider Decision Update
+
+As of April 6, 2026, the v1 subscription payment strategy for this repo has changed:
+
+- v1 uses the **Xero payment gateway** as the hosted payment/setup surface
+- app-level subscription and payment fields must remain provider-neutral
+- direct Stripe or direct GoCardless integrations are deferred to later releases
+
+Use `TMH_Commerce_Extension_Subscription_Payment_Strategy_v1.md`, `TMH_Commerce_Extension_Canonical_Domain_Model_v1.md`, and `TMH_Commerce_Extension_Status_And_Mapping_Spec_v1.md` as the canonical references where this document conflicts with older provider-specific assumptions.
+
 ## 1. Core architecture
 
 Use this split:
 
 - **CRM** = commercial/order system and operational state
-- **Stripe** = checkout and subscription engine
-- **Xero** = downstream accounting ledger
+- **Xero payment gateway** = v1 hosted payment/setup surface
+- **Xero ledger** = downstream accounting ledger
 
-Do **not** use Xero repeating invoices in this version. Once Stripe owns recurring billing, Xero should receive normal accounting invoices and payments per cycle, not act as the recurring engine.
+Do **not** use Xero repeating invoices in this version. The v1 app hands off hosted payment/setup through the Xero payment gateway and should keep provider-specific details behind the payment adapter layer.
 
 ## 2. CRM model
 
@@ -26,17 +36,17 @@ This works if you enforce:
 - **one Order = one subscription agreement**
 - one payer
 - one frequency
-- one Stripe subscription
+- one provider-backed subscription agreement
 
 ### Order fields
 
 - `is_subscription_order`
 - `subscription_interval` (`monthly` / `annual`)
 - `subscription_status`
-- `stripe_customer_id`
-- `stripe_subscription_id`
-- `stripe_checkout_session_id`
-- `stripe_latest_invoice_id`
+- `provider_customer_id`
+- `provider_subscription_id`
+- `provider_session_id`
+- `provider_latest_invoice_id`
 - `xero_latest_invoice_id`
 - `subscription_reference`
 - `current_period_end`
@@ -44,22 +54,22 @@ This works if you enforce:
 - `cancelled_at`
 - `last_paid_at`
 
-## 3. Stripe catalog model
+## 3. Payment catalog model
 
-Sync **Service Packages**, not atomic Products, to Stripe:
+Sync **Service Packages**, not atomic Products, to the v1 payment gateway:
 
-- `Service Package` ↔ `Stripe Product`
-- billing variants ↔ `Stripe Price`
+- `Service Package` ↔ provider-backed sellable package
+- billing variants ↔ provider-backed billing options
 
 ### Store on each sellable package
 
-- `stripe_product_id`
-- `stripe_monthly_price_id`
-- `stripe_annual_price_id`
+- `provider_product_id`
+- `provider_monthly_price_id`
+- `provider_annual_price_id`
 
 ### Store on payer/customer
 
-- `stripe_customer_id`
+- `provider_customer_id`
 
 ## 4. Supported scope for v1
 
@@ -88,8 +98,8 @@ Support only:
 
 1. Validate that all selected packages are subscription-enabled and share one interval.
 2. Create or update CRM Order and Deals in `Pending Checkout`.
-3. Find or create Stripe Customer.
-4. Build Stripe Checkout Session in `subscription` mode using existing Stripe Price IDs.
+3. Find or create the provider-backed customer through the v1 gateway.
+4. Build the hosted checkout/setup session using the existing provider-backed package identifiers.
 5. Pass CRM order key in `client_reference_id` and metadata.
 6. Return hosted Checkout URL.
 
@@ -98,33 +108,33 @@ Support only:
 Used by frontend polling after redirect return:
 
 - reads CRM status
-- optionally refreshes from Stripe if needed
+- optionally refreshes from the v1 payment gateway if needed
 - returns `pending`, `active`, `failed`, or `cancelled`
 
 Webhooks remain source of truth. Polling is only for UI convenience.
 
-## 6. Stripe webhook plan
+## 6. Payment reconciliation plan
 
-Implement one webhook endpoint with signature verification.
+Implement one reconciliation endpoint or webhook handler set with signature verification where the gateway requires it.
 
 ### Minimum events to handle
 
-- `checkout.session.completed`
-- `invoice.paid`
-- `invoice.payment_failed`
-- `customer.subscription.updated`
-- `customer.subscription.deleted`
+- checkout/session completion event
+- successful charge or successful setup event
+- failed charge/setup event
+- subscription updated event
+- subscription cancelled/deleted event
 
 ### Recommended behavior
 
-#### `checkout.session.completed`
+#### Checkout/session completed
 
 - locate Order by `client_reference_id`
-- store `stripe_customer_id`
-- store `stripe_subscription_id`
+- store `provider_customer_id`
+- store `provider_subscription_id`
 - move Order to `Pending Confirmation` or directly `Active`, depending on your rule
 
-#### `invoice.paid`
+#### Successful recurring charge
 
 - mark Order `Active`
 - update `last_paid_at`
@@ -132,30 +142,30 @@ Implement one webhook endpoint with signature verification.
 - create Xero invoice for this cycle
 - create Xero payment against that invoice
 
-#### `invoice.payment_failed`
+#### Failed recurring charge
 
 - mark Order `Past Due`
 - notify internal team or customer as needed
 
-#### `customer.subscription.updated`
+#### Subscription updated
 
 - sync cancellation flag, period end, and status
 
-#### `customer.subscription.deleted`
+#### Subscription cancelled/deleted
 
 - mark Order `Cancelled`
 
-## 7. Stripe checkout flow
+## 7. Hosted checkout/setup flow
 
 1. Customer selects packages.
 2. Frontend calls CRM backend create-checkout endpoint.
-3. Backend returns Stripe hosted Checkout URL.
-4. Frontend redirects customer to Stripe Checkout.
-5. Customer completes first payment on the Stripe-hosted page.
-6. Stripe redirects to your success or cancel page.
+3. Backend returns the hosted payment/setup URL from the v1 gateway.
+4. Frontend redirects customer to the hosted gateway flow.
+5. Customer completes the first payment or payment setup on the hosted page.
+6. The gateway redirects to your success or cancel page.
 7. Frontend polls your backend for final Order status until webhook processing completes.
 
-Use **hosted Stripe Checkout**, not Elements or custom card UI.
+Use the hosted Xero payment gateway flow, not custom embedded payment UI.
 
 ## 8. Xero integration
 
@@ -163,7 +173,7 @@ Use **hosted Stripe Checkout**, not Elements or custom card UI.
 
 Do **not** create a Xero repeating invoice.
 
-Instead, for every successful Stripe billing cycle, create:
+Instead, for every successful recurring billing cycle, create:
 
 - one normal **ACCREC invoice** in Xero
 - one related **Payment** in Xero
@@ -176,11 +186,11 @@ Reason:
 
 - avoids unpaid or stale accounting invoices if Stripe checkout is abandoned
 - keeps Xero aligned to actual successful billings
-- one Stripe renewal = one Xero accounting invoice
+- one successful renewal cycle = one Xero accounting invoice
 
 ### Invoice contents
 
-Build Xero invoice lines from your **atomic SKU mapping**, not from Stripe package rows, because account codes and tax codes live at the atomic accounting level.
+Build Xero invoice lines from your **atomic SKU mapping**, not from provider package rows, because account codes and tax codes live at the atomic accounting level.
 
 ### Reference strategy
 
@@ -188,7 +198,7 @@ On every Xero invoice, write a stable reference such as:
 
 - `subscription_reference`
 - CRM Order number
-- Stripe subscription ID
+- provider subscription ID
 
 Then fetch from Xero by reference whenever you need invoice or payment history instead of duplicating invoices into CRM.
 
@@ -198,7 +208,7 @@ Do not build now:
 
 - CRM invoice module
 - Xero repeating invoices
-- GoCardless branch
+- direct provider integrations
 - plan changes
 - pause/resume
 - proration
@@ -216,4 +226,4 @@ Do not build now:
 
 ## 11. Final design in one sentence
 
-**CRM creates the commercial order, Stripe Checkout sells and renews the subscription, webhooks update CRM, and each successful Stripe charge creates a normal invoice plus payment in Xero.**
+**CRM creates the commercial order, the v1 Xero payment gateway handles hosted payment/setup, normalized payment events update CRM, and each successful recurring charge creates the required accounting records in Xero.**

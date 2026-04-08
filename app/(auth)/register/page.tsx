@@ -24,7 +24,10 @@ export default function RegisterPage() {
   }
 
   return (
-    <AuthCard title="Create account" description="Create your free portfolio in minutes.">
+    <AuthCard
+      title="Create account"
+      description="Create a TMH account for subscription, preference, and request access."
+    >
       <form onSubmit={handleSubmit} className="grid gap-4">
         <div className="grid gap-2">
           <Label htmlFor="fullName">Full name</Label>
@@ -81,4 +84,3 @@ export default function RegisterPage() {
     </AuthCard>
   );
 }
-

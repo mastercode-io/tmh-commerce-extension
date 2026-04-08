@@ -1,14 +1,19 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 import {
-  fetchNotificationPreferences,
+  attachCorrelationIdHeader,
+  getOrCreateCorrelationId,
+} from '@/lib/server/correlation';
+import { parseJsonRequestBody } from '@/lib/server/request-json';
+import {
+  isNotificationPreferencesOptOutRequest,
+  isNotificationPreferencesSaveRequest,
+} from '@/lib/email-preferences/validators';
+import {
+  getPreferenceProfile,
   NotificationPreferencesError,
-  saveNotificationPreferences,
-} from '@/lib/email-preferences/crm';
-import type {
-  NotificationPreferencesOptOutRequest,
-  NotificationPreferencesSaveRequest,
-} from '@/lib/email-preferences/types';
+  savePreferenceProfile,
+} from '@/lib/zoho/preferences';
 
 export const runtime = 'edge';
 
@@ -35,104 +40,157 @@ function getUserFacingError(
     : 'We could not save email preferences right now. Please try again later.';
 }
 
-function isCategoriesPayload(
-  payload: unknown,
-): payload is NotificationPreferencesSaveRequest {
-  return Boolean(
-    payload &&
-      typeof payload === 'object' &&
-      'email' in payload &&
-      typeof payload.email === 'string' &&
-      'categories' in payload &&
-      Array.isArray(payload.categories),
+function createInvalidEmailResponse(
+  correlationId: string,
+  action: 'load' | 'save',
+) {
+  return createJsonResponse(
+    {
+      code: 'invalid_request',
+      message:
+        action === 'load'
+          ? 'Bad request. Please check the link and try again.'
+          : 'Bad request. A valid email address is required.',
+      correlationId,
+      crmSyncStatus: 'sync_failed',
+    },
+    correlationId,
+    { status: 400 },
   );
 }
 
-function isGlobalOptOutPayload(
+function createJsonResponse(
   payload: unknown,
-): payload is NotificationPreferencesOptOutRequest {
-  return Boolean(
-    payload &&
-      typeof payload === 'object' &&
-      'email' in payload &&
-      typeof payload.email === 'string' &&
-      'optOut' in payload &&
-      payload.optOut === true,
-  );
+  correlationId: string,
+  init?: ResponseInit,
+) {
+  return attachCorrelationIdHeader(NextResponse.json(payload, init), correlationId);
+}
+
+function createPreferenceResponsePayload(
+  preferences: Awaited<ReturnType<typeof getPreferenceProfile>>,
+  includeDebug: boolean,
+) {
+  const profile = {
+    customerId: preferences.customerId,
+    email: preferences.email,
+    globalOptOut: preferences.globalOptOut,
+    categories: preferences.categories,
+    updatedAt: preferences.updatedAt,
+    crmSyncStatus: preferences.crmSyncStatus,
+    isNew: preferences.isNew,
+  };
+
+  return {
+    email: preferences.email,
+    categories: preferences.categories,
+    ...(preferences.globalOptOut ? { optOut: true as const } : {}),
+    ...(preferences.isNew ? { new: true as const } : {}),
+    crmSyncStatus: preferences.crmSyncStatus,
+    correlationId: preferences.correlationId,
+    profile,
+    ...(includeDebug && preferences.debug ? { debug: preferences.debug } : {}),
+  };
 }
 
 export async function GET(request: NextRequest) {
+  const correlationId = getOrCreateCorrelationId(request);
   const email = request.nextUrl.searchParams.get('email')?.trim() ?? '';
 
+  if (!email) {
+    return createInvalidEmailResponse(correlationId, 'load');
+  }
+
   try {
-    const preferences = await fetchNotificationPreferences(email);
-    return NextResponse.json({
-      email: preferences.email,
-      categories: preferences.categories,
-      ...(preferences.optOut ? { optOut: true as const } : {}),
-      ...(preferences.new ? { new: true as const } : {}),
-      ...(isDevModeEnabled() && preferences.debug ? { debug: preferences.debug } : {}),
-    });
+    const preferences = await getPreferenceProfile(email, correlationId);
+    return createJsonResponse(
+      createPreferenceResponsePayload(preferences, isDevModeEnabled()),
+      correlationId,
+    );
   } catch (error) {
     if (error instanceof NotificationPreferencesError) {
-      return NextResponse.json(
+      return createJsonResponse(
         {
           code: error.code,
           message: getUserFacingError(error, 'load'),
+          correlationId,
+          crmSyncStatus: 'sync_failed',
           ...(isDevModeEnabled() && error.debug ? { debug: error.debug } : {}),
         },
+        correlationId,
         { status: error.status },
       );
     }
 
-    return NextResponse.json(
+    return createJsonResponse(
       {
         code: 'server_error',
         message: 'Unable to load notification preferences.',
+        correlationId,
+        crmSyncStatus: 'sync_failed',
       },
+      correlationId,
       { status: 500 },
     );
   }
 }
 
 export async function POST(request: NextRequest) {
-  const payload = (await request.json()) as unknown;
+  const correlationId = getOrCreateCorrelationId(request);
+  const payload = await parseJsonRequestBody(request);
 
-  if (!isCategoriesPayload(payload) && !isGlobalOptOutPayload(payload)) {
-    return NextResponse.json(
+  if (
+    !isNotificationPreferencesSaveRequest(payload) &&
+    !isNotificationPreferencesOptOutRequest(payload)
+  ) {
+    return createJsonResponse(
       {
         code: 'invalid_request',
         message: 'A valid email preferences payload is required.',
+        correlationId,
+        crmSyncStatus: 'sync_failed',
       },
+      correlationId,
       { status: 400 },
     );
   }
 
+  if (!payload.email.trim()) {
+    return createInvalidEmailResponse(correlationId, 'save');
+  }
+
   try {
-    const preferences = await saveNotificationPreferences(payload);
-    return NextResponse.json({
-      email: preferences.email,
-      categories: preferences.categories,
-      ...(preferences.optOut ? { optOut: true as const } : {}),
-      ...(isDevModeEnabled() && preferences.debug ? { debug: preferences.debug } : {}),
-    });
+    const preferences = await savePreferenceProfile(
+      { ...payload, email: payload.email.trim() },
+      correlationId,
+    );
+    return createJsonResponse(
+      createPreferenceResponsePayload(preferences, isDevModeEnabled()),
+      correlationId,
+    );
   } catch (error) {
     if (error instanceof NotificationPreferencesError) {
-      return NextResponse.json(
+      return createJsonResponse(
         {
           code: error.code,
           message: getUserFacingError(error, 'save'),
+          correlationId,
+          crmSyncStatus: 'sync_failed',
           ...(isDevModeEnabled() && error.debug ? { debug: error.debug } : {}),
         },
+        correlationId,
         { status: error.status },
       );
     }
 
-    return NextResponse.json(
+    return createJsonResponse(
       {
         code: 'server_error',
         message: 'Unable to save notification preferences.',
+        correlationId,
+        crmSyncStatus: 'sync_failed',
       },
+      correlationId,
       { status: 500 },
     );
   }

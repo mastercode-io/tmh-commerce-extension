@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import {
   ArrowLeft,
   CalendarDays,
@@ -17,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { canUseMockMonitoringSubscription } from '@/lib/monitoring/config';
 
 const slots = [
   { label: 'Tuesday, 18 March', time: '10:00 AM' },
@@ -29,6 +31,10 @@ export default async function MockBookingPage({
 }: {
   searchParams: Promise<{ token?: string }>;
 }) {
+  if (!canUseMockMonitoringSubscription()) {
+    notFound();
+  }
+
   const { token } = await searchParams;
   const returnHref = token
     ? `/subscribe/monitoring?token=${encodeURIComponent(token)}`
@@ -39,15 +45,15 @@ export default async function MockBookingPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <Badge variant="secondary" className="mb-3">
-            Mock Zoho Bookings
+            Local booking simulator
           </Badge>
           <h1 className="text-3xl font-semibold tracking-tight">
             Schedule your MAD assessment call
           </h1>
           <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
-            This page stands in for the external Zoho Bookings experience. In
-            production, the link opens in a new tab so the subscription quote
-            remains intact in the portal.
+            This page stands in for the external booking experience during local
+            development. In production, the booking link opens in a new tab so
+            the subscription quote remains intact.
           </p>
         </div>
         <Button variant="outline" asChild>

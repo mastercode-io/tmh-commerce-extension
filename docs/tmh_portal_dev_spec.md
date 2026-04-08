@@ -1,5 +1,13 @@
 # TMH Portal - Development Specification
 
+## Archive Notice
+
+This document is archived reference material from the earlier TMH Portal / Temmy Portal proof-of-concept phase.
+
+It is not an active implementation target for the current repository.
+
+The active implementation target is the TMH Commerce Extension defined by the canonical planning stack in `docs/TMH_Commerce_Extension_*`.
+
 ## Project Context
 
 **Purpose:** Clickable MVP/POC for Temmy Portal client-facing trademark management  
