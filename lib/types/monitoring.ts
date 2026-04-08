@@ -6,6 +6,7 @@ export type MonitoringPlan =
 export type BillingFrequency = 'monthly' | 'annual';
 
 export type MonitoringRiskProfile = 'low' | 'medium' | 'high';
+export type MonitoringClientLocation = 'UK' | 'INT';
 
 export type MonitoringTrademarkStatus = 'pending' | 'registered' | 'expired';
 
@@ -41,6 +42,7 @@ export interface MonitoringClientData {
   token: string;
   clientName: string;
   companyName?: string;
+  clientLocation?: MonitoringClientLocation;
   helpPhoneNumber: string;
   helpEmail: string;
   bookingUrl: string;
@@ -83,6 +85,10 @@ export interface MonitoringQuoteSummary {
   discountAnnual: number;
   totalMonthly: number;
   totalAnnual: number;
+  vatMonthly: number;
+  vatAnnual: number;
+  payableTotalMonthly: number;
+  payableTotalAnnual: number;
   annualSaving: number;
 }
 
@@ -138,6 +144,15 @@ export interface MonitoringCheckoutIntentTrademark {
 export interface MonitoringCheckoutIntentPayload {
   billingFrequency: BillingFrequency;
   selectedTrademarks: MonitoringCheckoutIntentTrademark[];
+  summary: {
+    billingFrequency: BillingFrequency;
+    selectedCount: number;
+    fullPriceSubtotal: number;
+    discount: number;
+    subtotal: number;
+    vat: number;
+    payableTotal: number;
+  };
 }
 
 export interface MonitoringCheckoutResponse {

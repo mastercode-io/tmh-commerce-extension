@@ -7,6 +7,7 @@ test('normalizeMonitoringClientDataPayload maps title-case trademark enums', () 
   const input = {
     token: 'abc',
     clientName: 'Test360 Limited',
+    clientLocaltion: 'UK',
     helpPhoneNumber: '7555123456',
     helpEmail: 'test55@example.com',
     bookingUrl: 'https://bookings.thetrademarkhelpline.com',
@@ -54,4 +55,5 @@ test('normalizeMonitoringClientDataPayload maps title-case trademark enums', () 
       { type: 'combined', status: 'expired' },
     ],
   );
+  assert.equal((normalized as { clientLocation?: string }).clientLocation, 'UK');
 });

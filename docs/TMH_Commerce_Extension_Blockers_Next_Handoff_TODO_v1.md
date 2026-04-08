@@ -468,6 +468,15 @@ type MonitoringCheckoutRequest = {
     appliedPrice: number | null;
     currency: 'GBP';
   }[];
+  summary: {
+    billingFrequency: 'monthly' | 'annual';
+    selectedCount: number;
+    fullPriceSubtotal: number;
+    discount: number;
+    subtotal: number;
+    vat: number;
+    payableTotal: number;
+  };
 };
 ```
 
@@ -492,6 +501,8 @@ Zoho responsibilities:
 - Revalidate token and selected trademark IDs.
 - Persist basket/checkout snapshot.
 - Treat `selectedTrademarks` as the authoritative checkout payload for v1.
+- Treat `summary` as the narrowed order/quote summary for the chosen billing frequency.
+- For UK clients, expect VAT at `20%` of the post-discount subtotal.
 - Create or update normalized commercial records:
   - order with `status = pending_checkout`
   - payment/setup record with `status = initiated`

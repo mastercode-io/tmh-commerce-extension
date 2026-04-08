@@ -59,8 +59,8 @@ export function QuoteSummary({
 
   const currentTotal =
     billingFrequency === 'annual'
-      ? (quote?.summary.totalAnnual ?? 0)
-      : (quote?.summary.totalMonthly ?? 0);
+      ? (quote?.summary.payableTotalAnnual ?? 0)
+      : (quote?.summary.payableTotalMonthly ?? 0);
   const displayedSubtotal =
     billingFrequency === 'annual'
       ? (quote?.summary.subtotalAnnual ?? 0)
@@ -69,6 +69,10 @@ export function QuoteSummary({
     billingFrequency === 'annual'
       ? (quote?.summary.discountAnnual ?? 0)
       : (quote?.summary.discountMonthly ?? 0);
+  const displayedVat =
+    billingFrequency === 'annual'
+      ? (quote?.summary.vatAnnual ?? 0)
+      : (quote?.summary.vatMonthly ?? 0);
   const ctaLabel = 'Continue to payment';
 
   return (
@@ -115,6 +119,12 @@ export function QuoteSummary({
               <span className="font-medium text-green-700">
                 -{formatMoney(displayedDiscount)}
               </span>
+            </div>
+          ) : null}
+          {quote && displayedVat > 0 ? (
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground text-sm">VAT</span>
+              <span className="font-medium">{formatMoney(displayedVat)}</span>
             </div>
           ) : null}
           <div className="flex items-center justify-between gap-3 border-t pt-3">

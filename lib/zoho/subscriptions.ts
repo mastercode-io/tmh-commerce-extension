@@ -1,6 +1,7 @@
 import type {
   BillingFrequency,
   MonitoringApiErrorCode,
+  MonitoringClientLocation,
   MonitoringCheckoutIntentPayload,
   MonitoringCheckoutResponse,
   MonitoringClientData,
@@ -33,6 +34,7 @@ type ZohoMonitoringSubscriptionRequest = {
   billingFrequency?: BillingFrequency;
   selections?: TrademarkSelection[];
   selectedTrademarks?: MonitoringCheckoutIntentPayload['selectedTrademarks'];
+  summary?: MonitoringCheckoutIntentPayload['summary'];
   session?: string;
 };
 
@@ -137,6 +139,12 @@ function isMonitoringPlan(value: unknown): value is MonitoringPlan {
   );
 }
 
+function isMonitoringClientLocation(
+  value: unknown,
+): value is MonitoringClientLocation {
+  return value === 'UK' || value === 'INT';
+}
+
 function isMonitoringTrademark(value: unknown): value is MonitoringTrademark {
   return (
     hasStringField(value, 'id') &&
@@ -162,6 +170,9 @@ function isMonitoringClientData(value: unknown): value is MonitoringClientData {
   return (
     hasStringField(value, 'token') &&
     hasStringField(value, 'clientName') &&
+    (!('clientLocation' in value) ||
+      value.clientLocation === undefined ||
+      isMonitoringClientLocation(value.clientLocation)) &&
     hasStringField(value, 'helpPhoneNumber') &&
     hasStringField(value, 'helpEmail') &&
     hasStringField(value, 'bookingUrl') &&
@@ -324,6 +335,7 @@ export async function createMonitoringSubscriptionCheckoutIntent(args: {
       origin: args.origin,
       billingFrequency: args.billingFrequency,
       selectedTrademarks: args.checkoutIntent.selectedTrademarks,
+      summary: args.checkoutIntent.summary,
     },
     validate: isMonitoringCheckoutResponse,
   });

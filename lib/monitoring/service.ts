@@ -286,6 +286,7 @@ export async function createMonitoringCheckout(args: {
           clientData,
           request.billingFrequency,
           request.selections,
+          quote,
         ),
         correlationId: args.correlationId,
       });

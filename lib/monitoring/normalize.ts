@@ -67,8 +67,16 @@ export function normalizeMonitoringClientDataPayload(value: unknown): unknown {
     return value;
   }
 
+  const clientLocation =
+    typeof candidate.clientLocation === 'string'
+      ? candidate.clientLocation
+      : typeof candidate.clientLocaltion === 'string'
+        ? candidate.clientLocaltion
+        : undefined;
+
   return {
     ...candidate,
+    ...(clientLocation ? { clientLocation } : {}),
     trademarks: candidate.trademarks.map(normalizeMonitoringTrademark),
   };
 }

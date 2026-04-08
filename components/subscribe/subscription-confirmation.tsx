@@ -174,8 +174,8 @@ export function SubscriptionConfirmation({
 
   const amount =
     payload.billingFrequency === 'annual'
-      ? payload.summary.totalAnnual
-      : payload.summary.totalMonthly;
+      ? payload.summary.payableTotalAnnual
+      : payload.summary.payableTotalMonthly;
 
   return (
     <div className="mx-auto grid max-w-4xl gap-6">

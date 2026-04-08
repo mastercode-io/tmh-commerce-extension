@@ -120,6 +120,10 @@ function buildPlanBreakdown(
   });
 }
 
+function shouldApplyVat(clientData: MonitoringClientData) {
+  return clientData.clientLocation === 'UK';
+}
+
 export function createDefaultSelections(
   clientData: MonitoringClientData,
   plan: MonitoringPlan,
@@ -196,7 +200,14 @@ export function calculateMonitoringQuote(
   const discountAnnual = discountMonthly * 10;
   const totalMonthly = Math.max(0, subtotalMonthly - discountMonthly);
   const totalAnnual = Math.max(0, subtotalAnnual - discountAnnual);
-  const annualSaving = Math.max(0, totalMonthly * 12 - totalAnnual);
+  const vatMonthly = shouldApplyVat(clientData) ? totalMonthly * 0.2 : 0;
+  const vatAnnual = shouldApplyVat(clientData) ? totalAnnual * 0.2 : 0;
+  const payableTotalMonthly = totalMonthly + vatMonthly;
+  const payableTotalAnnual = totalAnnual + vatAnnual;
+  const annualSaving = Math.max(
+    0,
+    payableTotalMonthly * 12 - payableTotalAnnual,
+  );
 
   return {
     billingFrequency,
@@ -214,6 +225,10 @@ export function calculateMonitoringQuote(
       discountAnnual,
       totalMonthly,
       totalAnnual,
+      vatMonthly,
+      vatAnnual,
+      payableTotalMonthly,
+      payableTotalAnnual,
       annualSaving,
     },
   };
@@ -223,6 +238,7 @@ export function buildMonitoringCheckoutIntentPayload(
   clientData: MonitoringClientData,
   billingFrequency: BillingFrequency,
   selections: TrademarkSelection[],
+  quote: MonitoringQuoteResponse,
 ): MonitoringCheckoutIntentPayload {
   const trademarksById = getSelectedTrademarkMap(clientData);
   const planOccurrences: Record<MonitoringPlan, number> = {
@@ -271,5 +287,29 @@ export function buildMonitoringCheckoutIntentPayload(
   return {
     billingFrequency,
     selectedTrademarks,
+    summary: {
+      billingFrequency,
+      selectedCount: quote.summary.selectedCount,
+      fullPriceSubtotal:
+        billingFrequency === 'annual'
+          ? quote.summary.subtotalAnnual
+          : quote.summary.subtotalMonthly,
+      discount:
+        billingFrequency === 'annual'
+          ? quote.summary.discountAnnual
+          : quote.summary.discountMonthly,
+      subtotal:
+        billingFrequency === 'annual'
+          ? quote.summary.totalAnnual
+          : quote.summary.totalMonthly,
+      vat:
+        billingFrequency === 'annual'
+          ? quote.summary.vatAnnual
+          : quote.summary.vatMonthly,
+      payableTotal:
+        billingFrequency === 'annual'
+          ? quote.summary.payableTotalAnnual
+          : quote.summary.payableTotalMonthly,
+    },
   };
 }

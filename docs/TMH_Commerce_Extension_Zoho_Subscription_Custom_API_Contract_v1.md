@@ -138,6 +138,7 @@ type MonitoringClientData = {
   token: string;
   clientName: string;
   companyName?: string;
+  clientLocation?: 'UK' | 'INT';
   helpPhoneNumber: string;
   helpEmail: string;
   bookingUrl: string;
@@ -199,6 +200,15 @@ type MonitoringClientData = {
       "appliedPrice": 12,
       "currency": "GBP"
     }
+  ],
+  "summary": {
+    "billingFrequency": "monthly",
+    "selectedCount": 2,
+    "fullPriceSubtotal": 48,
+    "discount": 12,
+    "subtotal": 36,
+    "vat": 7.2,
+    "payableTotal": 43.2
   ]
 }
 ```
@@ -224,6 +234,9 @@ Rules:
 - Only selected trademarks are sent in this operation.
 - `selectedTrademarks` already includes the applied per-trademark price for the chosen billing frequency.
 - Where a second or subsequent trademark on the same discount-eligible plan receives a reduced price, the reduced value is sent directly in `appliedPrice`.
+- `summary` is the order/quote summary for the chosen billing frequency only.
+- For `clientLocation = UK`, `vat` must equal `subtotal * 0.2`.
+- For `clientLocation = INT`, `vat` must be `0`.
 - Do not expect the app to send the full quote matrix or all available pricing permutations in this operation.
 
 ### Success Response

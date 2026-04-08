@@ -145,6 +145,7 @@ export function getMockMonitoringClientData(
     token,
     clientName: 'Amelia Carter',
     companyName: 'Luma Lane Studio Ltd',
+    clientLocation: 'UK',
     helpPhoneNumber: MOCK_MONITORING_HELP_PHONE,
     helpEmail: MOCK_MONITORING_HELP_EMAIL,
     bookingUrl: buildBookingUrl(origin, token),

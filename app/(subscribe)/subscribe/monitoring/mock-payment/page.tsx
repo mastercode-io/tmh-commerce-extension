@@ -85,8 +85,8 @@ export default async function MockPaymentPage({
 
   const amount =
     session.billingFrequency === 'annual'
-      ? session.quote.summary.totalAnnual
-      : session.quote.summary.totalMonthly;
+      ? session.quote.summary.payableTotalAnnual
+      : session.quote.summary.payableTotalMonthly;
   const successHref = `/subscribe/monitoring/confirm?token=${encodeURIComponent(token)}&session=${encodeURIComponent(sessionParam ?? '')}`;
   const cancelHref = `/subscribe/monitoring?token=${encodeURIComponent(token)}&checkout=cancelled`;
   const failureHref = `/subscribe/monitoring?token=${encodeURIComponent(token)}&checkout=failed`;
