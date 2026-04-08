@@ -94,16 +94,7 @@ function buildSelections(
   );
 }
 
-function mapErrorMessage(status: number, data: unknown) {
-  if (
-    typeof data === 'object' &&
-    data !== null &&
-    'message' in data &&
-    typeof data.message === 'string'
-  ) {
-    return data.message;
-  }
-
+function mapErrorMessage(status: number) {
   if (status === 400) {
     return 'Invalid link. Please contact us if you need a fresh subscription link.';
   }
@@ -116,7 +107,7 @@ function mapErrorMessage(status: number, data: unknown) {
     return 'We could not find any trademarks for this account.';
   }
 
-  return 'We could not load this subscription link right now.';
+  return 'We could not open this monitoring link right now. Please try again later or contact us for help.';
 }
 
 async function requestJson<T>(input: string, init?: RequestInit): Promise<T> {
@@ -135,7 +126,7 @@ async function requestJson<T>(input: string, init?: RequestInit): Promise<T> {
     | null;
 
   if (!response.ok) {
-    throw new Error(mapErrorMessage(response.status, data));
+    throw new Error(mapErrorMessage(response.status));
   }
 
   return data as T;
@@ -338,7 +329,7 @@ export function MonitoringFlow({
 
         if (!response.ok || !payload) {
           throw new MonitoringApiResponseError(
-            mapErrorMessage(response.status, payload),
+            mapErrorMessage(response.status),
             response.status,
             payload && 'debug' in payload ? payload.debug : undefined,
             payload && 'correlationId' in payload ? payload.correlationId : undefined,
@@ -546,41 +537,69 @@ export function MonitoringFlow({
 
   if (loadState === 'error' || !clientData) {
     return (
-      <Card className="mx-auto max-w-3xl">
-        <CardHeader className="border-b">
-          <Badge variant="secondary" className="mb-3 w-fit">
-            Subscription link issue
-          </Badge>
-          <CardTitle>We couldn&apos;t open this monitoring link</CardTitle>
-          <CardDescription>{errorMessage}</CardDescription>
-        </CardHeader>
-        {showDemoHelpers ? (
-          <CardContent className="grid gap-4 pt-4">
-            <div className="bg-muted/40 rounded-xl border p-4 text-sm">
-              Local demo mode is available, so you can open the sample client
-              journey using the demo token.
+      <div className="grid gap-6">
+        <Card className="mx-auto max-w-3xl">
+          <CardHeader className="border-b">
+            <Badge variant="secondary" className="mb-3 w-fit">
+              Subscription link issue
+            </Badge>
+            <CardTitle>We couldn&apos;t open this monitoring link</CardTitle>
+            <CardDescription>{errorMessage}</CardDescription>
+          </CardHeader>
+          {showDemoHelpers ? (
+            <CardContent className="grid gap-4 pt-4">
+              <div className="bg-muted/40 rounded-xl border p-4 text-sm">
+                Local demo mode is available, so you can open the sample client
+                journey using the demo token.
+              </div>
+            </CardContent>
+          ) : null}
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-4">
+            <div className="text-muted-foreground text-sm">
+              Need help? 0800 689 1700
             </div>
-          </CardContent>
-        ) : null}
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-4">
-          <div className="text-muted-foreground text-sm">
-            Need help? 0800 689 1700
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" asChild>
-              <a href="mailto:care@thetrademarkhelpline.com">Contact us</a>
-            </Button>
-            {showDemoHelpers ? (
-              <Button asChild>
-                <Link href="/subscribe/monitoring?token=demo-monitoring-001">
-                  Open demo link
-                  <ArrowRight />
-                </Link>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" asChild>
+                <a href="mailto:care@thetrademarkhelpline.com">Contact us</a>
               </Button>
-            ) : null}
+              {showDemoHelpers ? (
+                <Button asChild>
+                  <Link href="/subscribe/monitoring?token=demo-monitoring-001">
+                    Open demo link
+                    <ArrowRight />
+                  </Link>
+                </Button>
+              ) : null}
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+
+        {devMode && debugPayload ? (
+          <Card className="mx-auto max-w-3xl overflow-hidden border-slate-300">
+            <CardContent className="pt-4">
+              <details className="group">
+                <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
+                  Custom API Debug
+                </summary>
+                <div className="text-muted-foreground mt-3 text-xs">
+                  {debugPayload.requestMethod} {debugPayload.requestUrl}
+                  <span className="ml-3 font-medium text-slate-700">
+                    Status {debugPayload.upstreamStatus}
+                  </span>
+                  {debugPayload.correlationId ?? correlationId ? (
+                    <span className="ml-3 font-medium text-slate-700">
+                      Correlation {debugPayload.correlationId ?? correlationId}
+                    </span>
+                  ) : null}
+                </div>
+                <pre className="mt-3 overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-800">
+                  {JSON.stringify(debugPayload.responsePayload, null, 2)}
+                </pre>
+              </details>
+            </CardContent>
+          </Card>
+        ) : null}
+      </div>
     );
   }
 

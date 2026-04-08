@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
+import { isDebugModeEnabled } from '@/lib/env/debug-mode';
 import { MonitoringServiceError } from '@/lib/monitoring/errors';
 import { getMonitoringSubscriptionContextWithDebug } from '@/lib/monitoring/service';
 import {
@@ -8,10 +9,6 @@ import {
 } from '@/lib/server/correlation';
 
 export const runtime = 'edge';
-
-function isDevModeEnabled() {
-  return process.env.DEV_MODE?.toLowerCase() === 'true';
-}
 
 function createJsonResponse(
   payload: unknown,
@@ -35,7 +32,7 @@ export async function GET(request: NextRequest) {
       {
         ...result.data,
         correlationId,
-        ...(isDevModeEnabled() && result.debug ? { debug: result.debug } : {}),
+        ...(isDebugModeEnabled() && result.debug ? { debug: result.debug } : {}),
       },
       correlationId,
     );
@@ -45,7 +42,7 @@ export async function GET(request: NextRequest) {
         {
           ...error.response,
           correlationId,
-          ...(isDevModeEnabled() && error.debug ? { debug: error.debug } : {}),
+          ...(isDebugModeEnabled() && error.debug ? { debug: error.debug } : {}),
         },
         correlationId,
         {

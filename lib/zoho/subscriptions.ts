@@ -9,6 +9,7 @@ import type {
   MonitoringTrademark,
   TrademarkSelection,
 } from '@/lib/types/monitoring';
+import { normalizeMonitoringClientDataPayload } from '@/lib/monitoring/normalize';
 import {
   executeZohoRequest,
   requireZohoBaseUrl,
@@ -269,8 +270,12 @@ async function executeMonitoringSubscriptionRequest<T>(args: {
       } satisfies ZohoMonitoringSubscriptionRequest,
     });
     const data = unwrapZohoCustomApiEnvelope<T>(result.responseBody);
+    const normalizedData =
+      args.operation === 'monitoring_subscription.resolve_token'
+        ? (normalizeMonitoringClientDataPayload(data) as T)
+        : data;
 
-    if (!args.validate(data)) {
+    if (!args.validate(normalizedData)) {
       throw new ZohoMonitoringSubscriptionError(
         `${args.operation} returned an invalid response shape.`,
         502,
@@ -280,7 +285,7 @@ async function executeMonitoringSubscriptionRequest<T>(args: {
     }
 
     return {
-      data,
+      data: normalizedData,
       debug: result.debug,
     };
   } catch (error) {
