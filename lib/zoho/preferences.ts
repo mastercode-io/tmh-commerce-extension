@@ -127,6 +127,37 @@ function normalizeNotificationResponse(
   };
 }
 
+function hasPreferenceStateKeys(body: unknown) {
+  return (
+    body !== null &&
+    typeof body === 'object' &&
+    ('categories' in body || 'optOut' in body)
+  );
+}
+
+function normalizeSavedNotificationResponse(
+  body: unknown,
+  fallbackPayload:
+    | NotificationPreferencesSaveRequest
+    | NotificationPreferencesOptOutRequest,
+): NormalizedNotificationCategoriesResponse | NotificationPreferencesOptOutRequest {
+  if (hasPreferenceStateKeys(body)) {
+    return normalizeNotificationResponse(body);
+  }
+
+  if ('optOut' in fallbackPayload) {
+    return {
+      email: fallbackPayload.email,
+      optOut: true,
+    };
+  }
+
+  return {
+    email: fallbackPayload.email,
+    categories: fallbackPayload.categories,
+  };
+}
+
 function mapClientError(error: unknown) {
   if (error instanceof NotificationPreferencesError) {
     return error;
@@ -220,7 +251,10 @@ export async function savePreferenceProfile(
     });
 
     try {
-      const normalizedResponse = normalizeNotificationResponse(result.responseBody);
+      const normalizedResponse = normalizeSavedNotificationResponse(
+        result.responseBody,
+        payloadBody,
+      );
 
       return {
         email: normalizedResponse.email ?? payloadBody.email,
