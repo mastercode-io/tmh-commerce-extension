@@ -159,7 +159,7 @@ Per trademark:
 - `brandName`
 - `type`
 - `jurisdiction`
-- `applicationDate`
+- `applicationDate` optional
 - `registrationDate` optional
 - `expiryDate` optional
 - `registrationNumber` optional
@@ -517,7 +517,7 @@ Exact Zoho field names still need confirmation. This is the initial mapping mode
 | `trademarks[].brandName` | related brand / case grouping | optional but useful |
 | `trademarks[].type` | mark type | must normalize into portal enums |
 | `trademarks[].jurisdiction` | jurisdiction field | GB, EU, WIPO, etc |
-| `trademarks[].applicationDate` | filing/application date | required by current type |
+| `trademarks[].applicationDate` | filing/application date | optional |
 | `trademarks[].registrationDate` | registration date | optional |
 | `trademarks[].expiryDate` | renewal / expiry date | optional but shown in UI |
 | `trademarks[].registrationNumber` | registration number | optional for some states |

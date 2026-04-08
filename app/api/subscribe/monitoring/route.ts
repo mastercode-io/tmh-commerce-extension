@@ -1,13 +1,17 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { MonitoringServiceError } from '@/lib/monitoring/errors';
-import { getMonitoringSubscriptionContext } from '@/lib/monitoring/service';
+import { getMonitoringSubscriptionContextWithDebug } from '@/lib/monitoring/service';
 import {
   attachCorrelationIdHeader,
   getOrCreateCorrelationId,
 } from '@/lib/server/correlation';
 
 export const runtime = 'edge';
+
+function isDevModeEnabled() {
+  return process.env.DEV_MODE?.toLowerCase() === 'true';
+}
 
 function createJsonResponse(
   payload: unknown,
@@ -21,24 +25,40 @@ export async function GET(request: NextRequest) {
   const correlationId = getOrCreateCorrelationId(request);
 
   try {
-    const data = await getMonitoringSubscriptionContext({
+    const result = await getMonitoringSubscriptionContextWithDebug({
       token: request.nextUrl.searchParams.get('token'),
       origin: request.nextUrl.origin,
       correlationId,
     });
 
-    return createJsonResponse(data, correlationId);
+    return createJsonResponse(
+      {
+        ...result.data,
+        correlationId,
+        ...(isDevModeEnabled() && result.debug ? { debug: result.debug } : {}),
+      },
+      correlationId,
+    );
   } catch (error) {
     if (error instanceof MonitoringServiceError) {
-      return createJsonResponse(error.response, correlationId, {
-        status: error.status,
-      });
+      return createJsonResponse(
+        {
+          ...error.response,
+          correlationId,
+          ...(isDevModeEnabled() && error.debug ? { debug: error.debug } : {}),
+        },
+        correlationId,
+        {
+          status: error.status,
+        },
+      );
     }
 
     return createJsonResponse(
       {
         code: 'server_error',
         message: 'We hit a temporary problem while loading this subscription link.',
+        correlationId,
       },
       correlationId,
       { status: 500 },

@@ -7,12 +7,14 @@ export default async function MonitoringSubscriptionPage({
   searchParams: Promise<{ token?: string; checkout?: string }>;
 }) {
   const { token, checkout } = await searchParams;
+  const devMode = process.env.DEV_MODE?.toLowerCase() === 'true';
 
   return (
     <MonitoringFlow
       initialToken={token ?? null}
       initialCheckoutState={checkout ?? null}
       showDemoHelpers={canUseMockMonitoringSubscription()}
+      devMode={devMode}
     />
   );
 }

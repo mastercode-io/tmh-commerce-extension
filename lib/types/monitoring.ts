@@ -28,7 +28,7 @@ export interface MonitoringTrademark {
   brandName: string;
   type: MonitoringTrademarkType;
   jurisdiction: string;
-  applicationDate: string;
+  applicationDate?: string;
   registrationDate?: string;
   expiryDate?: string;
   registrationNumber?: string;

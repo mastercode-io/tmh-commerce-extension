@@ -28,6 +28,7 @@ import {
   createMonitoringSubscriptionCheckoutIntent,
   isMonitoringSubscriptionCustomApiConfigured,
   resolveMonitoringSubscriptionToken,
+  type ZohoMonitoringSubscriptionDebug,
   ZohoMonitoringSubscriptionError,
 } from '@/lib/zoho/subscriptions';
 
@@ -75,6 +76,7 @@ function mapZohoErrorToMonitoringError(
     ),
     error.status,
     correlationId,
+    error.debug,
   );
 }
 
@@ -163,11 +165,14 @@ async function resolveMonitoringSubscriptionContext(args: {
   }
 }
 
-export async function getMonitoringSubscriptionContext(args: {
+export async function getMonitoringSubscriptionContextWithDebug(args: {
   token: string | null;
   origin: string;
   correlationId: string;
-}): Promise<MonitoringClientData> {
+}): Promise<{
+  data: MonitoringClientData;
+  debug?: ZohoMonitoringSubscriptionDebug;
+}> {
   assertMonitoringSubscriptionIntegration(args.correlationId);
 
   if (isMonitoringSubscriptionCustomApiConfigured()) {
@@ -184,7 +189,19 @@ export async function getMonitoringSubscriptionContext(args: {
 
   const token = assertScenarioToken(args.token, args.correlationId);
   await simulateMockLatency();
-  return getMockMonitoringClientData(args.origin, token);
+
+  return {
+    data: getMockMonitoringClientData(args.origin, token),
+  };
+}
+
+export async function getMonitoringSubscriptionContext(args: {
+  token: string | null;
+  origin: string;
+  correlationId: string;
+}): Promise<MonitoringClientData> {
+  const result = await getMonitoringSubscriptionContextWithDebug(args);
+  return result.data;
 }
 
 export async function getMonitoringQuote(args: {
@@ -200,11 +217,13 @@ export async function getMonitoringQuote(args: {
   const request = assertQuoteRequest(args.body, args.correlationId);
 
   const clientData = isMonitoringSubscriptionCustomApiConfigured()
-    ? await resolveMonitoringSubscriptionContext({
-        token,
-        origin: args.origin,
-        correlationId: args.correlationId,
-      })
+    ? (
+        await resolveMonitoringSubscriptionContext({
+          token,
+          origin: args.origin,
+          correlationId: args.correlationId,
+        })
+      ).data
     : getMockMonitoringClientData(args.origin, token);
 
   if (!isMonitoringSubscriptionCustomApiConfigured()) {
@@ -231,11 +250,13 @@ export async function createMonitoringCheckout(args: {
   const request = assertCheckoutRequest(args.body, args.correlationId);
 
   const clientData = isMonitoringSubscriptionCustomApiConfigured()
-    ? await resolveMonitoringSubscriptionContext({
-        token,
-        origin: args.origin,
-        correlationId: args.correlationId,
-      })
+    ? (
+        await resolveMonitoringSubscriptionContext({
+          token,
+          origin: args.origin,
+          correlationId: args.correlationId,
+        })
+      ).data
     : getMockMonitoringClientData(args.origin, token);
   const quote = calculateMonitoringQuote(
     clientData,

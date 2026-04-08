@@ -4,7 +4,9 @@ import type {
   MonitoringCheckoutResponse,
   MonitoringClientData,
   MonitoringConfirmationResponse,
+  MonitoringPlan,
   MonitoringQuoteResponse,
+  MonitoringTrademark,
   TrademarkSelection,
 } from '@/lib/types/monitoring';
 import {
@@ -93,6 +95,68 @@ function hasStringField<TField extends string>(
   );
 }
 
+function hasOptionalStringField<TField extends string>(
+  value: unknown,
+  field: TField,
+) {
+  if (value === null || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  return !(field in candidate) || typeof candidate[field] === 'string';
+}
+
+function isMonitoringTrademarkType(
+  value: unknown,
+): value is MonitoringTrademark['type'] {
+  return (
+    value === 'word_mark' || value === 'figurative' || value === 'combined'
+  );
+}
+
+function isMonitoringTrademarkStatus(
+  value: unknown,
+): value is MonitoringTrademark['status'] {
+  return value === 'pending' || value === 'registered' || value === 'expired';
+}
+
+function isMonitoringRiskProfile(
+  value: unknown,
+): value is MonitoringTrademark['riskProfile'] {
+  return value === 'low' || value === 'medium' || value === 'high';
+}
+
+function isMonitoringPlan(value: unknown): value is MonitoringPlan {
+  return (
+    value === 'monitoring_defence' ||
+    value === 'monitoring_essentials' ||
+    value === 'annual_review'
+  );
+}
+
+function isMonitoringTrademark(value: unknown): value is MonitoringTrademark {
+  return (
+    hasStringField(value, 'id') &&
+    hasStringField(value, 'name') &&
+    hasStringField(value, 'brandName') &&
+    hasStringField(value, 'jurisdiction') &&
+    hasStringField(value, 'type') &&
+    isMonitoringTrademarkType(value.type) &&
+    hasOptionalStringField(value, 'applicationDate') &&
+    hasOptionalStringField(value, 'registrationDate') &&
+    hasOptionalStringField(value, 'expiryDate') &&
+    hasOptionalStringField(value, 'registrationNumber') &&
+    hasStringField(value, 'status') &&
+    isMonitoringTrademarkStatus(value.status) &&
+    (!('riskProfile' in value) ||
+      value.riskProfile === undefined ||
+      isMonitoringRiskProfile(value.riskProfile)) &&
+    hasOptionalStringField(value, 'imageUrl')
+  );
+}
+
 function isMonitoringClientData(value: unknown): value is MonitoringClientData {
   return (
     hasStringField(value, 'token') &&
@@ -101,7 +165,11 @@ function isMonitoringClientData(value: unknown): value is MonitoringClientData {
     hasStringField(value, 'helpEmail') &&
     hasStringField(value, 'bookingUrl') &&
     'trademarks' in value &&
-    Array.isArray(value.trademarks)
+    Array.isArray(value.trademarks) &&
+    value.trademarks.every(isMonitoringTrademark) &&
+    (!('preSelectedPlan' in value) ||
+      value.preSelectedPlan === undefined ||
+      isMonitoringPlan(value.preSelectedPlan))
   );
 }
 
@@ -211,7 +279,10 @@ async function executeMonitoringSubscriptionRequest<T>(args: {
       );
     }
 
-    return data;
+    return {
+      data,
+      debug: result.debug,
+    };
   } catch (error) {
     throw mapZohoError(error);
   }
@@ -241,7 +312,7 @@ export async function createMonitoringSubscriptionCheckoutIntent(args: {
   quote: MonitoringQuoteResponse;
   correlationId: string;
 }) {
-  return executeMonitoringSubscriptionRequest({
+  const result = await executeMonitoringSubscriptionRequest({
     operation: 'monitoring_subscription.create_checkout_intent',
     correlationId: args.correlationId,
     payload: {
@@ -253,6 +324,8 @@ export async function createMonitoringSubscriptionCheckoutIntent(args: {
     },
     validate: isMonitoringCheckoutResponse,
   });
+
+  return result.data;
 }
 
 export async function confirmMonitoringSubscriptionCheckout(args: {
@@ -260,7 +333,7 @@ export async function confirmMonitoringSubscriptionCheckout(args: {
   session: string;
   correlationId: string;
 }) {
-  return executeMonitoringSubscriptionRequest({
+  const result = await executeMonitoringSubscriptionRequest({
     operation: 'monitoring_subscription.confirm_checkout',
     correlationId: args.correlationId,
     payload: {
@@ -269,4 +342,6 @@ export async function confirmMonitoringSubscriptionCheckout(args: {
     },
     validate: isMonitoringConfirmationResponse,
   });
+
+  return result.data;
 }

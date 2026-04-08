@@ -304,7 +304,7 @@ type MonitoringEntryResponse = {
     brandName?: string;
     type: 'word_mark' | 'figurative' | 'combined';
     jurisdiction: string;
-    applicationDate: string;
+    applicationDate?: string;
     registrationDate?: string;
     expiryDate?: string;
     registrationNumber?: string;

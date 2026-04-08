@@ -43,6 +43,41 @@ import type {
   TrademarkSelection,
 } from '@/lib/types/monitoring';
 
+type MonitoringDebugPayload = {
+  correlationId?: string;
+  operation?: string;
+  requestMethod: 'GET' | 'POST';
+  requestUrl: string;
+  upstreamStatus: number;
+  responsePayload: unknown;
+  responseBody: unknown;
+};
+
+type MonitoringClientResponse = MonitoringClientData & {
+  correlationId?: string;
+  message?: string;
+  debug?: MonitoringDebugPayload;
+};
+
+class MonitoringApiResponseError extends Error {
+  status: number;
+  debug?: MonitoringDebugPayload;
+  correlationId?: string;
+
+  constructor(
+    message: string,
+    status: number,
+    debug?: MonitoringDebugPayload,
+    correlationId?: string,
+  ) {
+    super(message);
+    this.name = 'MonitoringApiResponseError';
+    this.status = status;
+    this.debug = debug;
+    this.correlationId = correlationId;
+  }
+}
+
 function buildSelections(
   trademarks: MonitoringTrademark[],
   plan: MonitoringPlan = 'monitoring_essentials',
@@ -242,10 +277,12 @@ export function MonitoringFlow({
   initialToken,
   initialCheckoutState,
   showDemoHelpers,
+  devMode,
 }: {
   initialToken: string | null;
   initialCheckoutState: string | null;
   showDemoHelpers: boolean;
+  devMode: boolean;
 }) {
   const [token] = React.useState(initialToken);
   const [clientData, setClientData] =
@@ -274,6 +311,9 @@ export function MonitoringFlow({
   const [checkoutPending, setCheckoutPending] = React.useState(false);
   const [bookingPromptVisible, setBookingPromptVisible] = React.useState(false);
   const [busyPlan, setBusyPlan] = React.useState<MonitoringPlan | null>(null);
+  const [debugPayload, setDebugPayload] =
+    React.useState<MonitoringDebugPayload | null>(null);
+  const [correlationId, setCorrelationId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!token) {
@@ -287,22 +327,38 @@ export function MonitoringFlow({
       try {
         setLoadState('loading');
         setErrorMessage(null);
-        const data = await requestJson<MonitoringClientData>(
-          `/api/subscribe/monitoring?token=${encodeURIComponent(safeToken)}`,
-        );
+        const url = `/api/subscribe/monitoring?token=${encodeURIComponent(safeToken)}`;
+        const response = await fetch(url, {
+          method: 'GET',
+          cache: 'no-store',
+        });
+        const payload = (await response.json().catch(() => null)) as
+          | MonitoringClientResponse
+          | null;
+
+        if (!response.ok || !payload) {
+          throw new MonitoringApiResponseError(
+            mapErrorMessage(response.status, payload),
+            response.status,
+            payload && 'debug' in payload ? payload.debug : undefined,
+            payload && 'correlationId' in payload ? payload.correlationId : undefined,
+          );
+        }
 
         if (cancelled) {
           return;
         }
 
-        setClientData(data);
+        setClientData(payload);
         setSelections(
           buildSelections(
-            data.trademarks,
-            data.preSelectedPlan ?? 'monitoring_essentials',
+            payload.trademarks,
+            payload.preSelectedPlan ?? 'monitoring_essentials',
           ),
         );
-        setFlowMode(data.preSelectedPlan ? 'configuration' : 'plan-selection');
+        setFlowMode(payload.preSelectedPlan ? 'configuration' : 'plan-selection');
+        setDebugPayload(payload.debug ?? null);
+        setCorrelationId(payload.correlationId ?? null);
         setLoadState('ready');
       } catch (error) {
         if (cancelled) {
@@ -313,6 +369,10 @@ export function MonitoringFlow({
         setErrorMessage(
           error instanceof Error ? error.message : 'Something went wrong.',
         );
+        if (error instanceof MonitoringApiResponseError) {
+          setDebugPayload(error.debug ?? null);
+          setCorrelationId(error.correlationId ?? null);
+        }
       }
     }
 
@@ -690,6 +750,32 @@ export function MonitoringFlow({
             demo-monitoring-empty, demo-monitoring-error
           </div>
         </div>
+      ) : null}
+
+      {devMode && debugPayload ? (
+        <Card className="overflow-hidden border-slate-300">
+          <CardContent className="pt-4">
+            <details className="group">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
+                Custom API Debug
+              </summary>
+              <div className="text-muted-foreground mt-3 text-xs">
+                {debugPayload.requestMethod} {debugPayload.requestUrl}
+                <span className="ml-3 font-medium text-slate-700">
+                  Status {debugPayload.upstreamStatus}
+                </span>
+                {debugPayload.correlationId ?? correlationId ? (
+                  <span className="ml-3 font-medium text-slate-700">
+                    Correlation {debugPayload.correlationId ?? correlationId}
+                  </span>
+                ) : null}
+              </div>
+              <pre className="mt-3 overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-800">
+                {JSON.stringify(debugPayload.responsePayload, null, 2)}
+              </pre>
+            </details>
+          </CardContent>
+        </Card>
       ) : null}
     </div>
   );
