@@ -357,10 +357,61 @@ Same input shape as quote:
 - reject checkout if `payableNowCount < 1`
 - persist quote snapshot / checkout intent
 - store both payable and follow-up items
+- build a minimal checkout-intent payload containing only selected trademarks
+- include the applied per-trademark price for the chosen billing frequency
 - return:
   - `reference`
   - `session`
   - `redirectUrl`
+
+### Zoho Custom API Payload
+
+When the app calls the Zoho custom API for `monitoring_subscription.create_checkout_intent`, it sends a narrowed payload:
+
+```json
+{
+  "operation": "monitoring_subscription.create_checkout_intent",
+  "correlationId": "3f3c8fd1-7128-42bb-b87b-3c6e55f8e62d",
+  "token": "demo-monitoring-001",
+  "origin": "https://example.com",
+  "billingFrequency": "monthly",
+  "selectedTrademarks": [
+    {
+      "trademarkId": "crm_tm_1",
+      "name": "LUMA LANE",
+      "brandName": "Luma Lane",
+      "jurisdiction": "GB",
+      "registrationNumber": "UK00003163853",
+      "plan": "monitoring_essentials",
+      "billingFrequency": "monthly",
+      "payableNow": true,
+      "requiresQuote": false,
+      "appliedPrice": 24,
+      "currency": "GBP"
+    },
+    {
+      "trademarkId": "crm_tm_2",
+      "name": "LUMA LANE HOME",
+      "brandName": "Luma Lane Home",
+      "jurisdiction": "GB",
+      "registrationNumber": "UK00003163854",
+      "plan": "monitoring_essentials",
+      "billingFrequency": "monthly",
+      "payableNow": true,
+      "requiresQuote": false,
+      "appliedPrice": 12,
+      "currency": "GBP"
+    }
+  ]
+}
+```
+
+Rules:
+
+- Only selected trademarks are included.
+- The app does not send the full quote object in this operation.
+- `appliedPrice` is already discount-adjusted for the chosen frequency.
+- For quote-required items, `appliedPrice` is `null` and `requiresQuote = true`.
 
 ### Response Shape
 

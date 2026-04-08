@@ -1,11 +1,11 @@
 import type {
   BillingFrequency,
   MonitoringApiErrorCode,
+  MonitoringCheckoutIntentPayload,
   MonitoringCheckoutResponse,
   MonitoringClientData,
   MonitoringConfirmationResponse,
   MonitoringPlan,
-  MonitoringQuoteResponse,
   MonitoringTrademark,
   TrademarkSelection,
 } from '@/lib/types/monitoring';
@@ -32,7 +32,7 @@ type ZohoMonitoringSubscriptionRequest = {
   origin?: string;
   billingFrequency?: BillingFrequency;
   selections?: TrademarkSelection[];
-  quote?: MonitoringQuoteResponse;
+  selectedTrademarks?: MonitoringCheckoutIntentPayload['selectedTrademarks'];
   session?: string;
 };
 
@@ -313,8 +313,7 @@ export async function createMonitoringSubscriptionCheckoutIntent(args: {
   token: string;
   origin: string;
   billingFrequency: BillingFrequency;
-  selections: TrademarkSelection[];
-  quote: MonitoringQuoteResponse;
+  checkoutIntent: MonitoringCheckoutIntentPayload;
   correlationId: string;
 }) {
   const result = await executeMonitoringSubscriptionRequest({
@@ -324,8 +323,7 @@ export async function createMonitoringSubscriptionCheckoutIntent(args: {
       token: args.token,
       origin: args.origin,
       billingFrequency: args.billingFrequency,
-      selections: args.selections,
-      quote: args.quote,
+      selectedTrademarks: args.checkoutIntent.selectedTrademarks,
     },
     validate: isMonitoringCheckoutResponse,
   });

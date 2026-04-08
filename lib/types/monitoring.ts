@@ -121,6 +121,25 @@ export interface MonitoringCheckoutRequest {
   selections: TrademarkSelection[];
 }
 
+export interface MonitoringCheckoutIntentTrademark {
+  trademarkId: string;
+  name: string;
+  brandName: string;
+  jurisdiction: string;
+  registrationNumber?: string;
+  plan: MonitoringPlan;
+  billingFrequency: BillingFrequency;
+  payableNow: boolean;
+  requiresQuote: boolean;
+  appliedPrice: number | null;
+  currency: 'GBP';
+}
+
+export interface MonitoringCheckoutIntentPayload {
+  billingFrequency: BillingFrequency;
+  selectedTrademarks: MonitoringCheckoutIntentTrademark[];
+}
+
 export interface MonitoringCheckoutResponse {
   redirectUrl: string;
   session: string;

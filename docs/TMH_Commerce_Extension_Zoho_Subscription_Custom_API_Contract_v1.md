@@ -65,12 +65,19 @@ type ZohoMonitoringSubscriptionRequest = {
   token?: string;
   origin?: string;
   billingFrequency?: 'monthly' | 'annual';
-  selections?: {
+  selectedTrademarks?: {
     trademarkId: string;
+    name: string;
+    brandName: string;
+    jurisdiction: string;
+    registrationNumber?: string;
     plan: 'monitoring_defence' | 'monitoring_essentials' | 'annual_review';
-    selected: boolean;
+    billingFrequency: 'monthly' | 'annual';
+    payableNow: boolean;
+    requiresQuote: boolean;
+    appliedPrice: number | null;
+    currency: 'GBP';
   }[];
-  quote?: MonitoringQuoteResponse;
   session?: string;
 };
 ```
@@ -165,32 +172,34 @@ type MonitoringClientData = {
   "token": "customer-entry-token",
   "origin": "https://example.com",
   "billingFrequency": "monthly",
-  "selections": [
+  "selectedTrademarks": [
     {
       "trademarkId": "crm_tm_1",
+      "name": "LUMA LANE",
+      "brandName": "Luma Lane",
+      "jurisdiction": "UK",
+      "registrationNumber": "UK00003163853",
       "plan": "monitoring_essentials",
-      "selected": true
+      "billingFrequency": "monthly",
+      "payableNow": true,
+      "requiresQuote": false,
+      "appliedPrice": 24,
+      "currency": "GBP"
+    },
+    {
+      "trademarkId": "crm_tm_2",
+      "name": "LUMA LANE HOME",
+      "brandName": "Luma Lane Home",
+      "jurisdiction": "UK",
+      "registrationNumber": "UK00003163854",
+      "plan": "monitoring_essentials",
+      "billingFrequency": "monthly",
+      "payableNow": true,
+      "requiresQuote": false,
+      "appliedPrice": 12,
+      "currency": "GBP"
     }
-  ],
-  "quote": {
-    "billingFrequency": "monthly",
-    "lineItems": [],
-    "payableNowLineItems": [],
-    "followUpLineItems": [],
-    "planBreakdown": [],
-    "summary": {
-      "selectedCount": 1,
-      "payableNowCount": 1,
-      "requiresQuoteCount": 0,
-      "subtotalMonthly": 24,
-      "subtotalAnnual": 240,
-      "discountMonthly": 0,
-      "discountAnnual": 0,
-      "totalMonthly": 24,
-      "totalAnnual": 240,
-      "annualSaving": 48
-    }
-  }
+  ]
 }
 ```
 
@@ -198,6 +207,8 @@ type MonitoringClientData = {
 
 - Revalidate the token and selected trademark IDs.
 - Persist the checkout intent and basket snapshot.
+- Treat `selectedTrademarks` as the authoritative checkout payload for v1.
+- Use the provided `appliedPrice` per selected trademark instead of expecting a full quote object.
 - Create or update durable commercial records needed for v1:
   - customer/contact/account linkage
   - order record with `status = pending_checkout`
@@ -207,6 +218,13 @@ type MonitoringClientData = {
 - Create or request the Xero payment gateway hosted setup/payment URL.
 - Store the `correlationId`, app `reference`, and provider/session references.
 - Build the return URL back to the app using `origin`.
+
+Rules:
+
+- Only selected trademarks are sent in this operation.
+- `selectedTrademarks` already includes the applied per-trademark price for the chosen billing frequency.
+- Where a second or subsequent trademark on the same discount-eligible plan receives a reduced price, the reduced value is sent directly in `appliedPrice`.
+- Do not expect the app to send the full quote matrix or all available pricing permutations in this operation.
 
 ### Success Response
 

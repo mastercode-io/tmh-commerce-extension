@@ -1,6 +1,8 @@
 import type {
   BillingFrequency,
   MonitoringClientData,
+  MonitoringCheckoutIntentPayload,
+  MonitoringCheckoutIntentTrademark,
   MonitoringPlan,
   MonitoringPlanBreakdown,
   MonitoringQuoteLineItem,
@@ -54,6 +56,46 @@ function getMonthlyDiscount(selections: TrademarkSelection[]): number {
   const annualDiscount = Math.max(0, selectedAnnual - 1) * 7;
 
   return essentialsDiscount + annualDiscount;
+}
+
+function getAppliedPriceForSelection(args: {
+  selection: TrademarkSelection;
+  nominalMonthlyPrice: number | null;
+  planOccurrences: Record<MonitoringPlan, number>;
+  billingFrequency: BillingFrequency;
+}) {
+  const { selection, nominalMonthlyPrice, planOccurrences, billingFrequency } = args;
+
+  if (nominalMonthlyPrice === null) {
+    return null;
+  }
+
+  const occurrence = (planOccurrences[selection.plan] ?? 0) + 1;
+  planOccurrences[selection.plan] = occurrence;
+
+  if (selection.plan === 'monitoring_essentials') {
+    return billingFrequency === 'monthly'
+      ? occurrence === 1
+        ? 24
+        : 12
+      : occurrence === 1
+        ? 240
+        : 120;
+  }
+
+  if (selection.plan === 'annual_review') {
+    return billingFrequency === 'monthly'
+      ? occurrence === 1
+        ? 14
+        : 7
+      : occurrence === 1
+        ? 140
+        : 70;
+  }
+
+  return billingFrequency === 'monthly'
+    ? nominalMonthlyPrice
+    : nominalMonthlyPrice * 10;
 }
 
 function buildPlanBreakdown(
@@ -174,5 +216,60 @@ export function calculateMonitoringQuote(
       totalAnnual,
       annualSaving,
     },
+  };
+}
+
+export function buildMonitoringCheckoutIntentPayload(
+  clientData: MonitoringClientData,
+  billingFrequency: BillingFrequency,
+  selections: TrademarkSelection[],
+): MonitoringCheckoutIntentPayload {
+  const trademarksById = getSelectedTrademarkMap(clientData);
+  const planOccurrences: Record<MonitoringPlan, number> = {
+    monitoring_defence: 0,
+    monitoring_essentials: 0,
+    annual_review: 0,
+  };
+
+  const selectedTrademarks = selections
+    .filter((selection) => selection.selected)
+    .map<MonitoringCheckoutIntentTrademark | null>((selection) => {
+      const trademark = trademarksById.get(selection.trademarkId);
+
+      if (!trademark) {
+        return null;
+      }
+
+      const nominalMonthlyPrice = getNominalMonthlyPrice(trademark, selection.plan);
+      const requiresQuote =
+        selection.plan === 'monitoring_defence' && nominalMonthlyPrice === null;
+
+      return {
+        trademarkId: trademark.id,
+        name: trademark.name,
+        brandName: trademark.brandName,
+        jurisdiction: trademark.jurisdiction,
+        registrationNumber: trademark.registrationNumber,
+        plan: selection.plan,
+        billingFrequency,
+        payableNow: !requiresQuote,
+        requiresQuote,
+        appliedPrice: getAppliedPriceForSelection({
+          selection,
+          nominalMonthlyPrice,
+          planOccurrences,
+          billingFrequency,
+        }),
+        currency: 'GBP',
+      };
+    })
+    .filter(
+      (trademark): trademark is MonitoringCheckoutIntentTrademark =>
+        trademark !== null,
+    );
+
+  return {
+    billingFrequency,
+    selectedTrademarks,
   };
 }

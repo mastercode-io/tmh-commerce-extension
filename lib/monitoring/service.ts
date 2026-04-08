@@ -4,6 +4,7 @@ import {
 } from '@/lib/monitoring/config';
 import { MonitoringServiceError } from '@/lib/monitoring/errors';
 import { calculateMonitoringQuote } from '@/lib/monitoring/pricing';
+import { buildMonitoringCheckoutIntentPayload } from '@/lib/monitoring/pricing';
 import {
   createMonitoringError,
   getMockMonitoringClientData,
@@ -281,8 +282,11 @@ export async function createMonitoringCheckout(args: {
         token,
         origin: args.origin,
         billingFrequency: request.billingFrequency,
-        selections: request.selections,
-        quote,
+        checkoutIntent: buildMonitoringCheckoutIntentPayload(
+          clientData,
+          request.billingFrequency,
+          request.selections,
+        ),
         correlationId: args.correlationId,
       });
     } catch (error) {

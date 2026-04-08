@@ -455,12 +455,19 @@ Request body:
 type MonitoringCheckoutRequest = {
   token: string;
   billingFrequency: 'monthly' | 'annual';
-  selections: {
+  selectedTrademarks: {
     trademarkId: string;
+    name: string;
+    brandName: string;
+    jurisdiction: string;
+    registrationNumber?: string;
     plan: 'monitoring_defence' | 'monitoring_essentials' | 'annual_review';
-    selected: boolean;
+    billingFrequency: 'monthly' | 'annual';
+    payableNow: boolean;
+    requiresQuote: boolean;
+    appliedPrice: number | null;
+    currency: 'GBP';
   }[];
-  quote: MonitoringQuoteResponse;
 };
 ```
 
@@ -483,7 +490,8 @@ type MonitoringCheckoutResponse = {
 Zoho responsibilities:
 
 - Revalidate token and selected trademark IDs.
-- Persist basket/quote snapshot.
+- Persist basket/checkout snapshot.
+- Treat `selectedTrademarks` as the authoritative checkout payload for v1.
 - Create or update normalized commercial records:
   - order with `status = pending_checkout`
   - payment/setup record with `status = initiated`
