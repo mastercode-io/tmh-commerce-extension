@@ -264,6 +264,7 @@ export function buildMonitoringCheckoutIntentPayload(
         trademarkId: trademark.id,
         name: trademark.name,
         brandName: trademark.brandName,
+        type: trademark.type,
         jurisdiction: trademark.jurisdiction,
         registrationNumber: trademark.registrationNumber,
         plan: selection.plan,

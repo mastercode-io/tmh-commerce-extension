@@ -66,9 +66,10 @@ type ZohoMonitoringSubscriptionRequest = {
   origin?: string;
   billingFrequency?: 'monthly' | 'annual';
   selectedTrademarks?: {
-    trademarkId: string;
+    trademarkId: string; // same value as resolve_token trademarks[].id
     name: string;
     brandName: string;
+    type: 'word_mark' | 'figurative' | 'combined';
     jurisdiction: string;
     registrationNumber?: string;
     plan: 'monitoring_defence' | 'monitoring_essentials' | 'annual_review';
@@ -178,6 +179,7 @@ type MonitoringClientData = {
       "trademarkId": "crm_tm_1",
       "name": "LUMA LANE",
       "brandName": "Luma Lane",
+      "type": "word_mark",
       "jurisdiction": "UK",
       "registrationNumber": "UK00003163853",
       "plan": "monitoring_essentials",
@@ -191,6 +193,7 @@ type MonitoringClientData = {
       "trademarkId": "crm_tm_2",
       "name": "LUMA LANE HOME",
       "brandName": "Luma Lane Home",
+      "type": "word_mark",
       "jurisdiction": "UK",
       "registrationNumber": "UK00003163854",
       "plan": "monitoring_essentials",
@@ -209,7 +212,7 @@ type MonitoringClientData = {
     "subtotal": 36,
     "vat": 7.2,
     "payableTotal": 43.2
-  ]
+  }
 }
 ```
 
@@ -232,6 +235,7 @@ type MonitoringClientData = {
 Rules:
 
 - Only selected trademarks are sent in this operation.
+- `selectedTrademarks[].trademarkId` is the exact trademark `id` returned by `monitoring_subscription.resolve_token`.
 - `selectedTrademarks` already includes the applied per-trademark price for the chosen billing frequency.
 - Where a second or subsequent trademark on the same discount-eligible plan receives a reduced price, the reduced value is sent directly in `appliedPrice`.
 - `summary` is the order/quote summary for the chosen billing frequency only.

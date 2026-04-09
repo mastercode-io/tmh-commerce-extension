@@ -456,9 +456,10 @@ type MonitoringCheckoutRequest = {
   token: string;
   billingFrequency: 'monthly' | 'annual';
   selectedTrademarks: {
-    trademarkId: string;
+    trademarkId: string; // same value as resolve_token trademarks[].id
     name: string;
     brandName: string;
+    type: 'word_mark' | 'figurative' | 'combined';
     jurisdiction: string;
     registrationNumber?: string;
     plan: 'monitoring_defence' | 'monitoring_essentials' | 'annual_review';

@@ -131,6 +131,7 @@ export interface MonitoringCheckoutIntentTrademark {
   trademarkId: string;
   name: string;
   brandName: string;
+  type: MonitoringTrademarkType;
   jurisdiction: string;
   registrationNumber?: string;
   plan: MonitoringPlan;

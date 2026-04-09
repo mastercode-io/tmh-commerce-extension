@@ -392,6 +392,7 @@ When the app calls the Zoho custom API for `monitoring_subscription.create_check
       "trademarkId": "crm_tm_1",
       "name": "LUMA LANE",
       "brandName": "Luma Lane",
+      "type": "word_mark",
       "jurisdiction": "GB",
       "registrationNumber": "UK00003163853",
       "plan": "monitoring_essentials",
@@ -405,6 +406,7 @@ When the app calls the Zoho custom API for `monitoring_subscription.create_check
       "trademarkId": "crm_tm_2",
       "name": "LUMA LANE HOME",
       "brandName": "Luma Lane Home",
+      "type": "word_mark",
       "jurisdiction": "GB",
       "registrationNumber": "UK00003163854",
       "plan": "monitoring_essentials",
@@ -430,6 +432,7 @@ When the app calls the Zoho custom API for `monitoring_subscription.create_check
 Rules:
 
 - Only selected trademarks are included.
+- `selectedTrademarks[].trademarkId` is the exact `id` returned earlier by `GET /api/subscribe/monitoring`.
 - The app does not send the full quote object in this operation.
 - `appliedPrice` is already discount-adjusted for the chosen frequency.
 - `summary` is already narrowed to the chosen billing frequency.
