@@ -134,6 +134,7 @@ export interface MonitoringCheckoutIntentTrademark {
   type: MonitoringTrademarkType;
   jurisdiction: string;
   registrationNumber?: string;
+  riskLevel: MonitoringRiskProfile | null;
   plan: MonitoringPlan;
   billingFrequency: BillingFrequency;
   payableNow: boolean;

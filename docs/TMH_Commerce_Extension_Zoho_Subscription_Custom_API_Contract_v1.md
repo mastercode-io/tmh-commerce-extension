@@ -72,6 +72,7 @@ type ZohoMonitoringSubscriptionRequest = {
     type: 'word_mark' | 'figurative' | 'combined';
     jurisdiction: string;
     registrationNumber?: string;
+    riskLevel: 'low' | 'medium' | 'high' | null;
     plan: 'monitoring_defence' | 'monitoring_essentials' | 'annual_review';
     billingFrequency: 'monthly' | 'annual';
     payableNow: boolean;
@@ -182,6 +183,7 @@ type MonitoringClientData = {
       "type": "word_mark",
       "jurisdiction": "UK",
       "registrationNumber": "UK00003163853",
+      "riskLevel": null,
       "plan": "monitoring_essentials",
       "billingFrequency": "monthly",
       "payableNow": true,
@@ -236,6 +238,9 @@ Rules:
 
 - Only selected trademarks are sent in this operation.
 - `selectedTrademarks[].trademarkId` is the exact trademark `id` returned by `monitoring_subscription.resolve_token`.
+- `selectedTrademarks[].riskLevel` is always present.
+- For `monitoring_defence`, `riskLevel` mirrors the resolved trademark `riskProfile` when available, otherwise `null`.
+- For plans that do not depend on risk scoring, `riskLevel` is `null`.
 - `selectedTrademarks` already includes the applied per-trademark price for the chosen billing frequency.
 - Where a second or subsequent trademark on the same discount-eligible plan receives a reduced price, the reduced value is sent directly in `appliedPrice`.
 - `summary` is the order/quote summary for the chosen billing frequency only.

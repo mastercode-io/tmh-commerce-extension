@@ -21,6 +21,7 @@ test('buildMonitoringCheckoutIntentPayload includes only selected trademarks wit
         jurisdiction: 'UK',
         registrationNumber: 'UK1',
         status: 'registered',
+        riskProfile: 'medium',
       },
       {
         id: 'tm-2',
@@ -90,6 +91,7 @@ test('buildMonitoringCheckoutIntentPayload includes only selected trademarks wit
         type: 'word_mark',
         jurisdiction: 'UK',
         registrationNumber: 'UK1',
+        riskLevel: null,
         plan: 'monitoring_essentials',
         billingFrequency: 'monthly',
         payableNow: true,
@@ -104,6 +106,7 @@ test('buildMonitoringCheckoutIntentPayload includes only selected trademarks wit
         type: 'word_mark',
         jurisdiction: 'UK',
         registrationNumber: 'UK2',
+        riskLevel: null,
         plan: 'monitoring_essentials',
         billingFrequency: 'monthly',
         payableNow: true,

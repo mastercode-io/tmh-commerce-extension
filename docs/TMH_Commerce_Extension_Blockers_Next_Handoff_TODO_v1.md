@@ -462,6 +462,7 @@ type MonitoringCheckoutRequest = {
     type: 'word_mark' | 'figurative' | 'combined';
     jurisdiction: string;
     registrationNumber?: string;
+    riskLevel: 'low' | 'medium' | 'high' | null;
     plan: 'monitoring_defence' | 'monitoring_essentials' | 'annual_review';
     billingFrequency: 'monthly' | 'annual';
     payableNow: boolean;

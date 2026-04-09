@@ -274,6 +274,10 @@ export function buildMonitoringCheckoutIntentPayload(
         type: trademark.type,
         jurisdiction: trademark.jurisdiction,
         registrationNumber: trademark.registrationNumber,
+        riskLevel:
+          selection.plan === 'monitoring_defence'
+            ? (trademark.riskProfile ?? null)
+            : null,
         plan: selection.plan,
         billingFrequency,
         payableNow: !requiresQuote,

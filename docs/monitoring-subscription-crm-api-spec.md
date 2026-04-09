@@ -395,6 +395,7 @@ When the app calls the Zoho custom API for `monitoring_subscription.create_check
       "type": "word_mark",
       "jurisdiction": "GB",
       "registrationNumber": "UK00003163853",
+      "riskLevel": null,
       "plan": "monitoring_essentials",
       "billingFrequency": "monthly",
       "payableNow": true,
@@ -433,6 +434,9 @@ Rules:
 
 - Only selected trademarks are included.
 - `selectedTrademarks[].trademarkId` is the exact `id` returned earlier by `GET /api/subscribe/monitoring`.
+- `selectedTrademarks[].riskLevel` is always present.
+- For `monitoring_defence`, it mirrors the resolved trademark `riskProfile` when available, otherwise `null`.
+- For plans that do not depend on risk scoring, it is `null`.
 - The app does not send the full quote object in this operation.
 - `appliedPrice` is already discount-adjusted for the chosen frequency.
 - `summary` is already narrowed to the chosen billing frequency.
