@@ -10,6 +10,14 @@ import {
 
 export const runtime = 'edge';
 
+function getErrorDebug(error: unknown) {
+  if (error && typeof error === 'object' && 'debug' in error) {
+    return error.debug;
+  }
+
+  return undefined;
+}
+
 function createJsonResponse(
   payload: unknown,
   correlationId: string,
@@ -56,6 +64,9 @@ export async function GET(request: NextRequest) {
         code: 'server_error',
         message: 'We hit a temporary problem while loading this subscription link.',
         correlationId,
+        ...(isDebugModeEnabled() && getErrorDebug(error)
+          ? { debug: getErrorDebug(error) }
+          : {}),
       },
       correlationId,
       { status: 500 },

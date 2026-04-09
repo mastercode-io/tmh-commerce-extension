@@ -59,6 +59,12 @@ type MonitoringClientResponse = MonitoringClientData & {
   debug?: MonitoringDebugPayload;
 };
 
+type MonitoringApiResponse = {
+  message?: string;
+  correlationId?: string;
+  debug?: MonitoringDebugPayload;
+};
+
 class MonitoringApiResponseError extends Error {
   status: number;
   debug?: MonitoringDebugPayload;
@@ -121,12 +127,17 @@ async function requestJson<T>(input: string, init?: RequestInit): Promise<T> {
   });
 
   const data = (await response.json().catch(() => null)) as
-    | T
-    | { message?: string }
+    | (T & MonitoringApiResponse)
+    | MonitoringApiResponse
     | null;
 
   if (!response.ok) {
-    throw new Error(mapErrorMessage(response.status));
+    throw new MonitoringApiResponseError(
+      mapErrorMessage(response.status),
+      response.status,
+      data && 'debug' in data ? data.debug : undefined,
+      data && 'correlationId' in data ? data.correlationId : undefined,
+    );
   }
 
   return data as T;
@@ -421,6 +432,10 @@ export function MonitoringFlow({
         setQuoteError(
           error instanceof Error ? error.message : 'Quote refresh failed.',
         );
+        if (error instanceof MonitoringApiResponseError) {
+          setDebugPayload(error.debug ?? null);
+          setCorrelationId(error.correlationId ?? null);
+        }
       } finally {
         if (!cancelled) {
           setQuoteLoading(false);
@@ -505,6 +520,10 @@ export function MonitoringFlow({
           ? error.message
           : 'Checkout could not be created.',
       );
+      if (error instanceof MonitoringApiResponseError) {
+        setDebugPayload(error.debug ?? null);
+        setCorrelationId(error.correlationId ?? null);
+      }
       setCheckoutPending(false);
     }
   }, [billingFrequency, selectionList, token]);
