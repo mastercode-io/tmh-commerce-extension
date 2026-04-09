@@ -4,6 +4,7 @@ import {
 } from '@/lib/monitoring/config';
 import { MonitoringServiceError } from '@/lib/monitoring/errors';
 import { calculateMonitoringQuote } from '@/lib/monitoring/pricing';
+import { buildMonitoringCheckoutIntentPayload } from '@/lib/monitoring/pricing';
 import {
   createMonitoringError,
   getMockMonitoringClientData,
@@ -19,7 +20,7 @@ import type {
   MonitoringCheckoutRequest,
   MonitoringCheckoutResponse,
   MonitoringClientData,
-  MonitoringConfirmationResponse,
+  MonitoringConfirmationStatusResponse,
   MonitoringQuoteRequest,
   MonitoringQuoteResponse,
 } from '@/lib/types/monitoring';
@@ -28,6 +29,7 @@ import {
   createMonitoringSubscriptionCheckoutIntent,
   isMonitoringSubscriptionCustomApiConfigured,
   resolveMonitoringSubscriptionToken,
+  type ZohoMonitoringSubscriptionDebug,
   ZohoMonitoringSubscriptionError,
 } from '@/lib/zoho/subscriptions';
 
@@ -75,6 +77,7 @@ function mapZohoErrorToMonitoringError(
     ),
     error.status,
     correlationId,
+    error.debug,
   );
 }
 
@@ -129,24 +132,6 @@ function assertCheckoutRequest(
   };
 }
 
-function buildConfirmationResponse(
-  session: MockCheckoutSession,
-): MonitoringConfirmationResponse {
-  return {
-    clientName: session.clientName,
-    companyName: session.companyName,
-    helpPhoneNumber: session.helpPhoneNumber,
-    helpEmail: session.helpEmail,
-    bookingUrl: session.bookingUrl,
-    billingFrequency: session.billingFrequency,
-    firstPaymentDate: session.firstPaymentDate,
-    reference: session.reference,
-    paidItems: session.quote.payableNowLineItems,
-    followUpItems: session.quote.followUpLineItems,
-    summary: session.quote.summary,
-  };
-}
-
 async function resolveMonitoringSubscriptionContext(args: {
   token: string;
   origin: string;
@@ -163,11 +148,14 @@ async function resolveMonitoringSubscriptionContext(args: {
   }
 }
 
-export async function getMonitoringSubscriptionContext(args: {
+export async function getMonitoringSubscriptionContextWithDebug(args: {
   token: string | null;
   origin: string;
   correlationId: string;
-}): Promise<MonitoringClientData> {
+}): Promise<{
+  data: MonitoringClientData;
+  debug?: ZohoMonitoringSubscriptionDebug;
+}> {
   assertMonitoringSubscriptionIntegration(args.correlationId);
 
   if (isMonitoringSubscriptionCustomApiConfigured()) {
@@ -184,7 +172,19 @@ export async function getMonitoringSubscriptionContext(args: {
 
   const token = assertScenarioToken(args.token, args.correlationId);
   await simulateMockLatency();
-  return getMockMonitoringClientData(args.origin, token);
+
+  return {
+    data: getMockMonitoringClientData(args.origin, token),
+  };
+}
+
+export async function getMonitoringSubscriptionContext(args: {
+  token: string | null;
+  origin: string;
+  correlationId: string;
+}): Promise<MonitoringClientData> {
+  const result = await getMonitoringSubscriptionContextWithDebug(args);
+  return result.data;
 }
 
 export async function getMonitoringQuote(args: {
@@ -200,11 +200,13 @@ export async function getMonitoringQuote(args: {
   const request = assertQuoteRequest(args.body, args.correlationId);
 
   const clientData = isMonitoringSubscriptionCustomApiConfigured()
-    ? await resolveMonitoringSubscriptionContext({
-        token,
-        origin: args.origin,
-        correlationId: args.correlationId,
-      })
+    ? (
+        await resolveMonitoringSubscriptionContext({
+          token,
+          origin: args.origin,
+          correlationId: args.correlationId,
+        })
+      ).data
     : getMockMonitoringClientData(args.origin, token);
 
   if (!isMonitoringSubscriptionCustomApiConfigured()) {
@@ -231,11 +233,13 @@ export async function createMonitoringCheckout(args: {
   const request = assertCheckoutRequest(args.body, args.correlationId);
 
   const clientData = isMonitoringSubscriptionCustomApiConfigured()
-    ? await resolveMonitoringSubscriptionContext({
-        token,
-        origin: args.origin,
-        correlationId: args.correlationId,
-      })
+    ? (
+        await resolveMonitoringSubscriptionContext({
+          token,
+          origin: args.origin,
+          correlationId: args.correlationId,
+        })
+      ).data
     : getMockMonitoringClientData(args.origin, token);
   const quote = calculateMonitoringQuote(
     clientData,
@@ -260,8 +264,12 @@ export async function createMonitoringCheckout(args: {
         token,
         origin: args.origin,
         billingFrequency: request.billingFrequency,
-        selections: request.selections,
-        quote,
+        checkoutIntent: buildMonitoringCheckoutIntentPayload(
+          clientData,
+          request.billingFrequency,
+          request.selections,
+          quote,
+        ),
         correlationId: args.correlationId,
       });
     } catch (error) {
@@ -305,7 +313,7 @@ export async function confirmMonitoringCheckout(args: {
   token: string | null;
   sessionValue: string | null;
   correlationId: string;
-}): Promise<MonitoringConfirmationResponse> {
+}): Promise<MonitoringConfirmationStatusResponse> {
   assertMonitoringSubscriptionIntegration(args.correlationId);
 
   if (isMonitoringSubscriptionCustomApiConfigured()) {
@@ -350,5 +358,8 @@ export async function confirmMonitoringCheckout(args: {
     );
   }
 
-  return buildConfirmationResponse(session);
+  return {
+    paymentStatus: 'paid',
+    reference: session.reference,
+  };
 }

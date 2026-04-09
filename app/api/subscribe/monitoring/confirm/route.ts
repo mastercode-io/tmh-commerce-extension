@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
+import { isDebugModeEnabled } from '@/lib/env/debug-mode';
 import {
   confirmMonitoringCheckout,
 } from '@/lib/monitoring/service';
@@ -10,6 +11,14 @@ import {
 } from '@/lib/server/correlation';
 
 export const runtime = 'edge';
+
+function getErrorDebug(error: unknown) {
+  if (error && typeof error === 'object' && 'debug' in error) {
+    return error.debug;
+  }
+
+  return undefined;
+}
 
 function createJsonResponse(
   payload: unknown,
@@ -32,15 +41,27 @@ export async function GET(request: NextRequest) {
     return createJsonResponse(confirmation, correlationId);
   } catch (error) {
     if (error instanceof MonitoringServiceError) {
-      return createJsonResponse(error.response, correlationId, {
-        status: error.status,
-      });
+      return createJsonResponse(
+        {
+          ...error.response,
+          correlationId,
+          ...(isDebugModeEnabled() && error.debug ? { debug: error.debug } : {}),
+        },
+        correlationId,
+        {
+          status: error.status,
+        },
+      );
     }
 
     return createJsonResponse(
       {
         code: 'server_error',
         message: 'We could not verify this payment confirmation session.',
+        correlationId,
+        ...(isDebugModeEnabled() && getErrorDebug(error)
+          ? { debug: getErrorDebug(error) }
+          : {}),
       },
       correlationId,
       { status: 500 },

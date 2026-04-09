@@ -39,6 +39,7 @@ export function QuoteSummary({
   bookingUrl,
   quoteLoading,
   checkoutPending,
+  paymentMonitoringActive,
   quoteError,
   onCheckout,
 }: {
@@ -48,6 +49,7 @@ export function QuoteSummary({
   bookingUrl?: string;
   quoteLoading?: boolean;
   checkoutPending?: boolean;
+  paymentMonitoringActive?: boolean;
   quoteError?: string | null;
   onCheckout: () => void;
 }) {
@@ -59,8 +61,8 @@ export function QuoteSummary({
 
   const currentTotal =
     billingFrequency === 'annual'
-      ? (quote?.summary.totalAnnual ?? 0)
-      : (quote?.summary.totalMonthly ?? 0);
+      ? (quote?.summary.payableTotalAnnual ?? 0)
+      : (quote?.summary.payableTotalMonthly ?? 0);
   const displayedSubtotal =
     billingFrequency === 'annual'
       ? (quote?.summary.subtotalAnnual ?? 0)
@@ -69,7 +71,13 @@ export function QuoteSummary({
     billingFrequency === 'annual'
       ? (quote?.summary.discountAnnual ?? 0)
       : (quote?.summary.discountMonthly ?? 0);
-  const ctaLabel = 'Continue to payment';
+  const displayedVat =
+    billingFrequency === 'annual'
+      ? (quote?.summary.vatAnnual ?? 0)
+      : (quote?.summary.vatMonthly ?? 0);
+  const ctaLabel = paymentMonitoringActive
+    ? 'Waiting for payment...'
+    : 'Continue to payment';
 
   return (
     <Card className="sticky top-24">
@@ -115,6 +123,12 @@ export function QuoteSummary({
               <span className="font-medium text-green-700">
                 -{formatMoney(displayedDiscount)}
               </span>
+            </div>
+          ) : null}
+          {quote && displayedVat > 0 ? (
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground text-sm">VAT</span>
+              <span className="font-medium">{formatMoney(displayedVat)}</span>
             </div>
           ) : null}
           <div className="flex items-center justify-between gap-3 border-t pt-3">
@@ -176,7 +190,10 @@ export function QuoteSummary({
         <Button
           onClick={onCheckout}
           disabled={
-            checkoutPending || quoteLoading || payableItems.length === 0
+            checkoutPending ||
+            quoteLoading ||
+            paymentMonitoringActive ||
+            payableItems.length === 0
           }
           className="min-w-[220px]"
         >

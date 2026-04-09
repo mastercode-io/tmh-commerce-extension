@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
+import { isDebugModeEnabled } from '@/lib/env/debug-mode';
 import {
   createMonitoringCheckout,
 } from '@/lib/monitoring/service';
@@ -11,6 +12,14 @@ import {
 import { parseJsonRequestBody } from '@/lib/server/request-json';
 
 export const runtime = 'edge';
+
+function getErrorDebug(error: unknown) {
+  if (error && typeof error === 'object' && 'debug' in error) {
+    return error.debug;
+  }
+
+  return undefined;
+}
 
 function createJsonResponse(
   payload: unknown,
@@ -33,15 +42,27 @@ export async function POST(request: NextRequest) {
     return createJsonResponse(checkout, correlationId);
   } catch (error) {
     if (error instanceof MonitoringServiceError) {
-      return createJsonResponse(error.response, correlationId, {
-        status: error.status,
-      });
+      return createJsonResponse(
+        {
+          ...error.response,
+          correlationId,
+          ...(isDebugModeEnabled() && error.debug ? { debug: error.debug } : {}),
+        },
+        correlationId,
+        {
+          status: error.status,
+        },
+      );
     }
 
     return createJsonResponse(
       {
         code: 'server_error',
         message: 'We hit a temporary problem while starting checkout.',
+        correlationId,
+        ...(isDebugModeEnabled() && getErrorDebug(error)
+          ? { debug: getErrorDebug(error) }
+          : {}),
       },
       correlationId,
       { status: 500 },

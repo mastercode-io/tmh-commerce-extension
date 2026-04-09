@@ -6,6 +6,7 @@ export type MonitoringPlan =
 export type BillingFrequency = 'monthly' | 'annual';
 
 export type MonitoringRiskProfile = 'low' | 'medium' | 'high';
+export type MonitoringClientLocation = 'UK' | 'INT';
 
 export type MonitoringTrademarkStatus = 'pending' | 'registered' | 'expired';
 
@@ -28,7 +29,7 @@ export interface MonitoringTrademark {
   brandName: string;
   type: MonitoringTrademarkType;
   jurisdiction: string;
-  applicationDate: string;
+  applicationDate?: string;
   registrationDate?: string;
   expiryDate?: string;
   registrationNumber?: string;
@@ -41,6 +42,7 @@ export interface MonitoringClientData {
   token: string;
   clientName: string;
   companyName?: string;
+  clientLocation?: MonitoringClientLocation;
   helpPhoneNumber: string;
   helpEmail: string;
   bookingUrl: string;
@@ -83,6 +85,10 @@ export interface MonitoringQuoteSummary {
   discountAnnual: number;
   totalMonthly: number;
   totalAnnual: number;
+  vatMonthly: number;
+  vatAnnual: number;
+  payableTotalMonthly: number;
+  payableTotalAnnual: number;
   annualSaving: number;
 }
 
@@ -121,10 +127,51 @@ export interface MonitoringCheckoutRequest {
   selections: TrademarkSelection[];
 }
 
+export interface MonitoringCheckoutIntentTrademark {
+  trademarkId: string;
+  name: string;
+  brandName: string;
+  type: MonitoringTrademarkType;
+  jurisdiction: string;
+  registrationNumber?: string;
+  riskLevel: MonitoringRiskProfile | null;
+  plan: MonitoringPlan;
+  billingFrequency: BillingFrequency;
+  payableNow: boolean;
+  requiresQuote: boolean;
+  appliedPrice: number | null;
+  currency: 'GBP';
+}
+
+export interface MonitoringCheckoutIntentPayload {
+  billingFrequency: BillingFrequency;
+  selectedTrademarks: MonitoringCheckoutIntentTrademark[];
+  summary: {
+    billingFrequency: BillingFrequency;
+    selectedCount: number;
+    fullPriceSubtotal: number;
+    discount: number;
+    subtotal: number;
+    vat: number;
+    payableTotal: number;
+  };
+}
+
 export interface MonitoringCheckoutResponse {
   redirectUrl: string;
   session: string;
   reference: string;
+}
+
+export type MonitoringPaymentStatus =
+  | 'paid'
+  | 'pending'
+  | 'voided'
+  | 'not_found';
+
+export interface MonitoringConfirmationStatusResponse {
+  paymentStatus: MonitoringPaymentStatus;
+  reference?: string;
 }
 
 export interface MonitoringConfirmationResponse {
@@ -134,7 +181,7 @@ export interface MonitoringConfirmationResponse {
   helpEmail: string;
   bookingUrl: string;
   billingFrequency: BillingFrequency;
-  firstPaymentDate: string;
+  firstPaymentDate?: string;
   reference: string;
   paidItems: MonitoringQuoteLineItem[];
   followUpItems: MonitoringQuoteLineItem[];

@@ -1,12 +1,17 @@
 import type {
   BillingFrequency,
   MonitoringApiErrorCode,
+  MonitoringClientLocation,
+  MonitoringCheckoutIntentPayload,
   MonitoringCheckoutResponse,
   MonitoringClientData,
-  MonitoringConfirmationResponse,
-  MonitoringQuoteResponse,
+  MonitoringConfirmationStatusResponse,
+  MonitoringPaymentStatus,
+  MonitoringPlan,
+  MonitoringTrademark,
   TrademarkSelection,
 } from '@/lib/types/monitoring';
+import { normalizeMonitoringClientDataPayload } from '@/lib/monitoring/normalize';
 import {
   executeZohoRequest,
   requireZohoBaseUrl,
@@ -29,7 +34,8 @@ type ZohoMonitoringSubscriptionRequest = {
   origin?: string;
   billingFrequency?: BillingFrequency;
   selections?: TrademarkSelection[];
-  quote?: MonitoringQuoteResponse;
+  selectedTrademarks?: MonitoringCheckoutIntentPayload['selectedTrademarks'];
+  summary?: MonitoringCheckoutIntentPayload['summary'];
   session?: string;
 };
 
@@ -93,15 +99,90 @@ function hasStringField<TField extends string>(
   );
 }
 
+function hasOptionalStringField<TField extends string>(
+  value: unknown,
+  field: TField,
+) {
+  if (value === null || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  return !(field in candidate) || typeof candidate[field] === 'string';
+}
+
+function isMonitoringTrademarkType(
+  value: unknown,
+): value is MonitoringTrademark['type'] {
+  return (
+    value === 'word_mark' || value === 'figurative' || value === 'combined'
+  );
+}
+
+function isMonitoringTrademarkStatus(
+  value: unknown,
+): value is MonitoringTrademark['status'] {
+  return value === 'pending' || value === 'registered' || value === 'expired';
+}
+
+function isMonitoringRiskProfile(
+  value: unknown,
+): value is MonitoringTrademark['riskProfile'] {
+  return value === 'low' || value === 'medium' || value === 'high';
+}
+
+function isMonitoringPlan(value: unknown): value is MonitoringPlan {
+  return (
+    value === 'monitoring_defence' ||
+    value === 'monitoring_essentials' ||
+    value === 'annual_review'
+  );
+}
+
+function isMonitoringClientLocation(
+  value: unknown,
+): value is MonitoringClientLocation {
+  return value === 'UK' || value === 'INT';
+}
+
+function isMonitoringTrademark(value: unknown): value is MonitoringTrademark {
+  return (
+    hasStringField(value, 'id') &&
+    hasStringField(value, 'name') &&
+    hasStringField(value, 'brandName') &&
+    hasStringField(value, 'jurisdiction') &&
+    hasStringField(value, 'type') &&
+    isMonitoringTrademarkType(value.type) &&
+    hasOptionalStringField(value, 'applicationDate') &&
+    hasOptionalStringField(value, 'registrationDate') &&
+    hasOptionalStringField(value, 'expiryDate') &&
+    hasOptionalStringField(value, 'registrationNumber') &&
+    hasStringField(value, 'status') &&
+    isMonitoringTrademarkStatus(value.status) &&
+    (!('riskProfile' in value) ||
+      value.riskProfile === undefined ||
+      isMonitoringRiskProfile(value.riskProfile)) &&
+    hasOptionalStringField(value, 'imageUrl')
+  );
+}
+
 function isMonitoringClientData(value: unknown): value is MonitoringClientData {
   return (
     hasStringField(value, 'token') &&
     hasStringField(value, 'clientName') &&
+    (!('clientLocation' in value) ||
+      value.clientLocation === undefined ||
+      isMonitoringClientLocation(value.clientLocation)) &&
     hasStringField(value, 'helpPhoneNumber') &&
     hasStringField(value, 'helpEmail') &&
     hasStringField(value, 'bookingUrl') &&
     'trademarks' in value &&
-    Array.isArray(value.trademarks)
+    Array.isArray(value.trademarks) &&
+    value.trademarks.every(isMonitoringTrademark) &&
+    (!('preSelectedPlan' in value) ||
+      value.preSelectedPlan === undefined ||
+      isMonitoringPlan(value.preSelectedPlan))
   );
 }
 
@@ -115,23 +196,24 @@ function isMonitoringCheckoutResponse(
   );
 }
 
-function isMonitoringConfirmationResponse(
+function isMonitoringPaymentStatus(
   value: unknown,
-): value is MonitoringConfirmationResponse {
+): value is MonitoringPaymentStatus {
   return (
-    hasStringField(value, 'clientName') &&
-    hasStringField(value, 'helpPhoneNumber') &&
-    hasStringField(value, 'helpEmail') &&
-    hasStringField(value, 'bookingUrl') &&
-    hasStringField(value, 'billingFrequency') &&
-    hasStringField(value, 'firstPaymentDate') &&
-    hasStringField(value, 'reference') &&
-    'paidItems' in value &&
-    Array.isArray(value.paidItems) &&
-    'followUpItems' in value &&
-    Array.isArray(value.followUpItems) &&
-    'summary' in value &&
-    Boolean(value.summary)
+    value === 'paid' ||
+    value === 'pending' ||
+    value === 'voided' ||
+    value === 'not_found'
+  );
+}
+
+function isMonitoringConfirmationStatusResponse(
+  value: unknown,
+): value is MonitoringConfirmationStatusResponse {
+  return (
+    hasStringField(value, 'paymentStatus') &&
+    isMonitoringPaymentStatus(value.paymentStatus) &&
+    hasOptionalStringField(value, 'reference')
   );
 }
 
@@ -201,8 +283,12 @@ async function executeMonitoringSubscriptionRequest<T>(args: {
       } satisfies ZohoMonitoringSubscriptionRequest,
     });
     const data = unwrapZohoCustomApiEnvelope<T>(result.responseBody);
+    const normalizedData =
+      args.operation === 'monitoring_subscription.resolve_token'
+        ? (normalizeMonitoringClientDataPayload(data) as T)
+        : data;
 
-    if (!args.validate(data)) {
+    if (!args.validate(normalizedData)) {
       throw new ZohoMonitoringSubscriptionError(
         `${args.operation} returned an invalid response shape.`,
         502,
@@ -211,7 +297,10 @@ async function executeMonitoringSubscriptionRequest<T>(args: {
       );
     }
 
-    return data;
+    return {
+      data: normalizedData,
+      debug: result.debug,
+    };
   } catch (error) {
     throw mapZohoError(error);
   }
@@ -237,22 +326,23 @@ export async function createMonitoringSubscriptionCheckoutIntent(args: {
   token: string;
   origin: string;
   billingFrequency: BillingFrequency;
-  selections: TrademarkSelection[];
-  quote: MonitoringQuoteResponse;
+  checkoutIntent: MonitoringCheckoutIntentPayload;
   correlationId: string;
 }) {
-  return executeMonitoringSubscriptionRequest({
+  const result = await executeMonitoringSubscriptionRequest({
     operation: 'monitoring_subscription.create_checkout_intent',
     correlationId: args.correlationId,
     payload: {
       token: args.token,
       origin: args.origin,
       billingFrequency: args.billingFrequency,
-      selections: args.selections,
-      quote: args.quote,
+      selectedTrademarks: args.checkoutIntent.selectedTrademarks,
+      summary: args.checkoutIntent.summary,
     },
     validate: isMonitoringCheckoutResponse,
   });
+
+  return result.data;
 }
 
 export async function confirmMonitoringSubscriptionCheckout(args: {
@@ -260,13 +350,15 @@ export async function confirmMonitoringSubscriptionCheckout(args: {
   session: string;
   correlationId: string;
 }) {
-  return executeMonitoringSubscriptionRequest({
+  const result = await executeMonitoringSubscriptionRequest({
     operation: 'monitoring_subscription.confirm_checkout',
     correlationId: args.correlationId,
     payload: {
       token: args.token,
       session: args.session,
     },
-    validate: isMonitoringConfirmationResponse,
+    validate: isMonitoringConfirmationStatusResponse,
   });
+
+  return result.data;
 }

@@ -85,7 +85,7 @@ The current monitoring page already calls these public app routes:
 
 - **Method:** `GET`
 - **Route:** `/api/subscribe/monitoring/confirm?token=<TOKEN>&session=<SESSION>`
-- **Purpose:** Load the final quote snapshot and confirmation state
+- **Purpose:** Poll hosted payment/setup status with a minimal response
 
 These routes should remain the public interface used by the page.
 
@@ -149,6 +149,9 @@ The monitoring flow currently requires this data:
 - `helpEmail`
 - `bookingUrl`
 - `preSelectedPlan` optional
+- `clientLocation` optional, current values:
+  - `UK`
+  - `INT`
 
 ### 5.2 Trademark Context
 
@@ -159,7 +162,7 @@ Per trademark:
 - `brandName`
 - `type`
 - `jurisdiction`
-- `applicationDate`
+- `applicationDate` optional
 - `registrationDate` optional
 - `expiryDate` optional
 - `registrationNumber` optional
@@ -207,6 +210,7 @@ Query params:
   "token": "demo-monitoring-001",
   "clientName": "Amelia Carter",
   "companyName": "Luma Lane Studio Ltd",
+  "clientLocation": "UK",
   "helpPhoneNumber": "0161 833 5400",
   "helpEmail": "enquiries@thetrademarkhelpline.com",
   "bookingUrl": "https://bookings.example.com/...",
@@ -301,7 +305,11 @@ Recalculate quote totals and mixed payable/follow-up outcomes from the current b
     "discountAnnual": 120,
     "totalMonthly": 36,
     "totalAnnual": 360,
-    "annualSaving": 72
+    "vatMonthly": 7.2,
+    "vatAnnual": 72,
+    "payableTotalMonthly": 43.2,
+    "payableTotalAnnual": 432,
+    "annualSaving": 86.4
   }
 }
 ```
@@ -311,7 +319,11 @@ Recalculate quote totals and mixed payable/follow-up outcomes from the current b
 - Quote calculation must be server-authoritative
 - Multi-trademark discount is summary-level only
 - Annual price equals 10 x monthly price
-- `annualSaving = (totalMonthly * 12) - totalAnnual`
+- `totalMonthly` / `totalAnnual` are post-discount and pre-VAT
+- For `clientLocation = UK`, VAT is `20%` of the post-discount subtotal
+- `payableTotalMonthly = totalMonthly + vatMonthly`
+- `payableTotalAnnual = totalAnnual + vatAnnual`
+- `annualSaving = (payableTotalMonthly * 12) - payableTotalAnnual`
 - MAD without `riskProfile` becomes:
   - `requiresQuote: true`
   - excluded from payable total
@@ -357,10 +369,79 @@ Same input shape as quote:
 - reject checkout if `payableNowCount < 1`
 - persist quote snapshot / checkout intent
 - store both payable and follow-up items
+- build a minimal checkout-intent payload containing only selected trademarks
+- include the applied per-trademark price for the chosen billing frequency
 - return:
   - `reference`
   - `session`
   - `redirectUrl`
+
+### Zoho Custom API Payload
+
+When the app calls the Zoho custom API for `monitoring_subscription.create_checkout_intent`, it sends a narrowed payload:
+
+```json
+{
+  "operation": "monitoring_subscription.create_checkout_intent",
+  "correlationId": "3f3c8fd1-7128-42bb-b87b-3c6e55f8e62d",
+  "token": "demo-monitoring-001",
+  "origin": "https://example.com",
+  "billingFrequency": "monthly",
+  "selectedTrademarks": [
+    {
+      "trademarkId": "crm_tm_1",
+      "name": "LUMA LANE",
+      "brandName": "Luma Lane",
+      "type": "word_mark",
+      "jurisdiction": "GB",
+      "registrationNumber": "UK00003163853",
+      "riskLevel": null,
+      "plan": "monitoring_essentials",
+      "billingFrequency": "monthly",
+      "payableNow": true,
+      "requiresQuote": false,
+      "appliedPrice": 24,
+      "currency": "GBP"
+    },
+    {
+      "trademarkId": "crm_tm_2",
+      "name": "LUMA LANE HOME",
+      "brandName": "Luma Lane Home",
+      "type": "word_mark",
+      "jurisdiction": "GB",
+      "registrationNumber": "UK00003163854",
+      "plan": "monitoring_essentials",
+      "billingFrequency": "monthly",
+      "payableNow": true,
+      "requiresQuote": false,
+      "appliedPrice": 12,
+      "currency": "GBP"
+    }
+  ],
+  "summary": {
+    "billingFrequency": "monthly",
+    "selectedCount": 2,
+    "fullPriceSubtotal": 48,
+    "discount": 12,
+    "subtotal": 36,
+    "vat": 7.2,
+    "payableTotal": 43.2
+  ]
+}
+```
+
+Rules:
+
+- Only selected trademarks are included.
+- `selectedTrademarks[].trademarkId` is the exact `id` returned earlier by `GET /api/subscribe/monitoring`.
+- `selectedTrademarks[].riskLevel` is always present.
+- For `monitoring_defence`, it mirrors the resolved trademark `riskProfile` when available, otherwise `null`.
+- For plans that do not depend on risk scoring, it is `null`.
+- The app does not send the full quote object in this operation.
+- `appliedPrice` is already discount-adjusted for the chosen frequency.
+- `summary` is already narrowed to the chosen billing frequency.
+- For UK clients, `summary.vat` is `20%` of `summary.subtotal`.
+- For quote-required items, `appliedPrice` is `null` and `requiresQuote = true`.
 
 ### Response Shape
 
@@ -393,7 +474,7 @@ For v1:
 
 ### Purpose
 
-Load the stored checkout snapshot for the confirmation page.
+Poll the stored checkout state and return only payment status.
 
 ### Request
 
@@ -406,36 +487,20 @@ Query params:
 
 ```json
 {
-  "clientName": "Amelia Carter",
-  "companyName": "Luma Lane Studio Ltd",
-  "helpPhoneNumber": "0161 833 5400",
-  "helpEmail": "enquiries@thetrademarkhelpline.com",
-  "bookingUrl": "https://bookings.example.com/...",
-  "billingFrequency": "annual",
-  "firstPaymentDate": "2026-04-01",
-  "reference": "TMH-MON-ABC123",
-  "paidItems": [],
-  "followUpItems": [],
-  "summary": {
-    "selectedCount": 3,
-    "payableNowCount": 2,
-    "requiresQuoteCount": 1,
-    "subtotalMonthly": 48,
-    "subtotalAnnual": 480,
-    "discountMonthly": 12,
-    "discountAnnual": 120,
-    "totalMonthly": 36,
-    "totalAnnual": 360,
-    "annualSaving": 72
-  }
+  "paymentStatus": "paid"
 }
 ```
 
 ### Rules
 
-- Confirmation must reflect the stored checkout snapshot, not a fresh recalculation
-- If some items required follow-up, they must still be visible here
-- Booking URL should remain available on confirmation when follow-up items exist
+- Confirmation status must reflect the stored checkout state, not a fresh recalculation
+- Allowed values:
+  - `paid`
+  - `pending`
+- `voided`
+- `not_found`
+- `reference` is optional and may be omitted entirely
+- The frontend confirmation page uses the locally stored quote snapshot captured at checkout creation time
 
 ### Errors
 
@@ -517,7 +582,7 @@ Exact Zoho field names still need confirmation. This is the initial mapping mode
 | `trademarks[].brandName` | related brand / case grouping | optional but useful |
 | `trademarks[].type` | mark type | must normalize into portal enums |
 | `trademarks[].jurisdiction` | jurisdiction field | GB, EU, WIPO, etc |
-| `trademarks[].applicationDate` | filing/application date | required by current type |
+| `trademarks[].applicationDate` | filing/application date | optional |
 | `trademarks[].registrationDate` | registration date | optional |
 | `trademarks[].expiryDate` | renewal / expiry date | optional but shown in UI |
 | `trademarks[].registrationNumber` | registration number | optional for some states |

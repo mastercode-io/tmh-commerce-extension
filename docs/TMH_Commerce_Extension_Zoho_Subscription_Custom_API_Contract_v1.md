@@ -65,12 +65,30 @@ type ZohoMonitoringSubscriptionRequest = {
   token?: string;
   origin?: string;
   billingFrequency?: 'monthly' | 'annual';
-  selections?: {
-    trademarkId: string;
+  selectedTrademarks?: {
+    trademarkId: string; // same value as resolve_token trademarks[].id
+    name: string;
+    brandName: string;
+    type: 'word_mark' | 'figurative' | 'combined';
+    jurisdiction: string;
+    registrationNumber?: string;
+    riskLevel: 'low' | 'medium' | 'high' | null;
     plan: 'monitoring_defence' | 'monitoring_essentials' | 'annual_review';
-    selected: boolean;
+    billingFrequency: 'monthly' | 'annual';
+    payableNow: boolean;
+    requiresQuote: boolean;
+    appliedPrice: number | null;
+    currency: 'GBP';
   }[];
-  quote?: MonitoringQuoteResponse;
+  summary?: {
+    billingFrequency: 'monthly' | 'annual';
+    selectedCount: number;
+    fullPriceSubtotal: number;
+    discount: number;
+    subtotal: number;
+    vat: number;
+    payableTotal: number;
+  };
   session?: string;
 };
 ```
@@ -131,6 +149,7 @@ type MonitoringClientData = {
   token: string;
   clientName: string;
   companyName?: string;
+  clientLocation?: 'UK' | 'INT';
   helpPhoneNumber: string;
   helpEmail: string;
   bookingUrl: string;
@@ -141,7 +160,7 @@ type MonitoringClientData = {
     brandName: string;
     type: 'word_mark' | 'figurative' | 'combined';
     jurisdiction: string;
-    applicationDate: string;
+    applicationDate?: string;
     registrationDate?: string;
     expiryDate?: string;
     registrationNumber?: string;
@@ -165,31 +184,45 @@ type MonitoringClientData = {
   "token": "customer-entry-token",
   "origin": "https://example.com",
   "billingFrequency": "monthly",
-  "selections": [
+  "selectedTrademarks": [
     {
       "trademarkId": "crm_tm_1",
+      "name": "LUMA LANE",
+      "brandName": "Luma Lane",
+      "type": "word_mark",
+      "jurisdiction": "UK",
+      "registrationNumber": "UK00003163853",
+      "riskLevel": null,
       "plan": "monitoring_essentials",
-      "selected": true
+      "billingFrequency": "monthly",
+      "payableNow": true,
+      "requiresQuote": false,
+      "appliedPrice": 24,
+      "currency": "GBP"
+    },
+    {
+      "trademarkId": "crm_tm_2",
+      "name": "LUMA LANE HOME",
+      "brandName": "Luma Lane Home",
+      "type": "word_mark",
+      "jurisdiction": "UK",
+      "registrationNumber": "UK00003163854",
+      "plan": "monitoring_essentials",
+      "billingFrequency": "monthly",
+      "payableNow": true,
+      "requiresQuote": false,
+      "appliedPrice": 12,
+      "currency": "GBP"
     }
   ],
-  "quote": {
+  "summary": {
     "billingFrequency": "monthly",
-    "lineItems": [],
-    "payableNowLineItems": [],
-    "followUpLineItems": [],
-    "planBreakdown": [],
-    "summary": {
-      "selectedCount": 1,
-      "payableNowCount": 1,
-      "requiresQuoteCount": 0,
-      "subtotalMonthly": 24,
-      "subtotalAnnual": 240,
-      "discountMonthly": 0,
-      "discountAnnual": 0,
-      "totalMonthly": 24,
-      "totalAnnual": 240,
-      "annualSaving": 48
-    }
+    "selectedCount": 2,
+    "fullPriceSubtotal": 48,
+    "discount": 12,
+    "subtotal": 36,
+    "vat": 7.2,
+    "payableTotal": 43.2
   }
 }
 ```
@@ -198,6 +231,8 @@ type MonitoringClientData = {
 
 - Revalidate the token and selected trademark IDs.
 - Persist the checkout intent and basket snapshot.
+- Treat `selectedTrademarks` as the authoritative checkout payload for v1.
+- Use the provided `appliedPrice` per selected trademark instead of expecting a full quote object.
 - Create or update durable commercial records needed for v1:
   - customer/contact/account linkage
   - order record with `status = pending_checkout`
@@ -207,6 +242,20 @@ type MonitoringClientData = {
 - Create or request the Xero payment gateway hosted setup/payment URL.
 - Store the `correlationId`, app `reference`, and provider/session references.
 - Build the return URL back to the app using `origin`.
+
+Rules:
+
+- Only selected trademarks are sent in this operation.
+- `selectedTrademarks[].trademarkId` is the exact trademark `id` returned by `monitoring_subscription.resolve_token`.
+- `selectedTrademarks[].riskLevel` is always present.
+- For `monitoring_defence`, `riskLevel` mirrors the resolved trademark `riskProfile` when available, otherwise `null`.
+- For plans that do not depend on risk scoring, `riskLevel` is `null`.
+- `selectedTrademarks` already includes the applied per-trademark price for the chosen billing frequency.
+- Where a second or subsequent trademark on the same discount-eligible plan receives a reduced price, the reduced value is sent directly in `appliedPrice`.
+- `summary` is the order/quote summary for the chosen billing frequency only.
+- For `clientLocation = UK`, `vat` must equal `subtotal * 0.2`.
+- For `clientLocation = INT`, `vat` must be `0`.
+- Do not expect the app to send the full quote matrix or all available pricing permutations in this operation.
 
 ### Success Response
 
@@ -244,28 +293,26 @@ Rules:
 - Validate the token/session pairing.
 - Read the persisted checkout snapshot.
 - Read current normalized order/payment/subscription state where available.
-- Return the customer-facing confirmation snapshot.
+- Return only the normalized payment confirmation status needed by the polling UI.
+- `reference` is optional and should only be included when available.
 - Do not recompute quote state from the current token context alone.
 
 ### Success Response
 
 ```ts
-type MonitoringConfirmationResponse = {
-  clientName: string;
-  companyName?: string;
-  helpPhoneNumber: string;
-  helpEmail: string;
-  bookingUrl: string;
-  billingFrequency: 'monthly' | 'annual';
-  firstPaymentDate: string;
-  reference: string;
-  paidItems: MonitoringQuoteLineItem[];
-  followUpItems: MonitoringQuoteLineItem[];
-  summary: MonitoringQuoteSummary;
+type MonitoringConfirmationStatusResponse = {
+  paymentStatus: 'paid' | 'pending' | 'voided' | 'not_found';
+  reference?: string;
 };
 ```
 
-The app currently requires the fields above. Zoho may return extra normalized fields such as `order`, `payment`, `subscription`, or `checkoutIntent`; the app will ignore them until the UI is upgraded.
+Rules:
+
+- `paid` means the hosted payment/setup is complete and the app can continue to the confirmation page.
+- `pending` means the hosted flow is still in progress and the app should keep polling.
+- `voided` means the session has ended without a successful payment/setup.
+- `not_found` means the token/session pair could not be reconciled.
+- The app already holds the customer-facing quote snapshot locally; this endpoint is intentionally status-only.
 
 ---
 
