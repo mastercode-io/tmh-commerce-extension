@@ -124,6 +124,10 @@ function shouldApplyVat(clientData: MonitoringClientData) {
   return clientData.clientLocation === 'UK';
 }
 
+function roundCurrency(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
 export function createDefaultSelections(
   clientData: MonitoringClientData,
   plan: MonitoringPlan,
@@ -200,13 +204,16 @@ export function calculateMonitoringQuote(
   const discountAnnual = discountMonthly * 10;
   const totalMonthly = Math.max(0, subtotalMonthly - discountMonthly);
   const totalAnnual = Math.max(0, subtotalAnnual - discountAnnual);
-  const vatMonthly = shouldApplyVat(clientData) ? totalMonthly * 0.2 : 0;
-  const vatAnnual = shouldApplyVat(clientData) ? totalAnnual * 0.2 : 0;
-  const payableTotalMonthly = totalMonthly + vatMonthly;
-  const payableTotalAnnual = totalAnnual + vatAnnual;
-  const annualSaving = Math.max(
-    0,
-    payableTotalMonthly * 12 - payableTotalAnnual,
+  const vatMonthly = shouldApplyVat(clientData)
+    ? roundCurrency(totalMonthly * 0.2)
+    : 0;
+  const vatAnnual = shouldApplyVat(clientData)
+    ? roundCurrency(totalAnnual * 0.2)
+    : 0;
+  const payableTotalMonthly = roundCurrency(totalMonthly + vatMonthly);
+  const payableTotalAnnual = roundCurrency(totalAnnual + vatAnnual);
+  const annualSaving = roundCurrency(
+    Math.max(0, payableTotalMonthly * 12 - payableTotalAnnual),
   );
 
   return {
@@ -303,14 +310,16 @@ export function buildMonitoringCheckoutIntentPayload(
         billingFrequency === 'annual'
           ? quote.summary.totalAnnual
           : quote.summary.totalMonthly,
-      vat:
+      vat: roundCurrency(
         billingFrequency === 'annual'
           ? quote.summary.vatAnnual
           : quote.summary.vatMonthly,
-      payableTotal:
+      ),
+      payableTotal: roundCurrency(
         billingFrequency === 'annual'
           ? quote.summary.payableTotalAnnual
           : quote.summary.payableTotalMonthly,
+      ),
     },
   };
 }
