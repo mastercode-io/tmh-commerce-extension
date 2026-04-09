@@ -39,6 +39,7 @@ export function QuoteSummary({
   bookingUrl,
   quoteLoading,
   checkoutPending,
+  paymentMonitoringActive,
   quoteError,
   onCheckout,
 }: {
@@ -48,6 +49,7 @@ export function QuoteSummary({
   bookingUrl?: string;
   quoteLoading?: boolean;
   checkoutPending?: boolean;
+  paymentMonitoringActive?: boolean;
   quoteError?: string | null;
   onCheckout: () => void;
 }) {
@@ -73,7 +75,9 @@ export function QuoteSummary({
     billingFrequency === 'annual'
       ? (quote?.summary.vatAnnual ?? 0)
       : (quote?.summary.vatMonthly ?? 0);
-  const ctaLabel = 'Continue to payment';
+  const ctaLabel = paymentMonitoringActive
+    ? 'Waiting for payment...'
+    : 'Continue to payment';
 
   return (
     <Card className="sticky top-24">
@@ -186,7 +190,10 @@ export function QuoteSummary({
         <Button
           onClick={onCheckout}
           disabled={
-            checkoutPending || quoteLoading || payableItems.length === 0
+            checkoutPending ||
+            quoteLoading ||
+            paymentMonitoringActive ||
+            payableItems.length === 0
           }
           className="min-w-[220px]"
         >

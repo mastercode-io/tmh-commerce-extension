@@ -85,7 +85,7 @@ The current monitoring page already calls these public app routes:
 
 - **Method:** `GET`
 - **Route:** `/api/subscribe/monitoring/confirm?token=<TOKEN>&session=<SESSION>`
-- **Purpose:** Load the final quote snapshot and confirmation state
+- **Purpose:** Poll hosted payment/setup status with a minimal response
 
 These routes should remain the public interface used by the page.
 
@@ -474,7 +474,7 @@ For v1:
 
 ### Purpose
 
-Load the stored checkout snapshot for the confirmation page.
+Poll the stored checkout state and return only payment status.
 
 ### Request
 
@@ -487,36 +487,20 @@ Query params:
 
 ```json
 {
-  "clientName": "Amelia Carter",
-  "companyName": "Luma Lane Studio Ltd",
-  "helpPhoneNumber": "0161 833 5400",
-  "helpEmail": "enquiries@thetrademarkhelpline.com",
-  "bookingUrl": "https://bookings.example.com/...",
-  "billingFrequency": "annual",
-  "firstPaymentDate": "2026-04-01",
-  "reference": "TMH-MON-ABC123",
-  "paidItems": [],
-  "followUpItems": [],
-  "summary": {
-    "selectedCount": 3,
-    "payableNowCount": 2,
-    "requiresQuoteCount": 1,
-    "subtotalMonthly": 48,
-    "subtotalAnnual": 480,
-    "discountMonthly": 12,
-    "discountAnnual": 120,
-    "totalMonthly": 36,
-    "totalAnnual": 360,
-    "annualSaving": 72
-  }
+  "paymentStatus": "paid"
 }
 ```
 
 ### Rules
 
-- Confirmation must reflect the stored checkout snapshot, not a fresh recalculation
-- If some items required follow-up, they must still be visible here
-- Booking URL should remain available on confirmation when follow-up items exist
+- Confirmation status must reflect the stored checkout state, not a fresh recalculation
+- Allowed values:
+  - `paid`
+  - `pending`
+- `voided`
+- `not_found`
+- `reference` is optional and may be omitted entirely
+- The frontend confirmation page uses the locally stored quote snapshot captured at checkout creation time
 
 ### Errors
 

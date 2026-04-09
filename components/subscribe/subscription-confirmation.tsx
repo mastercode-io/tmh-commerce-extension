@@ -22,6 +22,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  consumeMonitoringPaymentCompletedMarker,
+  readMonitoringConfirmationSnapshot,
+} from '@/lib/monitoring/confirmation-storage';
 import type {
   MonitoringConfirmationResponse,
   MonitoringPlan,
@@ -44,27 +48,6 @@ function planLabel(plan: MonitoringPlan) {
     case 'annual_review':
       return 'Annual Review';
   }
-}
-
-async function fetchConfirmation(token: string, session: string) {
-  const response = await fetch(
-    `/api/subscribe/monitoring/confirm?token=${encodeURIComponent(token)}&session=${encodeURIComponent(session)}`,
-    { cache: 'no-store' },
-  );
-  const data = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new Error(
-      typeof data === 'object' &&
-        data !== null &&
-        'message' in data &&
-        typeof data.message === 'string'
-        ? data.message
-        : 'Confirmation details could not be loaded.',
-    );
-  }
-
-  return data as MonitoringConfirmationResponse;
 }
 
 export function SubscriptionConfirmation({
@@ -95,14 +78,36 @@ export function SubscriptionConfirmation({
     let cancelled = false;
 
     async function load() {
+      const snapshot = readMonitoringConfirmationSnapshot(safeToken, safeSession);
+      const hasCompletedMarker = consumeMonitoringPaymentCompletedMarker(
+        safeToken,
+        safeSession,
+      );
+
+      if (!hasCompletedMarker) {
+        if (cancelled) {
+          return;
+        }
+
+        setState('error');
+        setErrorMessage(
+          'This confirmation page is only available immediately after payment is detected. Please return to the monitoring page and try again.',
+        );
+        return;
+      }
+
       try {
-        const data = await fetchConfirmation(safeToken, safeSession);
+        if (!snapshot) {
+          throw new Error(
+            'Confirmation details are no longer available in this browser session. Please return to the quote and try again.',
+          );
+        }
 
         if (cancelled) {
           return;
         }
 
-        setPayload(data);
+        setPayload(snapshot);
         setState('ready');
       } catch (error) {
         if (cancelled) {
@@ -131,7 +136,7 @@ export function SubscriptionConfirmation({
         <CardHeader className="border-b">
           <CardTitle>Loading confirmation</CardTitle>
           <CardDescription>
-            Fetching the result of your hosted subscription setup.
+            Preparing the confirmed subscription summary.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 pt-4">
@@ -240,10 +245,12 @@ export function SubscriptionConfirmation({
                   /{payload.billingFrequency === 'annual' ? 'year' : 'month'}
                 </span>
               </div>
-              <div className="text-muted-foreground flex items-center gap-2 text-sm">
-                <CalendarDays className="size-4" />
-                First collection: {payload.firstPaymentDate}
-              </div>
+              {payload.firstPaymentDate ? (
+                <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                  <CalendarDays className="size-4" />
+                  First collection: {payload.firstPaymentDate}
+                </div>
+              ) : null}
             </div>
           </div>
 

@@ -517,7 +517,7 @@ Zoho responsibilities:
 
 Purpose:
 
-Read persisted checkout state and return customer-facing confirmation.
+Read persisted checkout state and return minimal payment confirmation status.
 
 Query:
 
@@ -537,27 +537,19 @@ monitoring_subscription.confirm_checkout
 Success response:
 
 ```ts
-type MonitoringConfirmationResponse = {
-  clientName: string;
-  companyName?: string;
-  helpPhoneNumber: string;
-  helpEmail: string;
-  bookingUrl: string;
-  billingFrequency: 'monthly' | 'annual';
-  firstPaymentDate: string;
-  reference: string;
-  lineItems: MonitoringQuoteLineItem[];
-  payableNowLineItems: MonitoringQuoteLineItem[];
-  followUpLineItems: MonitoringQuoteLineItem[];
-  summary: MonitoringQuoteResponse['summary'];
+type MonitoringConfirmationStatusResponse = {
+  paymentStatus: 'paid' | 'pending' | 'voided' | 'not_found';
+  reference?: string;
 };
 ```
 
 Required production behavior:
 
-- Do not recompute the confirmation from the token alone.
+- Do not recompute confirmation from the token alone.
 - Read the persisted checkout snapshot and current normalized order/payment/subscription state.
-- Surface pending, failed, and cancelled states through normalized app status fields where applicable.
+- Return only the status needed by the polling page.
+- `reference` is optional and may be omitted entirely.
+- The frontend confirmation page uses the locally stored quote snapshot captured at checkout creation time.
 
 ### `GET /api/account/summary`
 
@@ -1000,7 +992,7 @@ Recommended first test cases:
 | Route | Status | Notes |
 | --- | --- | --- |
 | `/subscribe/monitoring` | Implemented | Production validation blocked by Zoho monitoring subscription API and Xero gateway. |
-| `/subscribe/monitoring/confirm` | Implemented | Production validation blocked by persisted confirmation state. |
+| `/subscribe/monitoring/confirm` | Implemented | Status-only polling contract; production validation blocked by live persisted payment state. |
 | `/settings/notifications` | Implemented | Uses preferences API. |
 | `/account` | Implemented | Temporary query-param identity until auth is wired. |
 | `/account/orders` | Implemented | Temporary query-param identity until auth is wired. |

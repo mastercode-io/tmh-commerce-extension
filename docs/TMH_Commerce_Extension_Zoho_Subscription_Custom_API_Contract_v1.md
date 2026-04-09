@@ -80,6 +80,15 @@ type ZohoMonitoringSubscriptionRequest = {
     appliedPrice: number | null;
     currency: 'GBP';
   }[];
+  summary?: {
+    billingFrequency: 'monthly' | 'annual';
+    selectedCount: number;
+    fullPriceSubtotal: number;
+    discount: number;
+    subtotal: number;
+    vat: number;
+    payableTotal: number;
+  };
   session?: string;
 };
 ```
@@ -284,28 +293,26 @@ Rules:
 - Validate the token/session pairing.
 - Read the persisted checkout snapshot.
 - Read current normalized order/payment/subscription state where available.
-- Return the customer-facing confirmation snapshot.
+- Return only the normalized payment confirmation status needed by the polling UI.
+- `reference` is optional and should only be included when available.
 - Do not recompute quote state from the current token context alone.
 
 ### Success Response
 
 ```ts
-type MonitoringConfirmationResponse = {
-  clientName: string;
-  companyName?: string;
-  helpPhoneNumber: string;
-  helpEmail: string;
-  bookingUrl: string;
-  billingFrequency: 'monthly' | 'annual';
-  firstPaymentDate: string;
-  reference: string;
-  paidItems: MonitoringQuoteLineItem[];
-  followUpItems: MonitoringQuoteLineItem[];
-  summary: MonitoringQuoteSummary;
+type MonitoringConfirmationStatusResponse = {
+  paymentStatus: 'paid' | 'pending' | 'voided' | 'not_found';
+  reference?: string;
 };
 ```
 
-The app currently requires the fields above. Zoho may return extra normalized fields such as `order`, `payment`, `subscription`, or `checkoutIntent`; the app will ignore them until the UI is upgraded.
+Rules:
+
+- `paid` means the hosted payment/setup is complete and the app can continue to the confirmation page.
+- `pending` means the hosted flow is still in progress and the app should keep polling.
+- `voided` means the session has ended without a successful payment/setup.
+- `not_found` means the token/session pair could not be reconciled.
+- The app already holds the customer-facing quote snapshot locally; this endpoint is intentionally status-only.
 
 ---
 

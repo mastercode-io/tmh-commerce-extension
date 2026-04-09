@@ -5,7 +5,8 @@ import type {
   MonitoringCheckoutIntentPayload,
   MonitoringCheckoutResponse,
   MonitoringClientData,
-  MonitoringConfirmationResponse,
+  MonitoringConfirmationStatusResponse,
+  MonitoringPaymentStatus,
   MonitoringPlan,
   MonitoringTrademark,
   TrademarkSelection,
@@ -195,23 +196,24 @@ function isMonitoringCheckoutResponse(
   );
 }
 
-function isMonitoringConfirmationResponse(
+function isMonitoringPaymentStatus(
   value: unknown,
-): value is MonitoringConfirmationResponse {
+): value is MonitoringPaymentStatus {
   return (
-    hasStringField(value, 'clientName') &&
-    hasStringField(value, 'helpPhoneNumber') &&
-    hasStringField(value, 'helpEmail') &&
-    hasStringField(value, 'bookingUrl') &&
-    hasStringField(value, 'billingFrequency') &&
-    hasStringField(value, 'firstPaymentDate') &&
-    hasStringField(value, 'reference') &&
-    'paidItems' in value &&
-    Array.isArray(value.paidItems) &&
-    'followUpItems' in value &&
-    Array.isArray(value.followUpItems) &&
-    'summary' in value &&
-    Boolean(value.summary)
+    value === 'paid' ||
+    value === 'pending' ||
+    value === 'voided' ||
+    value === 'not_found'
+  );
+}
+
+function isMonitoringConfirmationStatusResponse(
+  value: unknown,
+): value is MonitoringConfirmationStatusResponse {
+  return (
+    hasStringField(value, 'paymentStatus') &&
+    isMonitoringPaymentStatus(value.paymentStatus) &&
+    hasOptionalStringField(value, 'reference')
   );
 }
 
@@ -355,7 +357,7 @@ export async function confirmMonitoringSubscriptionCheckout(args: {
       token: args.token,
       session: args.session,
     },
-    validate: isMonitoringConfirmationResponse,
+    validate: isMonitoringConfirmationStatusResponse,
   });
 
   return result.data;

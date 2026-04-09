@@ -163,6 +163,17 @@ export interface MonitoringCheckoutResponse {
   reference: string;
 }
 
+export type MonitoringPaymentStatus =
+  | 'paid'
+  | 'pending'
+  | 'voided'
+  | 'not_found';
+
+export interface MonitoringConfirmationStatusResponse {
+  paymentStatus: MonitoringPaymentStatus;
+  reference?: string;
+}
+
 export interface MonitoringConfirmationResponse {
   clientName: string;
   companyName?: string;
@@ -170,7 +181,7 @@ export interface MonitoringConfirmationResponse {
   helpEmail: string;
   bookingUrl: string;
   billingFrequency: BillingFrequency;
-  firstPaymentDate: string;
+  firstPaymentDate?: string;
   reference: string;
   paidItems: MonitoringQuoteLineItem[];
   followUpItems: MonitoringQuoteLineItem[];

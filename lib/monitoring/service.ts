@@ -20,7 +20,7 @@ import type {
   MonitoringCheckoutRequest,
   MonitoringCheckoutResponse,
   MonitoringClientData,
-  MonitoringConfirmationResponse,
+  MonitoringConfirmationStatusResponse,
   MonitoringQuoteRequest,
   MonitoringQuoteResponse,
 } from '@/lib/types/monitoring';
@@ -129,24 +129,6 @@ function assertCheckoutRequest(
   return {
     billingFrequency: body.billingFrequency,
     selections: body.selections,
-  };
-}
-
-function buildConfirmationResponse(
-  session: MockCheckoutSession,
-): MonitoringConfirmationResponse {
-  return {
-    clientName: session.clientName,
-    companyName: session.companyName,
-    helpPhoneNumber: session.helpPhoneNumber,
-    helpEmail: session.helpEmail,
-    bookingUrl: session.bookingUrl,
-    billingFrequency: session.billingFrequency,
-    firstPaymentDate: session.firstPaymentDate,
-    reference: session.reference,
-    paidItems: session.quote.payableNowLineItems,
-    followUpItems: session.quote.followUpLineItems,
-    summary: session.quote.summary,
   };
 }
 
@@ -331,7 +313,7 @@ export async function confirmMonitoringCheckout(args: {
   token: string | null;
   sessionValue: string | null;
   correlationId: string;
-}): Promise<MonitoringConfirmationResponse> {
+}): Promise<MonitoringConfirmationStatusResponse> {
   assertMonitoringSubscriptionIntegration(args.correlationId);
 
   if (isMonitoringSubscriptionCustomApiConfigured()) {
@@ -376,5 +358,8 @@ export async function confirmMonitoringCheckout(args: {
     );
   }
 
-  return buildConfirmationResponse(session);
+  return {
+    paymentStatus: 'paid',
+    reference: session.reference,
+  };
 }

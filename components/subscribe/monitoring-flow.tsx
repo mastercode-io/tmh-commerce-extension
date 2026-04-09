@@ -34,9 +34,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  saveMonitoringConfirmationSnapshot,
+  saveMonitoringPaymentCompletedMarker,
+} from '@/lib/monitoring/confirmation-storage';
 import type {
   BillingFrequency,
+  MonitoringApiErrorCode,
   MonitoringClientData,
+  MonitoringConfirmationStatusResponse,
+  MonitoringCheckoutResponse,
   MonitoringPlan,
   MonitoringQuoteResponse,
   MonitoringTrademark,
@@ -60,6 +67,7 @@ type MonitoringClientResponse = MonitoringClientData & {
 };
 
 type MonitoringApiResponse = {
+  code?: MonitoringApiErrorCode;
   message?: string;
   correlationId?: string;
   debug?: MonitoringDebugPayload;
@@ -67,22 +75,28 @@ type MonitoringApiResponse = {
 
 class MonitoringApiResponseError extends Error {
   status: number;
+  code?: MonitoringApiErrorCode;
   debug?: MonitoringDebugPayload;
   correlationId?: string;
 
   constructor(
     message: string,
     status: number,
+    code?: MonitoringApiErrorCode,
     debug?: MonitoringDebugPayload,
     correlationId?: string,
   ) {
     super(message);
     this.name = 'MonitoringApiResponseError';
     this.status = status;
+    this.code = code;
     this.debug = debug;
     this.correlationId = correlationId;
   }
 }
+
+const PAYMENT_CONFIRMATION_TIMEOUT_MS = 10 * 60 * 1000;
+const PAYMENT_PENDING_NOTICE_DELAY_MS = 2 * 60 * 1000;
 
 function buildSelections(
   trademarks: MonitoringTrademark[],
@@ -116,6 +130,21 @@ function mapErrorMessage(status: number) {
   return 'We could not open this monitoring link right now. Please try again later or contact us for help.';
 }
 
+function getMonitoringApiErrorCode(
+  payload: unknown,
+): MonitoringApiErrorCode | undefined {
+  if (
+    payload &&
+    typeof payload === 'object' &&
+    'code' in payload &&
+    typeof payload.code === 'string'
+  ) {
+    return payload.code as MonitoringApiErrorCode;
+  }
+
+  return undefined;
+}
+
 async function requestJson<T>(input: string, init?: RequestInit): Promise<T> {
   const response = await fetch(input, {
     ...init,
@@ -135,6 +164,7 @@ async function requestJson<T>(input: string, init?: RequestInit): Promise<T> {
     throw new MonitoringApiResponseError(
       mapErrorMessage(response.status),
       response.status,
+      getMonitoringApiErrorCode(data),
       data && 'debug' in data ? data.debug : undefined,
       data && 'correlationId' in data ? data.correlationId : undefined,
     );
@@ -316,6 +346,41 @@ export function MonitoringFlow({
   const [debugPayload, setDebugPayload] =
     React.useState<MonitoringDebugPayload | null>(null);
   const [correlationId, setCorrelationId] = React.useState<string | null>(null);
+  const [paymentSession, setPaymentSession] = React.useState<string | null>(null);
+  const [paymentUrl, setPaymentUrl] = React.useState<string | null>(null);
+  const [paymentMonitorState, setPaymentMonitorState] = React.useState<
+    'idle' | 'waiting' | 'timed_out' | 'failed'
+  >('idle');
+  const [paymentMonitorMessage, setPaymentMonitorMessage] =
+    React.useState<string | null>(null);
+  const [paymentPendingNoticeVisible, setPaymentPendingNoticeVisible] =
+    React.useState(false);
+  const paymentMonitorStartedAtRef = React.useRef<number | null>(null);
+  const paymentMonitorTimeoutRef = React.useRef<number | null>(null);
+
+  const clearPaymentMonitorTimeout = React.useCallback(() => {
+    if (paymentMonitorTimeoutRef.current !== null) {
+      window.clearTimeout(paymentMonitorTimeoutRef.current);
+      paymentMonitorTimeoutRef.current = null;
+    }
+  }, []);
+
+  const getNextPaymentPollDelay = React.useCallback((elapsedMs: number) => {
+    if (elapsedMs < 30_000) {
+      return 2_000;
+    }
+
+    if (elapsedMs < 120_000) {
+      return 5_000;
+    }
+
+    return 10_000;
+  }, []);
+
+  const finalizePaymentMonitoring = React.useCallback(() => {
+    clearPaymentMonitorTimeout();
+    paymentMonitorStartedAtRef.current = null;
+  }, [clearPaymentMonitorTimeout]);
 
   React.useEffect(() => {
     if (!token) {
@@ -342,6 +407,7 @@ export function MonitoringFlow({
           throw new MonitoringApiResponseError(
             mapErrorMessage(response.status),
             response.status,
+            getMonitoringApiErrorCode(payload),
             payload && 'debug' in payload ? payload.debug : undefined,
             payload && 'correlationId' in payload ? payload.correlationId : undefined,
           );
@@ -384,6 +450,12 @@ export function MonitoringFlow({
       cancelled = true;
     };
   }, [token]);
+
+  React.useEffect(() => {
+    return () => {
+      clearPaymentMonitorTimeout();
+    };
+  }, [clearPaymentMonitorTimeout]);
 
   const selectionList = React.useMemo(
     () =>
@@ -494,14 +566,14 @@ export function MonitoringFlow({
   );
 
   const handleCheckout = React.useCallback(async () => {
-    if (!token) {
+    if (!token || !clientData || !quote) {
       return;
     }
 
     const safeToken = token;
     try {
       setCheckoutPending(true);
-      const data = await requestJson<{ redirectUrl: string }>(
+      const data = await requestJson<MonitoringCheckoutResponse>(
         '/api/subscribe/monitoring/checkout',
         {
           method: 'POST',
@@ -513,7 +585,42 @@ export function MonitoringFlow({
         },
       );
 
-      window.location.assign(data.redirectUrl);
+      saveMonitoringConfirmationSnapshot({
+        token: safeToken,
+        session: data.session,
+        clientName: clientData.clientName,
+        companyName: clientData.companyName,
+        helpPhoneNumber: clientData.helpPhoneNumber,
+        helpEmail: clientData.helpEmail,
+        bookingUrl: clientData.bookingUrl,
+        billingFrequency,
+        reference: data.reference,
+        paidItems: quote.payableNowLineItems,
+        followUpItems: quote.followUpLineItems,
+        summary: quote.summary,
+      });
+
+      const popup = window.open(data.redirectUrl, '_blank', 'noopener,noreferrer');
+
+      setPaymentSession(data.session);
+      setPaymentUrl(data.redirectUrl);
+
+      if (!popup) {
+        setPaymentMonitorState('failed');
+        setPaymentMonitorMessage(
+          'We could not open the hosted payment page in a new tab. Please use the button below to open it and then recheck the payment status here.',
+        );
+        setCheckoutPending(false);
+        return;
+      }
+
+      paymentMonitorStartedAtRef.current = Date.now();
+      setPaymentMonitorState('waiting');
+      setPaymentMonitorMessage(
+        'The payment page has been opened in a new tab. Complete the payment there and this page will confirm it automatically.',
+      );
+      setPaymentPendingNoticeVisible(false);
+      setCheckoutPending(false);
     } catch (error) {
       setQuoteError(
         error instanceof Error
@@ -526,7 +633,165 @@ export function MonitoringFlow({
       }
       setCheckoutPending(false);
     }
-  }, [billingFrequency, selectionList, token]);
+  }, [billingFrequency, clientData, quote, selectionList, token]);
+
+  const performConfirmationCheck = React.useCallback(async () => {
+    if (!token || !paymentSession) {
+      return;
+    }
+
+    try {
+      const confirmation = await requestJson<MonitoringConfirmationStatusResponse>(
+        `/api/subscribe/monitoring/confirm?token=${encodeURIComponent(token)}&session=${encodeURIComponent(paymentSession)}`,
+        {
+          method: 'GET',
+        },
+      );
+
+      if (confirmation.paymentStatus === 'pending') {
+        const startedAt = paymentMonitorStartedAtRef.current ?? Date.now();
+        const elapsedMs = Date.now() - startedAt;
+
+        if (elapsedMs >= PAYMENT_CONFIRMATION_TIMEOUT_MS) {
+          finalizePaymentMonitoring();
+          setPaymentMonitorState('timed_out');
+          setPaymentMonitorMessage(
+            'Payment confirmation was not detected yet. You can reopen the payment page or run a manual recheck.',
+          );
+          setPaymentPendingNoticeVisible(true);
+          return;
+        }
+
+        setPaymentMonitorState('waiting');
+        setPaymentPendingNoticeVisible(
+          elapsedMs >= PAYMENT_PENDING_NOTICE_DELAY_MS,
+        );
+        clearPaymentMonitorTimeout();
+        paymentMonitorTimeoutRef.current = window.setTimeout(() => {
+          void performConfirmationCheck();
+        }, getNextPaymentPollDelay(elapsedMs));
+        return;
+      }
+
+      if (
+        confirmation.paymentStatus === 'voided' ||
+        confirmation.paymentStatus === 'not_found'
+      ) {
+        finalizePaymentMonitoring();
+        setPaymentMonitorState('failed');
+        setPaymentMonitorMessage(
+          'We could not confirm this payment session. Please return to the quote or contact us for help.',
+        );
+        return;
+      }
+
+      finalizePaymentMonitoring();
+      saveMonitoringPaymentCompletedMarker({
+        token,
+        session: paymentSession,
+      });
+      window.location.assign(
+        `/subscribe/monitoring/confirm?token=${encodeURIComponent(token)}&session=${encodeURIComponent(paymentSession)}`,
+      );
+      return;
+    } catch (error) {
+      if (error instanceof MonitoringApiResponseError) {
+        setDebugPayload(error.debug ?? null);
+        setCorrelationId(error.correlationId ?? null);
+      }
+
+      const startedAt = paymentMonitorStartedAtRef.current ?? Date.now();
+      const elapsedMs = Date.now() - startedAt;
+
+      if (
+        error instanceof MonitoringApiResponseError &&
+        (error.code === 'invalid_token' || error.code === 'expired_token')
+      ) {
+        finalizePaymentMonitoring();
+        setPaymentMonitorState('failed');
+        setPaymentMonitorMessage(
+          'We could not verify this payment session. Please return to the quote or contact us for help.',
+        );
+        return;
+      }
+
+      if (elapsedMs >= PAYMENT_CONFIRMATION_TIMEOUT_MS) {
+        finalizePaymentMonitoring();
+        setPaymentMonitorState('timed_out');
+        setPaymentMonitorMessage(
+          'Payment confirmation was not detected yet. You can reopen the payment page or run a manual recheck.',
+        );
+        setPaymentPendingNoticeVisible(true);
+        return;
+      }
+
+      setPaymentMonitorState('waiting');
+      setPaymentPendingNoticeVisible(elapsedMs >= PAYMENT_PENDING_NOTICE_DELAY_MS);
+      clearPaymentMonitorTimeout();
+      paymentMonitorTimeoutRef.current = window.setTimeout(() => {
+        void performConfirmationCheck();
+      }, getNextPaymentPollDelay(elapsedMs));
+    }
+  }, [
+    clearPaymentMonitorTimeout,
+    finalizePaymentMonitoring,
+    getNextPaymentPollDelay,
+    paymentSession,
+    token,
+  ]);
+
+  React.useEffect(() => {
+    if (paymentMonitorState !== 'waiting' || !paymentSession) {
+      return;
+    }
+
+    clearPaymentMonitorTimeout();
+    void performConfirmationCheck();
+  }, [
+    clearPaymentMonitorTimeout,
+    paymentMonitorState,
+    paymentSession,
+    performConfirmationCheck,
+  ]);
+
+  const handleReopenPayment = React.useCallback(() => {
+    if (!paymentUrl) {
+      return;
+    }
+
+    const popup = window.open(paymentUrl, '_blank', 'noopener,noreferrer');
+
+    if (!popup) {
+      setPaymentMonitorState('failed');
+      setPaymentMonitorMessage(
+        'We could not open the hosted payment page in a new tab. Please allow pop-ups and try again.',
+      );
+      return;
+    }
+
+    paymentMonitorStartedAtRef.current = Date.now();
+    setPaymentMonitorState('waiting');
+    setPaymentMonitorMessage(
+      'The payment page has been reopened in a new tab. We will keep checking for confirmation here.',
+    );
+    setPaymentPendingNoticeVisible(false);
+  }, [paymentUrl]);
+
+  const handleManualRecheck = React.useCallback(() => {
+    if (!paymentSession) {
+      return;
+    }
+
+    if (paymentMonitorStartedAtRef.current === null) {
+      paymentMonitorStartedAtRef.current = Date.now();
+    }
+
+    setPaymentMonitorState('waiting');
+    setPaymentMonitorMessage(
+      'Checking the latest payment status now.',
+    );
+    setPaymentPendingNoticeVisible(false);
+  }, [paymentSession]);
 
   const greeting = clientData
     ? `Hi ${clientData.clientName}${clientData.companyName ? ` - ${clientData.companyName}` : ''}`
@@ -776,8 +1041,43 @@ export function MonitoringFlow({
             checkoutPending={checkoutPending}
             quoteError={quoteError}
             onCheckout={() => void handleCheckout()}
+            paymentMonitoringActive={paymentMonitorState === 'waiting'}
           />
         </div>
+      ) : null}
+
+      {paymentMonitorState !== 'idle' ? (
+        <Card className="overflow-hidden border-amber-200 bg-amber-50/40">
+          <CardHeader className="border-b">
+            <CardTitle className="text-lg">Payment confirmation</CardTitle>
+            <CardDescription>
+              {paymentMonitorMessage}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 pt-4 text-sm">
+            {paymentPendingNoticeVisible ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950">
+                We are still waiting for payment confirmation from the hosted payment page. If you have already completed payment, run a manual recheck.
+              </div>
+            ) : null}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={handleReopenPayment}
+                disabled={!paymentUrl}
+              >
+                Open payment page
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => void handleManualRecheck()}
+                disabled={!paymentSession}
+              >
+                Recheck payment
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       ) : null}
 
       {showDemoHelpers ? (
