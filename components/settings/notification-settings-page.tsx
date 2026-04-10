@@ -5,11 +5,13 @@ import {
   AlertTriangle,
   BellRing,
   Briefcase,
+  CheckCircle2,
   Gem,
   Landmark,
   Mail,
   Scale,
   Sparkles,
+  X,
 } from 'lucide-react';
 
 import { PageHeader } from '@/components/common/page-header';
@@ -210,10 +212,37 @@ export function NotificationSettingsPage({
   const [debugPayload, setDebugPayload] =
     React.useState<NotificationPreferencesResponse['debug'] | null>(null);
   const [saveSuccessMessage, setSaveSuccessMessage] = React.useState<string | null>(null);
+  const [saveConfirmationMessage, setSaveConfirmationMessage] = React.useState<string | null>(
+    null,
+  );
   const [isGloballyBlocked, setIsGloballyBlocked] = React.useState(false);
   const [isNewPreferenceSet, setIsNewPreferenceSet] = React.useState(false);
   const [correlationId, setCorrelationId] = React.useState<string | null>(null);
   const normalizedEmail = email?.trim() ?? '';
+  const confirmationTimeoutRef = React.useRef<number | null>(null);
+
+  const dismissSaveConfirmation = React.useCallback(() => {
+    if (confirmationTimeoutRef.current !== null) {
+      window.clearTimeout(confirmationTimeoutRef.current);
+      confirmationTimeoutRef.current = null;
+    }
+
+    setSaveConfirmationMessage(null);
+  }, []);
+
+  const showSaveConfirmation = React.useCallback(
+    (message: string) => {
+      dismissSaveConfirmation();
+      setSaveConfirmationMessage(message);
+      confirmationTimeoutRef.current = window.setTimeout(() => {
+        setSaveConfirmationMessage(null);
+        confirmationTimeoutRef.current = null;
+      }, 4000);
+    },
+    [dismissSaveConfirmation],
+  );
+
+  React.useEffect(() => dismissSaveConfirmation, [dismissSaveConfirmation]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -225,6 +254,7 @@ export function NotificationSettingsPage({
       setHasResolvedInitialLoad(false);
       setDebugPayload(null);
       setSaveSuccessMessage(null);
+      dismissSaveConfirmation();
       setIsGloballyBlocked(false);
       setIsNewPreferenceSet(false);
       setCorrelationId(null);
@@ -296,7 +326,7 @@ export function NotificationSettingsPage({
     return () => {
       cancelled = true;
     };
-  }, [devMode, normalizedEmail]);
+  }, [devMode, dismissSaveConfirmation, normalizedEmail]);
 
   const isDirty =
     isNewPreferenceSet ||
@@ -356,6 +386,7 @@ export function NotificationSettingsPage({
     setIsSavingPreferences(true);
     setPageError(null);
     setSaveSuccessMessage(null);
+    dismissSaveConfirmation();
 
     try {
       const url = normalizedEmail
@@ -395,11 +426,15 @@ export function NotificationSettingsPage({
       setDebugPayload(payload.debug ?? debugPayload);
       setCorrelationId(payload.correlationId ?? correlationId);
       setIsNewPreferenceSet(false);
-      setSaveSuccessMessage(
-        essentialOptIn
-          ? 'Your preferences have been updated, thank you.'
-          : 'Thank you for updating your preferences.',
-      );
+      const successMessage = essentialOptIn
+        ? 'Your preferences have been updated, thank you.'
+        : 'Thank you for updating your preferences.';
+      setSaveSuccessMessage(essentialOptIn ? null : successMessage);
+      if (essentialOptIn) {
+        showSaveConfirmation(successMessage);
+      } else {
+        dismissSaveConfirmation();
+      }
       setIsGloballyBlocked(!essentialOptIn);
     } catch (error) {
       if (error instanceof NotificationApiResponseError) {
@@ -459,6 +494,34 @@ export function NotificationSettingsPage({
                   or call us on 0161 833 5400 between 9am and 5pm Monday to Friday.
                 </div>
               ) : null}
+            </div>
+          ) : null}
+
+          {saveConfirmationMessage ? (
+            <div
+              role="status"
+              aria-live="polite"
+              className="fixed bottom-4 right-4 z-50 w-[calc(100vw-2rem)] max-w-sm"
+            >
+              <div className="bg-background flex items-start gap-3 rounded-2xl border border-emerald-200 p-4 text-sm text-slate-900 shadow-lg">
+                <div className="mt-0.5 shrink-0 rounded-full bg-emerald-100 p-1 text-emerald-700">
+                  <CheckCircle2 className="size-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium">Preferences updated</div>
+                  <div className="text-muted-foreground mt-1">
+                    {saveConfirmationMessage}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={dismissSaveConfirmation}
+                  className="text-muted-foreground hover:text-foreground rounded-full p-1 transition-colors"
+                  aria-label="Dismiss confirmation"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
             </div>
           ) : null}
 
