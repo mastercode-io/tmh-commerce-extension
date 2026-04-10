@@ -501,7 +501,7 @@ export function NotificationSettingsPage({
             <div
               role="status"
               aria-live="polite"
-              className="fixed bottom-4 right-4 z-50 w-[calc(100vw-2rem)] max-w-sm"
+              className="fixed left-1/2 top-[20vh] z-50 w-[calc(100vw-2rem)] max-w-sm -translate-x-1/2"
             >
               <div className="bg-background flex items-start gap-3 rounded-2xl border border-emerald-200 p-4 text-sm text-slate-900 shadow-lg">
                 <div className="mt-0.5 shrink-0 rounded-full bg-emerald-100 p-1 text-emerald-700">
