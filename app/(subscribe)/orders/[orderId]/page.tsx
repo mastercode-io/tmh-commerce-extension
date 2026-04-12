@@ -1,4 +1,5 @@
 import { RenewalOrderScreen } from '@/components/renewal/renewal-order-screen';
+import { canUseMockRenewals } from '@/lib/renewals/config';
 
 export default async function RenewalOrderPage({
   params,
@@ -7,5 +8,10 @@ export default async function RenewalOrderPage({
 }) {
   const { orderId } = await params;
 
-  return <RenewalOrderScreen orderId={orderId} />;
+  return (
+    <RenewalOrderScreen
+      orderId={orderId}
+      showDemoHelpers={canUseMockRenewals()}
+    />
+  );
 }

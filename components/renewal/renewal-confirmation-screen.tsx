@@ -9,6 +9,10 @@ import { LoadingSkeleton } from '@/components/common/loading-skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
+  getRenewalDemoPaymentSnapshot,
+  readRenewalDemoOrder,
+} from '@/lib/renewals/demo-storage';
+import {
   Card,
   CardContent,
   CardDescription,
@@ -45,6 +49,22 @@ export function RenewalConfirmationScreen({ orderId }: { orderId: string }) {
           setConfirmation(response);
         }
       } catch (requestError) {
+        const fallback = getRenewalDemoPaymentSnapshot({ orderId }) ?? (() => {
+          const snapshot = readRenewalDemoOrder(orderId);
+          return snapshot ? { snapshot } : null;
+        })();
+
+        if (!cancelled && fallback) {
+          setConfirmation({
+            orderId: fallback.snapshot.order.orderId,
+            requestId: fallback.snapshot.request?.requestId,
+            paymentStatus: fallback.snapshot.payment?.status ?? 'initiated',
+            confirmedAt: fallback.snapshot.confirmedAt,
+            reference: fallback.snapshot.order.reference,
+          });
+          return;
+        }
+
         if (!cancelled) {
           setError(
             requestError instanceof RenewalApiResponseError

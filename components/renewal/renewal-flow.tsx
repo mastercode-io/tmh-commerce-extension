@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { saveRenewalDemoOrder } from '@/lib/renewals/demo-storage';
 import { requestRenewalJson, RenewalApiResponseError } from '@/lib/renewals/client';
 import type {
   CreateRenewalOrderResponse,
@@ -196,6 +197,13 @@ export function RenewalFlow({
           }),
         },
       );
+
+      saveRenewalDemoOrder({
+        token: details.token,
+        request: response.request,
+        order: response.order,
+        orderDetails: response.orderDetails,
+      });
 
       startNavigation(() => {
         router.push(`/orders/${response.order.orderId}`);

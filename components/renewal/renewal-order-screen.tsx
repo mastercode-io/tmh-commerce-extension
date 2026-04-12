@@ -18,6 +18,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { pollPaymentStatus } from '@/lib/commerce/payment-polling';
+import {
+  getRenewalDemoPaymentSnapshot,
+  readRenewalDemoOrder,
+  saveRenewalDemoOrder,
+  startRenewalDemoPayment,
+  toRenewalOrderResponse,
+} from '@/lib/renewals/demo-storage';
 import { requestRenewalJson, RenewalApiResponseError } from '@/lib/renewals/client';
 import type {
   CreateRenewalPaymentLinkResponse,
@@ -45,7 +52,13 @@ function formatMoney(amount: number) {
   }).format(amount);
 }
 
-export function RenewalOrderScreen({ orderId }: { orderId: string }) {
+export function RenewalOrderScreen({
+  orderId,
+  showDemoHelpers,
+}: {
+  orderId: string;
+  showDemoHelpers: boolean;
+}) {
   const router = useRouter();
   const [isNavigating, startNavigation] = React.useTransition();
   const [order, setOrder] = React.useState<RenewalOrderResponse | null>(null);
@@ -63,8 +76,27 @@ export function RenewalOrderScreen({ orderId }: { orderId: string }) {
       const response = await requestRenewalJson<RenewalOrderApiResponse>(
         `/api/renewals/orders/${orderId}`,
       );
+      if (showDemoHelpers) {
+        const existing = readRenewalDemoOrder(orderId);
+        saveRenewalDemoOrder({
+          token: existing?.token ?? 'tok_123',
+          request: response.request,
+          order: response.order,
+          orderDetails: response.orderDetails,
+          payment: response.payment,
+        });
+      }
       setOrder(response);
     } catch (requestError) {
+      const fallback = showDemoHelpers ? readRenewalDemoOrder(orderId) : null;
+
+      if (fallback) {
+        const paymentState = getRenewalDemoPaymentSnapshot({ orderId });
+        setOrder(toRenewalOrderResponse(paymentState?.snapshot ?? fallback));
+        setLoading(false);
+        return;
+      }
+
       setError(
         requestError instanceof RenewalApiResponseError
           ? requestError.message
@@ -73,7 +105,7 @@ export function RenewalOrderScreen({ orderId }: { orderId: string }) {
     } finally {
       setLoading(false);
     }
-  }, [orderId]);
+  }, [orderId, showDemoHelpers]);
 
   const startPolling = React.useCallback(async () => {
     if (polling) {
@@ -85,15 +117,34 @@ export function RenewalOrderScreen({ orderId }: { orderId: string }) {
 
     try {
       const result = await pollPaymentStatus(async () => {
-        const response =
-          await requestRenewalJson<RenewalPaymentStatusApiResponse>(
-            `/api/renewals/orders/${orderId}/payment-status`,
-          );
+        try {
+          const response =
+            await requestRenewalJson<RenewalPaymentStatusApiResponse>(
+              `/api/renewals/orders/${orderId}/payment-status`,
+            );
 
-        return {
-          status: response.status,
-          updatedAt: response.updatedAt,
-        };
+          return {
+            status: response.status,
+            updatedAt: response.updatedAt,
+          };
+        } catch (requestError) {
+          if (!showDemoHelpers) {
+            throw requestError;
+          }
+
+          const fallback = getRenewalDemoPaymentSnapshot({ orderId });
+
+          if (!fallback) {
+            throw requestError;
+          }
+
+          setOrder(toRenewalOrderResponse(fallback.snapshot));
+
+          return {
+            status: fallback.payment.status,
+            updatedAt: fallback.updatedAt,
+          };
+        }
       });
 
       if (result.status === 'succeeded') {
@@ -126,7 +177,7 @@ export function RenewalOrderScreen({ orderId }: { orderId: string }) {
     } finally {
       setPolling(false);
     }
-  }, [loadOrder, orderId, polling, router]);
+  }, [loadOrder, orderId, polling, router, showDemoHelpers]);
 
   React.useEffect(() => {
     void loadOrder();
@@ -158,6 +209,15 @@ export function RenewalOrderScreen({ orderId }: { orderId: string }) {
 
       window.location.assign(response.paymentUrl);
     } catch (requestError) {
+      if (showDemoHelpers) {
+        const fallback = startRenewalDemoPayment({ orderId });
+
+        if (fallback) {
+          window.location.assign(fallback.paymentUrl);
+          return;
+        }
+      }
+
       setError(
         requestError instanceof RenewalApiResponseError
           ? requestError.message
