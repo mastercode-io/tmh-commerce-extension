@@ -259,7 +259,7 @@ export function RenewalFlow({
   const allTrademarks = [details.primaryTrademark, ...details.additionalRenewals];
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
       <div className="grid gap-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -548,45 +548,85 @@ export function RenewalFlow({
         ) : null}
       </div>
 
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle>Primary renewal</CardTitle>
+      <div className="grid gap-4 xl:sticky xl:top-24 xl:self-start">
+        <Card className="ring-primary/10 shadow-sm ring-1">
+          <CardHeader className="border-b pb-4">
+            <CardTitle>Renewal snapshot</CardTitle>
             <CardDescription>
-              Included by default in the order you are about to create.
+              A compact view of the order you are about to create.
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-3 pt-4">
-            <div className="text-lg font-semibold">{details.primaryTrademark.wordMark}</div>
-            <div className="text-muted-foreground text-sm">
-              {details.primaryTrademark.registrationNumber ??
-                details.primaryTrademark.applicationNumber}
+          <CardContent className="grid gap-4 pt-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-xl border p-3">
+                <div className="text-muted-foreground text-[11px] tracking-[0.16em] uppercase">
+                  Selected
+                </div>
+                <div className="mt-2 text-2xl font-semibold">
+                  {selectedTrademarkIds.length}
+                </div>
+              </div>
+              <div className="rounded-xl border p-3">
+                <div className="text-muted-foreground text-[11px] tracking-[0.16em] uppercase">
+                  Contact
+                </div>
+                <div className="mt-2 text-sm font-medium">
+                  {contact.firstName || details.contact.firstName}
+                </div>
+              </div>
             </div>
-            <div className="grid gap-2 text-sm">
-              <div className="flex items-center justify-between">
-                <span>Status</span>
-                <span>{details.primaryTrademark.status}</span>
+
+            <div className="rounded-xl border p-4">
+              <div className="text-muted-foreground text-[11px] tracking-[0.16em] uppercase">
+                Primary renewal
               </div>
-              <div className="flex items-center justify-between">
-                <span>Renewal date</span>
-                <span>{formatDate(details.primaryTrademark.nextRenewalDate)}</span>
+              <div className="mt-2 text-lg font-semibold">
+                {details.primaryTrademark.wordMark}
               </div>
-              <div className="flex items-center justify-between">
-                <span>Classes</span>
-                <span>{details.primaryTrademark.classesCount}</span>
+              <div className="text-muted-foreground mt-1 text-sm">
+                {details.primaryTrademark.registrationNumber ??
+                  details.primaryTrademark.applicationNumber}
+              </div>
+              <div className="mt-4 grid gap-2 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span>Status</span>
+                  <span className="font-medium">{details.primaryTrademark.status}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span>Renewal date</span>
+                  <span className="font-medium">
+                    {formatDate(details.primaryTrademark.nextRenewalDate)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span>Classes</span>
+                  <span className="font-medium">
+                    {details.primaryTrademark.classesCount}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border p-4">
+              <div className="text-muted-foreground text-[11px] tracking-[0.16em] uppercase">
+                Account
+              </div>
+              <div className="mt-2 text-sm font-medium">{details.account.name}</div>
+              <div className="text-muted-foreground mt-1 text-sm">
+                {details.contact.email}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-primary text-primary-foreground">
-          <CardHeader>
+        <Card>
+          <CardHeader className="border-b">
             <CardTitle className="flex items-center gap-2">
               <CheckCircle2 className="size-5" />
               What happens next
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-2 text-sm">
+          <CardContent className="grid gap-2 pt-4 text-sm">
             <div>1. We create a renewal order with the selected trademarks.</div>
             <div>2. You review the totals and accept the terms.</div>
             <div>3. The hosted payment step starts and the order moves to confirmation.</div>

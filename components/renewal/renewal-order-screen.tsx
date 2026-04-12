@@ -260,7 +260,7 @@ export function RenewalOrderScreen({
   const paymentStatus = order.payment?.status ?? null;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
       <div className="grid gap-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -379,7 +379,7 @@ export function RenewalOrderScreen({
         ) : null}
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-4 xl:sticky xl:top-24 xl:self-start">
         <Card className="ring-primary/15 ring-2">
           <CardHeader className="border-b">
             <CardTitle>Order summary</CardTitle>
@@ -425,6 +425,20 @@ export function RenewalOrderScreen({
                 Checking payment status...
               </div>
             ) : null}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="border-b">
+            <CardTitle>What happens next</CardTitle>
+            <CardDescription>
+              This payment step uses the server-authoritative order details shown on the left.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-2 pt-4 text-sm">
+            <div>1. Accept the terms and open the hosted payment step.</div>
+            <div>2. Return here while the order polls for the final payment state.</div>
+            <div>3. When payment succeeds, the flow moves to the confirmation page.</div>
           </CardContent>
         </Card>
       </div>
