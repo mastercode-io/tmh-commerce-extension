@@ -1,0 +1,8 @@
+{
+  "orderId": "aud_ord_123",
+  "section": "appointment",
+  "data": {
+    "scheduled": false,
+    "skipped": true
+  }
+}

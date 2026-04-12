@@ -1,0 +1,14 @@
+{
+  "source": "live",
+  "data": {
+    "items": [
+      {
+        "application_number": "UK00003456789",
+        "verbal_element_text": "TECHIFY",
+        "status": "Registered",
+        "expiry_date": "2026-08-15",
+        "applicants": [{ "name": "Tech Innovations Ltd" }]
+      }
+    ]
+  }
+}

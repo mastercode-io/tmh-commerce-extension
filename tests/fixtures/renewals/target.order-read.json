@@ -1,0 +1,25 @@
+{
+  "orderId": "ord_123",
+  "dealToken": "deal_tok_123",
+  "currency": "GBP",
+  "totals": {
+    "subtotal": 760,
+    "vat": 152,
+    "total": 912
+  },
+  "trademarks": [
+    {
+      "id": "tm_001",
+      "wordMark": "TECHIFY",
+      "applicationNumber": "UK00003456789",
+      "registrationNumber": "UK00003456789",
+      "markType": "Word Mark",
+      "classesCount": 2
+    }
+  ],
+  "lineItems": [],
+  "payment": {
+    "paymentId": "pay_123",
+    "status": "initiated"
+  }
+}

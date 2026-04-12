@@ -198,11 +198,11 @@ The current app should focus on three bounded user-facing areas:
 - billing summary
 - profile/preferences
 
-### C. Requests
-- request audit
-- request renewal
-- request application
-- request support/callback
+### C. Services
+- audit
+- renewal
+- application
+- support/callback
 
 ---
 

@@ -58,9 +58,10 @@ Rename/refocus:
 ### 1.2 Align route intent
 Target route families:
 - marketing / subscribe
+- orders
 - account
 - preferences
-- requests
+- services
 - support
 - auth
 
@@ -71,7 +72,7 @@ Prefer:
 - Payments
 - Subscriptions
 - Preferences
-- Requests
+- Services
 
 Avoid for this phase:
 - Workspace

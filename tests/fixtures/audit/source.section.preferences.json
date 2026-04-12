@@ -1,0 +1,7 @@
+{
+  "orderId": "aud_ord_123",
+  "section": "preferences",
+  "data": {
+    "methods": ["Phone", "SMS", "WhatsApp", "Email"]
+  }
+}

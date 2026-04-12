@@ -1,0 +1,30 @@
+{
+  "token": "tok_010",
+  "account": {
+    "type": "individual",
+    "name": "Alex Example",
+    "address": {
+      "line1": "4 Example Road",
+      "city": "London",
+      "postcode": "SW1A 1AA",
+      "country": "United Kingdom"
+    }
+  },
+  "contact": {
+    "firstName": "Alex",
+    "lastName": "Example",
+    "email": "alex@example.com",
+    "phone": "+44 7700 900111"
+  },
+  "primaryTrademark": {
+    "id": "tm_010",
+    "wordMark": "EXAMPLE",
+    "markType": "Word Mark",
+    "status": "Registered",
+    "jurisdiction": "UK",
+    "applicationNumber": "UK00001010101",
+    "classes": [],
+    "classesCount": 1
+  },
+  "additionalRenewals": []
+}

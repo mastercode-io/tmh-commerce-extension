@@ -1,0 +1,18 @@
+{
+  "token": "lead_tok_123",
+  "lead": {
+    "firstName": "Jane",
+    "lastName": "Doe",
+    "email": "jane@example.com",
+    "phone": "+44 7700 900000"
+  },
+  "request": {
+    "requestId": "req_123",
+    "requestType": "audit",
+    "status": "submitted",
+    "summary": "Trademark audit request",
+    "createdAt": "2026-04-12T10:00:00.000Z",
+    "updatedAt": "2026-04-12T10:00:00.000Z",
+    "reference": "TMH-AUD-REQ-123"
+  }
+}
