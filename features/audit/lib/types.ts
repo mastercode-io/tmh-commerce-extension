@@ -58,7 +58,22 @@ export interface AuditTmStatusSection {
 export interface AuditTemmySection {
   selected?: string | null;
   results?: {
-    items: unknown[];
+    items: TemmyResultItem[];
+  };
+}
+
+export interface TemmyResultItem {
+  application_number: string;
+  verbal_element_text: string;
+  status: string;
+  expiry_date: string | null;
+  applicants: Array<{ name: string }>;
+}
+
+export interface TemmySearchResponse {
+  source: string;
+  data: {
+    items: TemmyResultItem[];
   };
 }
 

@@ -250,18 +250,18 @@ Status legend:
 
 | ID | Area | Task | Dependency | Evidence Required | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| A1 | Audit API | Implement lead upsert route | D4-D5, S1-S4 | Handler tests | Not started | Token continuation preserved |
-| A2 | Audit API | Implement section save route | A1 | Handler tests by section | Not started | Server-side section persistence |
-| A3 | Audit API | Implement order read route | A2 | Handler test | Not started | Must return server-authoritative pricing |
-| A4 | Audit API | Implement payment creation route | D5, A3 | Handler test | Not started | Hosted checkout handoff |
-| A5 | Audit API | Implement confirmation read route | A4 | Handler test | Not started | Final summary state |
-| A6 | Audit API | Implement Temmy search normalization | A2 | Handler test for zero/single/multi results | Not started | Preserve search/selection behavior |
+| A1 | Audit API | Implement lead upsert route | D4-D5, S1-S4 | Handler tests | Done | Added `POST /api/audit/lead` backed by audit service lead upsert and continuation token handling |
+| A2 | Audit API | Implement section save route | A1 | Handler tests by section | Done | Added `POST /api/audit/orders/sections` with per-section persistence and order creation on contact save |
+| A3 | Audit API | Implement order read route | A2 | Handler test | Done | Added `GET /api/audit/orders/[orderId]` returning server-authoritative pricing and saved sections |
+| A4 | Audit API | Implement payment creation route | D5, A3 | Handler test | Done | Added `POST /api/audit/orders/[orderId]/payment` with terms gate and hosted-checkout handoff contract |
+| A5 | Audit API | Implement confirmation read route | A4 | Handler test | Done | Added `GET /api/audit/orders/[orderId]/confirmation` for payment outcome reads |
+| A6 | Audit API | Implement Temmy search normalization | A2 | Handler test for zero/single/multi results | Done | Added `POST /api/temmy/search` plus zero/single/multi-result mock coverage |
 
 ### 5.6 Audit Frontend
 
 | ID | Area | Task | Dependency | Evidence Required | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| A7 | Audit UI | Build wizard shell with section state | A1-A2 | UI notes or tests | Not started | State structured by section |
+| A7 | Audit UI | Build wizard shell with section state | A1-A2 | UI notes or tests | Done | Added browser-resumable `/audit` wizard shell with section-structured state, Temmy lookup, and server order refresh |
 | A8 | Audit UI | Build contact and preferences steps | A7 | UI tests | Not started | At least one contact method required |
 | A9 | Audit UI | Build trademark status and Temmy lookup steps | A6-A7 | UI tests | Not started | Explicit result selection when needed |
 | A10 | Audit UI | Build goods/services and billing steps | A7 | UI tests | Not started | Preserve website and billing validation |
@@ -299,6 +299,7 @@ Update this table as execution proceeds.
 | 2026-04-12 | S1-S4 | Implemented shared commerce helpers, flow-specific type modules, seeded fixtures, and added verification tests in the target repo | Unassigned | `lib/commerce/status.ts`, `lib/commerce/errors.ts`, `lib/commerce/payment-polling.ts`, `tests/commerce-status.test.ts` | Start renewal backend work R1-R6 |
 | 2026-04-12 | R1-R6 | Implemented renewal backend routes, mock-backed order persistence, payment polling states, and confirmation reads | Unassigned | `app/api/renewals/details/route.ts`, `app/api/renewals/orders/[orderId]/payment-status/route.ts`, `lib/renewals/service.ts` | Wire public renewal pages |
 | 2026-04-12 | R7-R13 | Implemented the first public renewal journey on `/renewal`, `/orders/[orderId]`, and `/orders/[orderId]/confirmation` with mock hosted-payment handoff | Unassigned | `app/(subscribe)/renewal/page.tsx`, `components/renewal/renewal-flow.tsx`, `components/renewal/renewal-order-screen.tsx` | Add manual/browser verification and then move to audit backend |
+| 2026-04-13 | A1-A7 | Implemented the audit backend routes plus the browser-resumable `/audit` wizard shell with section state, Temmy lookup, and server order refresh | Unassigned | `app/api/audit/lead/route.ts`, `app/api/audit/orders/sections/route.ts`, `app/(subscribe)/audit/page.tsx`, `components/audit/audit-wizard.tsx`, `tests/audit-service.test.ts` | Build A8-A13 summary, payment, and confirmation routes |
 
 ## 7. Recommended First Slice
 
