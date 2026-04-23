@@ -73,6 +73,25 @@ type MonitoringApiResponse = {
   debug?: MonitoringDebugPayload;
 };
 
+type PaymentPopupFailureStage =
+  | 'open_blocked'
+  | 'window_closed_before_redirect'
+  | 'redirect_failed';
+
+type PaymentPopupDebugInfo = {
+  source: 'checkout' | 'reopen';
+  attemptedAt: string;
+  requestedUrl: string;
+  userActivationActive: boolean | null;
+  openReturnedWindow: boolean;
+  windowClosedBeforeRedirect: boolean | null;
+  redirectAttempted: boolean;
+  redirectSucceeded: boolean;
+  failureStage: PaymentPopupFailureStage | null;
+  errorName?: string;
+  errorMessage?: string;
+};
+
 class MonitoringApiResponseError extends Error {
   status: number;
   code?: MonitoringApiErrorCode;
@@ -173,7 +192,48 @@ async function requestJson<T>(input: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
-function redirectOpenedPaymentWindow(paymentWindow: Window, url: string) {
+function getUserActivationState() {
+  if (
+    typeof navigator !== 'undefined' &&
+    'userActivation' in navigator &&
+    navigator.userActivation
+  ) {
+    return navigator.userActivation.isActive;
+  }
+
+  return null;
+}
+
+function createPaymentPopupDebugInfo(args: {
+  source: PaymentPopupDebugInfo['source'];
+  requestedUrl: string;
+  openReturnedWindow: boolean;
+  windowClosedBeforeRedirect: boolean | null;
+  redirectAttempted: boolean;
+  redirectSucceeded: boolean;
+  failureStage: PaymentPopupDebugInfo['failureStage'];
+  errorName?: string;
+  errorMessage?: string;
+}): PaymentPopupDebugInfo {
+  return {
+    source: args.source,
+    attemptedAt: new Date().toISOString(),
+    requestedUrl: args.requestedUrl,
+    userActivationActive: getUserActivationState(),
+    openReturnedWindow: args.openReturnedWindow,
+    windowClosedBeforeRedirect: args.windowClosedBeforeRedirect,
+    redirectAttempted: args.redirectAttempted,
+    redirectSucceeded: args.redirectSucceeded,
+    failureStage: args.failureStage,
+    ...(args.errorName ? { errorName: args.errorName } : {}),
+    ...(args.errorMessage ? { errorMessage: args.errorMessage } : {}),
+  };
+}
+
+function redirectOpenedPaymentWindow(
+  paymentWindow: Window,
+  url: string,
+): { ok: boolean; errorName?: string; errorMessage?: string } {
   try {
     paymentWindow.opener = null;
   } catch {}
@@ -181,9 +241,20 @@ function redirectOpenedPaymentWindow(paymentWindow: Window, url: string) {
   try {
     paymentWindow.location.replace(url);
     paymentWindow.focus();
-    return true;
-  } catch {
-    return false;
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error) {
+      return {
+        ok: false,
+        errorName: error.name,
+        errorMessage: error.message,
+      };
+    }
+
+    return {
+      ok: false,
+      errorMessage: 'Unknown redirect error',
+    };
   }
 }
 
@@ -367,6 +438,8 @@ export function MonitoringFlow({
   >('idle');
   const [paymentMonitorMessage, setPaymentMonitorMessage] =
     React.useState<string | null>(null);
+  const [paymentPopupDebug, setPaymentPopupDebug] =
+    React.useState<PaymentPopupDebugInfo | null>(null);
   const [paymentPendingNoticeVisible, setPaymentPendingNoticeVisible] =
     React.useState(false);
   const paymentMonitorStartedAtRef = React.useRef<number | null>(null);
@@ -621,11 +694,37 @@ export function MonitoringFlow({
       setPaymentSession(data.session);
       setPaymentUrl(data.redirectUrl);
 
+      const popupOpenReturnedWindow = Boolean(pendingPaymentWindow);
+      const popupClosedBeforeRedirect = pendingPaymentWindow
+        ? pendingPaymentWindow.closed
+        : null;
+      const redirectResult =
+        pendingPaymentWindow && !popupClosedBeforeRedirect
+          ? redirectOpenedPaymentWindow(pendingPaymentWindow, data.redirectUrl)
+          : { ok: false as const };
+
       if (
-        !pendingPaymentWindow ||
-        pendingPaymentWindow.closed ||
-        !redirectOpenedPaymentWindow(pendingPaymentWindow, data.redirectUrl)
+        !popupOpenReturnedWindow ||
+        popupClosedBeforeRedirect ||
+        !redirectResult.ok
       ) {
+        setPaymentPopupDebug(
+          createPaymentPopupDebugInfo({
+            source: 'checkout',
+            requestedUrl: data.redirectUrl,
+            openReturnedWindow: popupOpenReturnedWindow,
+            windowClosedBeforeRedirect: popupClosedBeforeRedirect,
+            redirectAttempted: popupOpenReturnedWindow && !popupClosedBeforeRedirect,
+            redirectSucceeded: redirectResult.ok,
+            failureStage: !popupOpenReturnedWindow
+              ? 'open_blocked'
+              : popupClosedBeforeRedirect
+                ? 'window_closed_before_redirect'
+                : 'redirect_failed',
+            errorName: redirectResult.errorName,
+            errorMessage: redirectResult.errorMessage,
+          }),
+        );
         setPaymentMonitorState('failed');
         setPaymentMonitorMessage(
           'We could not keep the hosted payment page open in a new tab. Please use the button below to open it and then recheck the payment status here.',
@@ -634,6 +733,17 @@ export function MonitoringFlow({
         return;
       }
 
+      setPaymentPopupDebug(
+        createPaymentPopupDebugInfo({
+          source: 'checkout',
+          requestedUrl: data.redirectUrl,
+          openReturnedWindow: true,
+          windowClosedBeforeRedirect: false,
+          redirectAttempted: true,
+          redirectSucceeded: true,
+          failureStage: null,
+        }),
+      );
       paymentMonitorStartedAtRef.current = Date.now();
       setPaymentMonitorState('waiting');
       setPaymentMonitorMessage(
@@ -783,16 +893,52 @@ export function MonitoringFlow({
       return;
     }
 
-    const popup = window.open(paymentUrl, '_blank', 'noopener,noreferrer');
+    // Reuse the same open-blank-then-redirect strategy as checkout so the
+    // manual reopen button stays compatible with direct activation rules.
+    const popup = window.open('', '_blank');
+    const popupOpenReturnedWindow = Boolean(popup);
+    const popupClosedBeforeRedirect = popup ? popup.closed : null;
+    const redirectResult =
+      popup && !popupClosedBeforeRedirect
+        ? redirectOpenedPaymentWindow(popup, paymentUrl)
+        : { ok: false as const };
 
-    if (!popup) {
+    if (!popupOpenReturnedWindow || popupClosedBeforeRedirect || !redirectResult.ok) {
+      setPaymentPopupDebug(
+        createPaymentPopupDebugInfo({
+          source: 'reopen',
+          requestedUrl: paymentUrl,
+          openReturnedWindow: popupOpenReturnedWindow,
+          windowClosedBeforeRedirect: popupClosedBeforeRedirect,
+          redirectAttempted: popupOpenReturnedWindow && !popupClosedBeforeRedirect,
+          redirectSucceeded: redirectResult.ok,
+          failureStage: !popupOpenReturnedWindow
+            ? 'open_blocked'
+            : popupClosedBeforeRedirect
+              ? 'window_closed_before_redirect'
+              : 'redirect_failed',
+          errorName: redirectResult.errorName,
+          errorMessage: redirectResult.errorMessage,
+        }),
+      );
       setPaymentMonitorState('failed');
       setPaymentMonitorMessage(
-        'We could not open the hosted payment page in a new tab. Please allow pop-ups and try again.',
+        'We could not open the hosted payment page in a new tab. Check the debug details below and try again.',
       );
       return;
     }
 
+    setPaymentPopupDebug(
+      createPaymentPopupDebugInfo({
+        source: 'reopen',
+        requestedUrl: paymentUrl,
+        openReturnedWindow: true,
+        windowClosedBeforeRedirect: false,
+        redirectAttempted: true,
+        redirectSucceeded: true,
+        failureStage: null,
+      }),
+    );
     paymentMonitorStartedAtRef.current = Date.now();
     setPaymentMonitorState('waiting');
     setPaymentMonitorMessage(
@@ -1100,6 +1246,16 @@ export function MonitoringFlow({
                 Recheck payment
               </Button>
             </div>
+            {(devMode || showDemoHelpers) && paymentPopupDebug ? (
+              <details className="rounded-xl border border-slate-200 bg-white/80 p-4">
+                <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
+                  Client-side popup debug
+                </summary>
+                <pre className="mt-3 overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-800">
+                  {JSON.stringify(paymentPopupDebug, null, 2)}
+                </pre>
+              </details>
+            ) : null}
           </CardContent>
         </Card>
       ) : null}
