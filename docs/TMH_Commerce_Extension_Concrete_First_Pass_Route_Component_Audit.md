@@ -64,14 +64,19 @@ This is the route structure the current repo should converge toward.
 ### A. Marketing / entry
 Suggested route family:
 - `/`
-- `/subscribe`
+- `/subscribe/monitoring`
 - `/preferences`
-- `/request-audit`
-- `/request-renewal`
-- `/request-application`
+- `/renewal`
+- `/audit`
+- `/application`
 - `/support` or `/contact`
 
-### B. Account
+### B. Transactional order / checkout
+Suggested route family:
+- `/orders/[orderId]`
+- `/orders/[orderId]/confirmation`
+
+### C. Account
 Suggested route family:
 - `/account`
 - `/account/orders`
@@ -79,22 +84,24 @@ Suggested route family:
 - `/account/subscriptions`
 - `/account/preferences`
 - `/account/profile`
-- `/account/requests`
+- `/account/services`
 
-### C. Auth
+### D. Auth
 Suggested route family:
 - `/login`
 - `/verify`
 - `/logout`
 - `/forgot-password` or equivalent if needed
 
-### D. API / server routes
+### E. API / server routes
 Suggested grouping:
 - `/api/zoho/*`
 - `/api/subscriptions/*`
 - `/api/payments/*`
 - `/api/preferences/*`
-- `/api/requests/*`
+- `/api/renewals/*`
+- `/api/audit/*`
+- `/api/account/*`
 
 ### Recommendation
 Do not expose top-level routes like:
@@ -106,6 +113,8 @@ Do not expose top-level routes like:
 - `/workspace`
 
 in the current production phase.
+
+Do not use generic request-centric customer-facing URLs when a clearer service or commerce noun is available.
 
 ---
 
@@ -159,6 +168,14 @@ This is P1 and should drive the entire repo refocus.
 Refocus this into:
 - `/account`
 - or a route group conceptually meaning **Account**
+
+User-facing naming under this area should prefer:
+- Account
+- Orders
+- Payments
+- Subscriptions
+- Preferences
+- Services
 
 ### Action
 Audit all pages/components under this group:

@@ -1,5 +1,16 @@
 export type BillingInterval = 'monthly' | 'annual';
 
+export type CurrencyCode = 'GBP' | string;
+
+export type Address = {
+  line1: string;
+  line2?: string | null;
+  city: string;
+  county?: string | null;
+  postcode: string;
+  country: string;
+};
+
 export type OrderStatus =
   | 'draft'
   | 'pending_checkout'
@@ -73,7 +84,7 @@ export type OrderSummary = {
   kind: OrderKind;
   status: OrderStatus;
   billingInterval?: BillingInterval;
-  currency: string;
+  currency: CurrencyCode;
   totalDueNow: number;
   totalFollowUp?: number;
   createdAt: string;
@@ -101,7 +112,7 @@ export type PaymentSummary = {
   provider: string;
   status: PaymentStatus;
   amount: number;
-  currency: string;
+  currency: CurrencyCode;
   paidAt?: string;
   failedAt?: string;
   failureReason?: string;

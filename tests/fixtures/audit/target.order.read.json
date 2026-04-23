@@ -1,0 +1,37 @@
+{
+  "orderId": "aud_ord_123",
+  "dealId": "zoho_deal_123",
+  "status": "draft",
+  "currency": "GBP",
+  "createdAt": "2026-04-12T10:00:00.000Z",
+  "updatedAt": "2026-04-12T10:10:00.000Z",
+  "sections": {
+    "contact": {
+      "firstName": "Jane",
+      "lastName": "Doe",
+      "email": "jane@example.com",
+      "phone": "+44 7700 900000"
+    },
+    "preferences": {
+      "methods": ["Email", "Phone"]
+    },
+    "tmStatus": {
+      "status": "existing",
+      "tmAppNumber": "UK00003456789"
+    },
+    "goods": {
+      "description": "Software development",
+      "website": "https://example.com"
+    }
+  },
+  "pricing": {
+    "lineItems": [],
+    "subtotal": 59,
+    "vat": 11.8,
+    "total": 70.8
+  },
+  "payment": {
+    "paymentId": "pay_123",
+    "status": "initiated"
+  }
+}

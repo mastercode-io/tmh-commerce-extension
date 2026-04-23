@@ -1,0 +1,41 @@
+{
+  "account": {
+    "type": "organization",
+    "name": "Tech Innovations Ltd",
+    "company_number": "09876543",
+    "vat_number": "GB123456789",
+    "address": {
+      "line1": "123 High Street",
+      "line2": "Suite 4B",
+      "city": "Manchester",
+      "postcode": "M1 1AA",
+      "country": "United Kingdom"
+    }
+  },
+  "contact": {
+    "first_name": "Sarah",
+    "last_name": "Johnson",
+    "email": "sarah.johnson@techinnovations.com",
+    "mobile": "+44 7700 900123",
+    "phone": "+44 161 123 4567",
+    "position": "Managing Director"
+  },
+  "trademark": {
+    "id": "tm_001",
+    "word_mark": "TECHIFY",
+    "mark_type": "Word Mark",
+    "status": "Registered",
+    "jurisdiction": "UK",
+    "application_number": "UK00003456789",
+    "registration_number": "UK00003456789",
+    "classes_count": 2
+  },
+  "next_due": [
+    {
+      "id": "tm_002",
+      "word_mark": "INNOVATE PRO",
+      "registration_number": "UK00003567890",
+      "classes_count": 3
+    }
+  ]
+}

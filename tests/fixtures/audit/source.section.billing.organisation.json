@@ -1,0 +1,18 @@
+{
+  "orderId": "aud_ord_123",
+  "section": "billing",
+  "data": {
+    "type": "Organisation",
+    "companyName": "Tech Innovations Ltd",
+    "address": {
+      "line1": "123 High Street",
+      "line2": "Suite 4B",
+      "city": "Manchester",
+      "county": "Greater Manchester",
+      "postcode": "M1 1AA",
+      "country": "United Kingdom"
+    },
+    "invoiceEmail": "finance@example.com",
+    "invoicePhone": "+44 161 123 4567"
+  }
+}

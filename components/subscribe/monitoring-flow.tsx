@@ -173,6 +173,20 @@ async function requestJson<T>(input: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
+function redirectOpenedPaymentWindow(paymentWindow: Window, url: string) {
+  try {
+    paymentWindow.opener = null;
+  } catch {}
+
+  try {
+    paymentWindow.location.replace(url);
+    paymentWindow.focus();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function StatusBanner({ checkoutState }: { checkoutState: string | null }) {
   if (!checkoutState) {
     return null;
@@ -571,6 +585,10 @@ export function MonitoringFlow({
     }
 
     const safeToken = token;
+    // Open the tab synchronously so browsers that require direct user
+    // activation still allow the hosted payment journey.
+    const pendingPaymentWindow = window.open('', '_blank');
+
     try {
       setCheckoutPending(true);
       const data = await requestJson<MonitoringCheckoutResponse>(
@@ -600,15 +618,17 @@ export function MonitoringFlow({
         summary: quote.summary,
       });
 
-      const popup = window.open(data.redirectUrl, '_blank', 'noopener,noreferrer');
-
       setPaymentSession(data.session);
       setPaymentUrl(data.redirectUrl);
 
-      if (!popup) {
+      if (
+        !pendingPaymentWindow ||
+        pendingPaymentWindow.closed ||
+        !redirectOpenedPaymentWindow(pendingPaymentWindow, data.redirectUrl)
+      ) {
         setPaymentMonitorState('failed');
         setPaymentMonitorMessage(
-          'We could not open the hosted payment page in a new tab. Please use the button below to open it and then recheck the payment status here.',
+          'We could not keep the hosted payment page open in a new tab. Please use the button below to open it and then recheck the payment status here.',
         );
         setCheckoutPending(false);
         return;
@@ -622,6 +642,10 @@ export function MonitoringFlow({
       setPaymentPendingNoticeVisible(false);
       setCheckoutPending(false);
     } catch (error) {
+      if (pendingPaymentWindow && !pendingPaymentWindow.closed) {
+        pendingPaymentWindow.close();
+      }
+
       setQuoteError(
         error instanceof Error
           ? error.message

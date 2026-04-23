@@ -1,0 +1,22 @@
+{
+  "token": "tok_123",
+  "source": "renewal-landing",
+  "contact": {
+    "firstName": "Sarah",
+    "lastName": "Johnson",
+    "email": "sarah.johnson@techinnovations.com",
+    "phone": "+44 7700 900123"
+  },
+  "screening": {
+    "ownershipChange": false,
+    "classesChange": false
+  },
+  "selection": {
+    "primaryTrademarkId": "tm_001",
+    "selectedTrademarkIds": ["tm_001", "tm_002", "tm_003"]
+  },
+  "consents": {
+    "authorisedToRenew": true,
+    "contactConsent": true
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "orderId": "aud_ord_123",
+  "section": "goods",
+  "data": {
+    "description": "Software development and support services",
+    "website": "https://example.com"
+  }
+}
