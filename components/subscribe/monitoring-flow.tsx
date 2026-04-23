@@ -73,6 +73,26 @@ type MonitoringApiResponse = {
   debug?: MonitoringDebugPayload;
 };
 
+type PaymentPopupFailureStage =
+  | 'open_blocked'
+  | 'window_closed_before_redirect'
+  | 'redirect_failed'
+  | 'same_tab_navigation_failed';
+
+type PaymentPopupDebugInfo = {
+  source: 'checkout' | 'reopen';
+  attemptedAt: string;
+  requestedUrl: string;
+  userActivationActive: boolean | null;
+  openReturnedWindow: boolean;
+  windowClosedBeforeRedirect: boolean | null;
+  redirectAttempted: boolean;
+  redirectSucceeded: boolean;
+  failureStage: PaymentPopupFailureStage | null;
+  errorName?: string;
+  errorMessage?: string;
+};
+
 class MonitoringApiResponseError extends Error {
   status: number;
   code?: MonitoringApiErrorCode;
@@ -173,18 +193,42 @@ async function requestJson<T>(input: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
-function redirectOpenedPaymentWindow(paymentWindow: Window, url: string) {
-  try {
-    paymentWindow.opener = null;
-  } catch {}
-
-  try {
-    paymentWindow.location.replace(url);
-    paymentWindow.focus();
-    return true;
-  } catch {
-    return false;
+function getUserActivationState() {
+  if (
+    typeof navigator !== 'undefined' &&
+    'userActivation' in navigator &&
+    navigator.userActivation
+  ) {
+    return navigator.userActivation.isActive;
   }
+
+  return null;
+}
+
+function createPaymentPopupDebugInfo(args: {
+  source: PaymentPopupDebugInfo['source'];
+  requestedUrl: string;
+  openReturnedWindow: boolean;
+  windowClosedBeforeRedirect: boolean | null;
+  redirectAttempted: boolean;
+  redirectSucceeded: boolean;
+  failureStage: PaymentPopupDebugInfo['failureStage'];
+  errorName?: string;
+  errorMessage?: string;
+}): PaymentPopupDebugInfo {
+  return {
+    source: args.source,
+    attemptedAt: new Date().toISOString(),
+    requestedUrl: args.requestedUrl,
+    userActivationActive: getUserActivationState(),
+    openReturnedWindow: args.openReturnedWindow,
+    windowClosedBeforeRedirect: args.windowClosedBeforeRedirect,
+    redirectAttempted: args.redirectAttempted,
+    redirectSucceeded: args.redirectSucceeded,
+    failureStage: args.failureStage,
+    ...(args.errorName ? { errorName: args.errorName } : {}),
+    ...(args.errorMessage ? { errorMessage: args.errorMessage } : {}),
+  };
 }
 
 function StatusBanner({ checkoutState }: { checkoutState: string | null }) {
@@ -367,6 +411,8 @@ export function MonitoringFlow({
   >('idle');
   const [paymentMonitorMessage, setPaymentMonitorMessage] =
     React.useState<string | null>(null);
+  const [paymentPopupDebug, setPaymentPopupDebug] =
+    React.useState<PaymentPopupDebugInfo | null>(null);
   const [paymentPendingNoticeVisible, setPaymentPendingNoticeVisible] =
     React.useState(false);
   const paymentMonitorStartedAtRef = React.useRef<number | null>(null);
@@ -585,9 +631,6 @@ export function MonitoringFlow({
     }
 
     const safeToken = token;
-    // Open the tab synchronously so browsers that require direct user
-    // activation still allow the hosted payment journey.
-    const pendingPaymentWindow = window.open('', '_blank');
 
     try {
       setCheckoutPending(true);
@@ -620,32 +663,50 @@ export function MonitoringFlow({
 
       setPaymentSession(data.session);
       setPaymentUrl(data.redirectUrl);
+      setPaymentPopupDebug(
+        createPaymentPopupDebugInfo({
+          source: 'checkout',
+          requestedUrl: data.redirectUrl,
+          openReturnedWindow: false,
+          windowClosedBeforeRedirect: null,
+          redirectAttempted: false,
+          redirectSucceeded: false,
+          failureStage: null,
+        }),
+      );
 
-      if (
-        !pendingPaymentWindow ||
-        pendingPaymentWindow.closed ||
-        !redirectOpenedPaymentWindow(pendingPaymentWindow, data.redirectUrl)
-      ) {
+      try {
+        window.location.assign(data.redirectUrl);
+        return;
+      } catch (navigationError) {
+        const errorName =
+          navigationError instanceof Error ? navigationError.name : undefined;
+        const errorMessage =
+          navigationError instanceof Error
+            ? navigationError.message
+            : 'Unknown navigation error';
+
+        setPaymentPopupDebug(
+          createPaymentPopupDebugInfo({
+            source: 'checkout',
+            requestedUrl: data.redirectUrl,
+            openReturnedWindow: false,
+            windowClosedBeforeRedirect: null,
+            redirectAttempted: false,
+            redirectSucceeded: false,
+            failureStage: 'same_tab_navigation_failed',
+            errorName,
+            errorMessage,
+          }),
+        );
         setPaymentMonitorState('failed');
         setPaymentMonitorMessage(
-          'We could not keep the hosted payment page open in a new tab. Please use the button below to open it and then recheck the payment status here.',
+          'We could not start the hosted payment page automatically. Use the button below to continue to payment.',
         );
         setCheckoutPending(false);
         return;
       }
-
-      paymentMonitorStartedAtRef.current = Date.now();
-      setPaymentMonitorState('waiting');
-      setPaymentMonitorMessage(
-        'The payment page has been opened in a new tab. Complete the payment there and this page will confirm it automatically.',
-      );
-      setPaymentPendingNoticeVisible(false);
-      setCheckoutPending(false);
     } catch (error) {
-      if (pendingPaymentWindow && !pendingPaymentWindow.closed) {
-        pendingPaymentWindow.close();
-      }
-
       setQuoteError(
         error instanceof Error
           ? error.message
@@ -783,22 +844,36 @@ export function MonitoringFlow({
       return;
     }
 
-    const popup = window.open(paymentUrl, '_blank', 'noopener,noreferrer');
+    try {
+      window.location.assign(paymentUrl);
+      return;
+    } catch (navigationError) {
+      const errorName =
+        navigationError instanceof Error ? navigationError.name : undefined;
+      const errorMessage =
+        navigationError instanceof Error
+          ? navigationError.message
+          : 'Unknown navigation error';
 
-    if (!popup) {
+      setPaymentPopupDebug(
+        createPaymentPopupDebugInfo({
+          source: 'reopen',
+          requestedUrl: paymentUrl,
+          openReturnedWindow: false,
+          windowClosedBeforeRedirect: null,
+          redirectAttempted: false,
+          redirectSucceeded: false,
+          failureStage: 'same_tab_navigation_failed',
+          errorName,
+          errorMessage,
+        }),
+      );
       setPaymentMonitorState('failed');
       setPaymentMonitorMessage(
-        'We could not open the hosted payment page in a new tab. Please allow pop-ups and try again.',
+        'We could not start the hosted payment page automatically. Check the debug details below and try again.',
       );
       return;
     }
-
-    paymentMonitorStartedAtRef.current = Date.now();
-    setPaymentMonitorState('waiting');
-    setPaymentMonitorMessage(
-      'The payment page has been reopened in a new tab. We will keep checking for confirmation here.',
-    );
-    setPaymentPendingNoticeVisible(false);
   }, [paymentUrl]);
 
   const handleManualRecheck = React.useCallback(() => {
@@ -1100,6 +1175,16 @@ export function MonitoringFlow({
                 Recheck payment
               </Button>
             </div>
+            {(devMode || showDemoHelpers) && paymentPopupDebug ? (
+              <details className="rounded-xl border border-slate-200 bg-white/80 p-4">
+                <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
+                  Client-side popup debug
+                </summary>
+                <pre className="mt-3 overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-800">
+                  {JSON.stringify(paymentPopupDebug, null, 2)}
+                </pre>
+              </details>
+            ) : null}
           </CardContent>
         </Card>
       ) : null}
