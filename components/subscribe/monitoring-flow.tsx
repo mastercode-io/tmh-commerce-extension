@@ -76,7 +76,8 @@ type MonitoringApiResponse = {
 type PaymentPopupFailureStage =
   | 'open_blocked'
   | 'window_closed_before_redirect'
-  | 'redirect_failed';
+  | 'redirect_failed'
+  | 'same_tab_navigation_failed';
 
 type PaymentPopupDebugInfo = {
   source: 'checkout' | 'reopen';
@@ -228,34 +229,6 @@ function createPaymentPopupDebugInfo(args: {
     ...(args.errorName ? { errorName: args.errorName } : {}),
     ...(args.errorMessage ? { errorMessage: args.errorMessage } : {}),
   };
-}
-
-function redirectOpenedPaymentWindow(
-  paymentWindow: Window,
-  url: string,
-): { ok: boolean; errorName?: string; errorMessage?: string } {
-  try {
-    paymentWindow.opener = null;
-  } catch {}
-
-  try {
-    paymentWindow.location.replace(url);
-    paymentWindow.focus();
-    return { ok: true };
-  } catch (error) {
-    if (error instanceof Error) {
-      return {
-        ok: false,
-        errorName: error.name,
-        errorMessage: error.message,
-      };
-    }
-
-    return {
-      ok: false,
-      errorMessage: 'Unknown redirect error',
-    };
-  }
 }
 
 function StatusBanner({ checkoutState }: { checkoutState: string | null }) {
@@ -658,9 +631,6 @@ export function MonitoringFlow({
     }
 
     const safeToken = token;
-    // Open the tab synchronously so browsers that require direct user
-    // activation still allow the hosted payment journey.
-    const pendingPaymentWindow = window.open('', '_blank');
 
     try {
       setCheckoutPending(true);
@@ -693,69 +663,50 @@ export function MonitoringFlow({
 
       setPaymentSession(data.session);
       setPaymentUrl(data.redirectUrl);
-
-      const popupOpenReturnedWindow = Boolean(pendingPaymentWindow);
-      const popupClosedBeforeRedirect = pendingPaymentWindow
-        ? pendingPaymentWindow.closed
-        : null;
-      const redirectResult =
-        pendingPaymentWindow && !popupClosedBeforeRedirect
-          ? redirectOpenedPaymentWindow(pendingPaymentWindow, data.redirectUrl)
-          : { ok: false as const };
-
-      if (
-        !popupOpenReturnedWindow ||
-        popupClosedBeforeRedirect ||
-        !redirectResult.ok
-      ) {
-        setPaymentPopupDebug(
-          createPaymentPopupDebugInfo({
-            source: 'checkout',
-            requestedUrl: data.redirectUrl,
-            openReturnedWindow: popupOpenReturnedWindow,
-            windowClosedBeforeRedirect: popupClosedBeforeRedirect,
-            redirectAttempted: popupOpenReturnedWindow && !popupClosedBeforeRedirect,
-            redirectSucceeded: redirectResult.ok,
-            failureStage: !popupOpenReturnedWindow
-              ? 'open_blocked'
-              : popupClosedBeforeRedirect
-                ? 'window_closed_before_redirect'
-                : 'redirect_failed',
-            errorName: redirectResult.errorName,
-            errorMessage: redirectResult.errorMessage,
-          }),
-        );
-        setPaymentMonitorState('failed');
-        setPaymentMonitorMessage(
-          'We could not keep the hosted payment page open in a new tab. Please use the button below to open it and then recheck the payment status here.',
-        );
-        setCheckoutPending(false);
-        return;
-      }
-
       setPaymentPopupDebug(
         createPaymentPopupDebugInfo({
           source: 'checkout',
           requestedUrl: data.redirectUrl,
-          openReturnedWindow: true,
-          windowClosedBeforeRedirect: false,
-          redirectAttempted: true,
-          redirectSucceeded: true,
+          openReturnedWindow: false,
+          windowClosedBeforeRedirect: null,
+          redirectAttempted: false,
+          redirectSucceeded: false,
           failureStage: null,
         }),
       );
-      paymentMonitorStartedAtRef.current = Date.now();
-      setPaymentMonitorState('waiting');
-      setPaymentMonitorMessage(
-        'The payment page has been opened in a new tab. Complete the payment there and this page will confirm it automatically.',
-      );
-      setPaymentPendingNoticeVisible(false);
-      setCheckoutPending(false);
-    } catch (error) {
-      if (pendingPaymentWindow && !pendingPaymentWindow.closed) {
-        pendingPaymentWindow.close();
-      }
 
+      try {
+        window.location.assign(data.redirectUrl);
+        return;
+      } catch (navigationError) {
+        const errorName =
+          navigationError instanceof Error ? navigationError.name : undefined;
+        const errorMessage =
+          navigationError instanceof Error
+            ? navigationError.message
+            : 'Unknown navigation error';
+
+        setPaymentPopupDebug(
+          createPaymentPopupDebugInfo({
+            source: 'checkout',
+            requestedUrl: data.redirectUrl,
+            openReturnedWindow: false,
+            windowClosedBeforeRedirect: null,
+            redirectAttempted: false,
+            redirectSucceeded: false,
+            failureStage: 'same_tab_navigation_failed',
+            errorName,
+            errorMessage,
+          }),
+        );
+        setPaymentMonitorState('failed');
+        setPaymentMonitorMessage(
+          'We could not start the hosted payment page automatically. Use the button below to continue to payment.',
+        );
+        setCheckoutPending(false);
+        return;
+      }
+    } catch (error) {
       setQuoteError(
         error instanceof Error
           ? error.message
@@ -893,58 +844,36 @@ export function MonitoringFlow({
       return;
     }
 
-    // Reuse the same open-blank-then-redirect strategy as checkout so the
-    // manual reopen button stays compatible with direct activation rules.
-    const popup = window.open('', '_blank');
-    const popupOpenReturnedWindow = Boolean(popup);
-    const popupClosedBeforeRedirect = popup ? popup.closed : null;
-    const redirectResult =
-      popup && !popupClosedBeforeRedirect
-        ? redirectOpenedPaymentWindow(popup, paymentUrl)
-        : { ok: false as const };
+    try {
+      window.location.assign(paymentUrl);
+      return;
+    } catch (navigationError) {
+      const errorName =
+        navigationError instanceof Error ? navigationError.name : undefined;
+      const errorMessage =
+        navigationError instanceof Error
+          ? navigationError.message
+          : 'Unknown navigation error';
 
-    if (!popupOpenReturnedWindow || popupClosedBeforeRedirect || !redirectResult.ok) {
       setPaymentPopupDebug(
         createPaymentPopupDebugInfo({
           source: 'reopen',
           requestedUrl: paymentUrl,
-          openReturnedWindow: popupOpenReturnedWindow,
-          windowClosedBeforeRedirect: popupClosedBeforeRedirect,
-          redirectAttempted: popupOpenReturnedWindow && !popupClosedBeforeRedirect,
-          redirectSucceeded: redirectResult.ok,
-          failureStage: !popupOpenReturnedWindow
-            ? 'open_blocked'
-            : popupClosedBeforeRedirect
-              ? 'window_closed_before_redirect'
-              : 'redirect_failed',
-          errorName: redirectResult.errorName,
-          errorMessage: redirectResult.errorMessage,
+          openReturnedWindow: false,
+          windowClosedBeforeRedirect: null,
+          redirectAttempted: false,
+          redirectSucceeded: false,
+          failureStage: 'same_tab_navigation_failed',
+          errorName,
+          errorMessage,
         }),
       );
       setPaymentMonitorState('failed');
       setPaymentMonitorMessage(
-        'We could not open the hosted payment page in a new tab. Check the debug details below and try again.',
+        'We could not start the hosted payment page automatically. Check the debug details below and try again.',
       );
       return;
     }
-
-    setPaymentPopupDebug(
-      createPaymentPopupDebugInfo({
-        source: 'reopen',
-        requestedUrl: paymentUrl,
-        openReturnedWindow: true,
-        windowClosedBeforeRedirect: false,
-        redirectAttempted: true,
-        redirectSucceeded: true,
-        failureStage: null,
-      }),
-    );
-    paymentMonitorStartedAtRef.current = Date.now();
-    setPaymentMonitorState('waiting');
-    setPaymentMonitorMessage(
-      'The payment page has been reopened in a new tab. We will keep checking for confirmation here.',
-    );
-    setPaymentPendingNoticeVisible(false);
   }, [paymentUrl]);
 
   const handleManualRecheck = React.useCallback(() => {
