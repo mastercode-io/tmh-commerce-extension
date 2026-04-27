@@ -17,7 +17,8 @@ function formatMoney(amount: number) {
   return new Intl.NumberFormat('en-GB', {
     style: 'currency',
     currency: 'GBP',
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(amount);
 }
 
@@ -133,7 +134,8 @@ export function QuoteSummary({
           ) : null}
           <div className="flex items-center justify-between gap-3 border-t pt-3">
             <span className="text-sm font-medium">
-              Total {billingFrequency === 'annual' ? 'per year' : 'per month'}
+              Total payable{' '}
+              {billingFrequency === 'annual' ? 'per year' : 'per month'}
             </span>
             <span className="text-lg font-semibold">
               {formatMoney(currentTotal)}
